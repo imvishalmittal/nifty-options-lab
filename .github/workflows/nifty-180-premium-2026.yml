@@ -1,0 +1,79 @@
+name: NIFTY 180 Premium 2026
+
+on:
+  push:
+    branches:
+      - agent/opening-range-backtest
+    paths:
+      - '.github/workflows/nifty-180-premium-2026.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  month:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        period:
+          - key: '2026-01'
+            start: '2026-01-01'
+            end: '2026-01-30'
+          - key: '2026-02'
+            start: '2026-02-01'
+            end: '2026-02-28'
+          - key: '2026-03'
+            start: '2026-03-01'
+            end: '2026-03-31'
+          - key: '2026-04'
+            start: '2026-04-01'
+            end: '2026-04-30'
+          - key: '2026-05'
+            start: '2026-05-01'
+            end: '2026-05-31'
+          - key: '2026-06'
+            start: '2026-06-01'
+            end: '2026-06-30'
+          - key: '2026-07'
+            start: '2026-07-01'
+            end: '2026-07-31'
+          - key: '2026-08'
+            start: '2026-08-01'
+            end: '2026-08-14'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate NIFTY 180 engine
+        run: node --test tests/nifty-180-premium-strategy.test.mjs tests/groww-backtest-nifty-180.test.mjs tests/groww-option-costs.test.mjs
+
+      - name: Run actual-contract monthly validation
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          PERIOD_KEY: ${{ matrix.period.key }}
+          START_DATE: ${{ matrix.period.start }}
+          END_DATE: ${{ matrix.period.end }}
+        run: |
+          mkdir -p "outputs/nifty-180-premium-2026/${PERIOD_KEY}"
+          node research/groww-backtest-nifty-180.mjs \
+            "--start=${START_DATE}" \
+            "--end=${END_DATE}" \
+            --candidates=8 \
+            --lot-size=65 \
+            "--out=outputs/nifty-180-premium-2026/${PERIOD_KEY}/result.json" \
+            > "outputs/nifty-180-premium-2026/${PERIOD_KEY}/stdout.json"
+
+      - name: Upload monthly result
+        uses: actions/upload-artifact@v4
+        with:
+          name: nifty-180-premium-${{ matrix.period.key }}-${{ github.run_id }}
+          path: outputs/nifty-180-premium-2026/${{ matrix.period.key }}/
+          if-no-files-found: error
+          retention-days: 30
