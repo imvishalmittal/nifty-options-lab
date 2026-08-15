@@ -17,6 +17,9 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    concurrency:
+      group: groww-backtest-api
+      queue: max
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -35,7 +38,7 @@ jobs:
             "--symbols=${SYMBOLS}" \
             --out=work/groww/qf-data-quality/2025 \
             > work/groww/qf-data-quality/manifest-output.json
-      - name: Audit regular-session gaps and ATRs
+      - name: Audit continuous-session gaps and ATRs
         run: |
           mkdir -p outputs/quick-flip-data-quality
           mapfile -t files < <(find work/groww/qf-data-quality/2025 -maxdepth 1 -name '*.csv' -type f | sort)
