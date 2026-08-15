@@ -1,0 +1,50 @@
+name: NIFTY 180 Premium Smoke
+
+on:
+  push:
+    branches:
+      - agent/opening-range-backtest
+    paths:
+      - '.github/workflows/nifty-180-premium-smoke.yml'
+      - 'research/groww-backtest-nifty-180.mjs'
+      - 'research/nifty-180-premium-strategy.mjs'
+      - 'tests/groww-backtest-nifty-180.test.mjs'
+      - 'tests/nifty-180-premium-strategy.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate pure strategy tests
+        run: node --test tests/nifty-180-premium-strategy.test.mjs tests/groww-backtest-nifty-180.test.mjs
+
+      - name: Run five-session Groww FNO smoke test
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+        run: |
+          mkdir -p outputs/nifty-180-premium-smoke
+          node research/groww-backtest-nifty-180.mjs \
+            --start=2026-08-10 \
+            --end=2026-08-14 \
+            --candidates=8 \
+            --out=outputs/nifty-180-premium-smoke/result.json \
+            > outputs/nifty-180-premium-smoke/stdout.json
+
+      - name: Upload smoke result
+        uses: actions/upload-artifact@v4
+        with:
+          name: nifty-180-premium-smoke-${{ github.run_id }}
+          path: outputs/nifty-180-premium-smoke/
+          if-no-files-found: error
+          retention-days: 14
