@@ -33,7 +33,7 @@ test('chooses the ITM contract whose 09:25 premium is closest to 180', () => {
   assert.equal(selected.symbol, 'A');
 });
 
-test('first side to close above 180 wins and enters on next one-minute candle', () => {
+test('first post-09:30 crossing above 180 wins and enters on next one-minute candle', () => {
   const callCandles = [
     candle('2026-08-14T09:29:00+05:30', 178, 181, 177, 179),
     candle('2026-08-14T09:30:00+05:30', 179, 183, 178, 182),
@@ -41,8 +41,9 @@ test('first side to close above 180 wins and enters on next one-minute candle', 
     candle('2026-08-14T09:32:00+05:30', 188, 221, 187, 220),
   ];
   const putCandles = [
-    candle('2026-08-14T09:30:00+05:30', 175, 178, 170, 174),
-    candle('2026-08-14T09:31:00+05:30', 174, 180, 171, 179),
+    candle('2026-08-14T09:29:00+05:30', 175, 178, 170, 174),
+    candle('2026-08-14T09:30:00+05:30', 174, 179, 171, 176),
+    candle('2026-08-14T09:31:00+05:30', 176, 180, 173, 179),
     candle('2026-08-14T09:32:00+05:30', 179, 183, 178, 181),
   ];
   const result = evaluatePremiumDay({ call: { symbol: 'CE' }, put: { symbol: 'PE' }, callCandles, putCandles });
@@ -53,9 +54,63 @@ test('first side to close above 180 wins and enters on next one-minute candle', 
   assert.equal(result.result, 'TARGET');
 });
 
-test('same-minute CE and PE confirmations are rejected as ambiguous', () => {
-  const callCandles = [candle('2026-08-14T09:30:00+05:30', 179, 183, 178, 182), candle('2026-08-14T09:31:00+05:30', 182, 184, 180, 183)];
-  const putCandles = [candle('2026-08-14T09:30:00+05:30', 179, 184, 178, 181), candle('2026-08-14T09:31:00+05:30', 181, 183, 179, 182)];
+test('contract already above 180 before 09:30 does not trigger by merely staying above', () => {
+  const callCandles = [
+    candle('2026-08-14T09:29:00+05:30', 200, 205, 198, 202),
+    candle('2026-08-14T09:30:00+05:30', 202, 210, 201, 208),
+    candle('2026-08-14T09:31:00+05:30', 208, 215, 205, 210),
+  ];
+  const putCandles = [
+    candle('2026-08-14T09:29:00+05:30', 170, 175, 168, 172),
+    candle('2026-08-14T09:30:00+05:30', 172, 178, 170, 176),
+    candle('2026-08-14T09:31:00+05:30', 176, 179, 173, 178),
+  ];
+  const result = evaluatePremiumDay({ call: { symbol: 'CE' }, put: { symbol: 'PE' }, callCandles, putCandles });
+  assert.equal(result.status, 'NO_TRADE');
+});
+
+test('confirmation that has already reached the 220 target is rejected', () => {
+  const callCandles = [
+    candle('2026-08-14T09:29:00+05:30', 175, 179, 170, 178),
+    candle('2026-08-14T09:30:00+05:30', 178, 230, 177, 225),
+    candle('2026-08-14T09:31:00+05:30', 224, 228, 215, 218),
+  ];
+  const putCandles = [
+    candle('2026-08-14T09:29:00+05:30', 170, 174, 168, 171),
+    candle('2026-08-14T09:30:00+05:30', 171, 176, 169, 174),
+  ];
+  const result = evaluatePremiumDay({ call: { symbol: 'CE' }, put: { symbol: 'PE' }, callCandles, putCandles });
+  assert.equal(result.status, 'NO_TRADE');
+  assert.match(result.reason, /target/i);
+});
+
+test('next-bar entry at or above 220 is rejected instead of counted as a target', () => {
+  const callCandles = [
+    candle('2026-08-14T09:29:00+05:30', 175, 179, 170, 178),
+    candle('2026-08-14T09:30:00+05:30', 178, 195, 177, 190),
+    candle('2026-08-14T09:31:00+05:30', 225, 230, 218, 222),
+  ];
+  const putCandles = [
+    candle('2026-08-14T09:29:00+05:30', 170, 174, 168, 171),
+    candle('2026-08-14T09:30:00+05:30', 171, 176, 169, 174),
+  ];
+  const result = evaluatePremiumDay({ call: { symbol: 'CE' }, put: { symbol: 'PE' }, callCandles, putCandles });
+  assert.equal(result.status, 'NO_TRADE');
+  assert.equal(result.entry, 225);
+  assert.match(result.reason, /outside/i);
+});
+
+test('same-minute CE and PE crossings are rejected as ambiguous', () => {
+  const callCandles = [
+    candle('2026-08-14T09:29:00+05:30', 175, 179, 173, 178),
+    candle('2026-08-14T09:30:00+05:30', 179, 183, 178, 182),
+    candle('2026-08-14T09:31:00+05:30', 182, 184, 180, 183),
+  ];
+  const putCandles = [
+    candle('2026-08-14T09:29:00+05:30', 176, 179, 174, 178),
+    candle('2026-08-14T09:30:00+05:30', 179, 184, 178, 181),
+    candle('2026-08-14T09:31:00+05:30', 181, 183, 179, 182),
+  ];
   const result = evaluatePremiumDay({ call: { symbol: 'CE' }, put: { symbol: 'PE' }, callCandles, putCandles });
   assert.equal(result.status, 'AMBIGUOUS');
 });
