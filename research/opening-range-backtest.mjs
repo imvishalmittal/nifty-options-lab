@@ -59,14 +59,18 @@ export function isBearishEngulfing(prev, c) {
   return prev && prev.close > prev.open && c.close < c.open && c.open >= prev.close && c.close <= prev.open;
 }
 
-function groupByDay(candles) {
+function groupBySymbolDay(candles) {
   const groups = new Map();
   for (const c of candles) {
     const { date } = parts(c.timestamp);
-    if (!groups.has(date)) groups.set(date, []);
-    groups.get(date).push(c);
+    const symbol = c.symbol || 'UNKNOWN';
+    const key = `${symbol}\u0000${date}`;
+    if (!groups.has(key)) groups.set(key, { symbol, date, rows: [] });
+    groups.get(key).rows.push(c);
   }
-  for (const rows of groups.values()) rows.sort((a,b) => a.timestamp.localeCompare(b.timestamp));
+  for (const group of groups.values()) {
+    group.rows.sort((a,b) => a.timestamp.localeCompare(b.timestamp));
+  }
   return groups;
 }
 
@@ -101,7 +105,7 @@ export function backtest(candles, options = {}) {
   const cfg = { ...DEFAULTS, ...options };
   const trades = [];
 
-  for (const [date, day] of groupByDay(candles)) {
+  for (const { symbol, date, rows: day } of groupBySymbolDay(candles).values()) {
     const opening = day.filter((c) => {
       const t = parts(c.timestamp).time;
       return t >= cfg.openingStart && t < cfg.openingEnd;
@@ -130,8 +134,9 @@ export function backtest(candles, options = {}) {
       const stop = bullishPattern ? c.low : c.high;
       const target = bullishPattern ? openingHigh : openingLow;
       const risk = Math.abs(trigger - stop);
-      const reward = Math.abs(target - trigger);
-      if (!(risk > 0 && reward > 0)) continue;
+      const directionalReward = direction === 'LONG' ? target - trigger : trigger - target;
+      if (!(risk > 0 && directionalReward > 0)) continue;
+      const reward = directionalReward;
 
       // Entry is allowed only after the reversal candle has closed. Scan later bars for trigger break.
       let entryIndex = -1;
@@ -149,7 +154,7 @@ export function backtest(candles, options = {}) {
       const pnlPoints = direction === 'LONG' ? outcome.exit - trigger : trigger - outcome.exit;
       trades.push({
         date,
-        symbol: c.symbol || day[0].symbol || '',
+        symbol,
         direction,
         openingHigh,
         openingLow,
