@@ -8,8 +8,10 @@ on:
       - '.github/workflows/nifty-180-premium-smoke.yml'
       - 'research/groww-backtest-nifty-180.mjs'
       - 'research/nifty-180-premium-strategy.mjs'
+      - 'research/groww-option-costs.mjs'
       - 'tests/groww-backtest-nifty-180.test.mjs'
       - 'tests/nifty-180-premium-strategy.test.mjs'
+      - 'tests/groww-option-costs.test.mjs'
   workflow_dispatch:
 
 permissions:
@@ -26,8 +28,8 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Validate pure strategy tests
-        run: node --test tests/nifty-180-premium-strategy.test.mjs tests/groww-backtest-nifty-180.test.mjs
+      - name: Validate strategy and cost tests
+        run: node --test tests/nifty-180-premium-strategy.test.mjs tests/groww-backtest-nifty-180.test.mjs tests/groww-option-costs.test.mjs
 
       - name: Run five-session Groww FNO smoke test
         env:
@@ -38,6 +40,7 @@ jobs:
             --start=2026-08-10 \
             --end=2026-08-14 \
             --candidates=8 \
+            --lot-size=65 \
             --out=outputs/nifty-180-premium-smoke/result.json \
             > outputs/nifty-180-premium-smoke/stdout.json
 
