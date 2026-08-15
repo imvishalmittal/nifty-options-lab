@@ -21,9 +21,12 @@ jobs:
   month:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    concurrency:
+      group: groww-backtest-api
+      queue: max
     strategy:
       fail-fast: false
-      max-parallel: 2
+      max-parallel: 1
       matrix:
         period:
           - key: '2026-01'
@@ -63,6 +66,7 @@ jobs:
       - name: Run actual-contract monthly validation
         env:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_REQUEST_SPACING_MS: '1500'
           PERIOD_KEY: ${{ matrix.period.key }}
           START_DATE: ${{ matrix.period.start }}
           END_DATE: ${{ matrix.period.end }}
