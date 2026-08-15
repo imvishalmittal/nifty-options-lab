@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import { parseCsv, isBullishHammer, isBearishShootingStar, isBullishEngulfing, isBearishEngulfing, summarize } from './opening-range-backtest.mjs';
 
+const CONTINUOUS_SESSION_END = '15:15';
+
 const DEFAULTS = {
   openingStart: '09:15',
   openingEnd: '09:30',
@@ -34,7 +36,10 @@ function groupBySymbolDay(candles) {
 function regularSessionRows(rows) {
   return rows.filter((c) => {
     const t = parts(c.timestamp).time;
-    return t >= '09:15' && t < '15:30';
+    // Use one comparable continuous-session window across history. Since the
+    // Aug-2026 NSE closing auction, F&O stocks leave continuous cash trading at
+    // 15:15, so 15:15+ prints are auction data rather than the old cash session.
+    return t >= '09:15' && t < CONTINUOUS_SESSION_END;
   });
 }
 
@@ -42,8 +47,8 @@ function dailyBars(days) {
   return [...days.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, rows]) => {
-      // Groww can return 09:00 pre-open/auction candles. ATR for this strategy is
-      // based on the continuous NSE cash session, so exclude pre-open prints.
+      // Exclude both 09:00 pre-open/auction candles and 15:15+ closing-auction
+      // candles so ATR is based on a stable continuous-session definition.
       const regular = regularSessionRows(rows);
       if (!regular.length) return null;
       return {
@@ -116,8 +121,11 @@ function bump(histogram, key) {
 function outcomeAfterEntry(day, entryIndex, direction, entry, stop, target) {
   let mfe = 0;
   let mae = 0;
+  let lastEligible = null;
   for (let i = entryIndex; i < day.length; i++) {
     const c = day[i];
+    if (parts(c.timestamp).time >= CONTINUOUS_SESSION_END) break;
+    lastEligible = c;
     if (direction === 'LONG') {
       mfe = Math.max(mfe, c.high - entry);
       mae = Math.max(mae, entry - c.low);
@@ -136,8 +144,8 @@ function outcomeAfterEntry(day, entryIndex, direction, entry, stop, target) {
       if (targetHit) return { result: 'TARGET', exit: target, exitTime: c.timestamp, mfe, mae, ambiguousBar: false };
     }
   }
-  const last = day.at(-1);
-  return { result: 'EOD', exit: last.close, exitTime: last.timestamp, mfe, mae, ambiguousBar: false };
+  if (!lastEligible) return null;
+  return { result: 'EOD', exit: lastEligible.close, exitTime: lastEligible.timestamp, mfe, mae, ambiguousBar: false };
 }
 
 function bullishPattern(prev, c) {
@@ -164,6 +172,7 @@ export function backtestQuickFlip(candles, options = {}) {
     reversalDays: 0,
     openingCountHistogram: {},
     dayStartTimeHistogram: {},
+    continuousSessionEnd: CONTINUOUS_SESSION_END,
   };
   const openingRangeAtrFractions = [];
   const openingRanges = [];
@@ -210,7 +219,6 @@ export function backtestQuickFlip(candles, options = {}) {
         if (time < cfg.openingEnd || time > cfg.entryWindowEnd) continue;
         const prev = i > 0 ? day[i - 1] : null;
 
-        // Quick Flip requires the reversal candle itself to trade outside the opening box.
         const lowSweep = c.low < openingLow;
         const highSweep = c.high > openingHigh;
         const bull = lowSweep ? bullishPattern(prev, c) : null;
@@ -239,6 +247,7 @@ export function backtestQuickFlip(candles, options = {}) {
         if (entryIndex < 0) continue;
 
         const outcome = outcomeAfterEntry(day, entryIndex, direction, trigger, stop, target);
+        if (!outcome) continue;
         const pnlPoints = direction === 'LONG' ? outcome.exit - trigger : trigger - outcome.exit;
         trades.push({
           date, symbol, direction, pattern,
