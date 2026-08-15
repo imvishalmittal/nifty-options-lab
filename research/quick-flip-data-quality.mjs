@@ -11,7 +11,8 @@ function parts(timestamp) {
 function regular(rows) {
   return rows.filter((c) => {
     const t = parts(c.timestamp).time;
-    return t >= '09:15' && t < '15:30';
+    // Use the same continuous-session definition as the strategy/ATR engine.
+    return t >= '09:15' && t < '15:15';
   });
 }
 
@@ -79,6 +80,7 @@ export function auditQuickFlipData(candles) {
     };
   }
   return {
+    continuousSession: { start: '09:15', endExclusive: '15:15' },
     bySymbol,
     largestOvernightGaps: allGaps.sort((a,b)=>Math.abs(b.gapPct)-Math.abs(a.gapPct)).slice(0,30),
   };
