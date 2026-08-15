@@ -9,9 +9,20 @@ import {
 import { calculateLongOptionRoundTripCosts } from './groww-option-costs.mjs';
 
 const BASE_URL = 'https://api.groww.in/v1';
+const DEFAULT_REQUEST_SPACING_MS = 1500;
+let requestSpacingMs = DEFAULT_REQUEST_SPACING_MS;
+let lastRequestAt = 0;
+let apiRequestCount = 0;
+let rateLimitRetries = 0;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function throttleRequest() {
+  const wait = Math.max(0, requestSpacingMs - (Date.now() - lastRequestAt));
+  if (wait > 0) await sleep(wait);
+  lastRequestAt = Date.now();
 }
 
 function normalizeTimestamp(value) {
@@ -61,13 +72,15 @@ export function nearestItmCandidates(contracts, spot, optionType, maxCandidates 
   return itmContracts(contracts, spot, optionType).slice(0, maxCandidates);
 }
 
-async function apiGet(token, endpoint, params, { maxRetries = 5 } = {}) {
+async function apiGet(token, endpoint, params, { maxRetries = 8 } = {}) {
   const url = new URL(`${BASE_URL}${endpoint}`);
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, String(value));
   }
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    await throttleRequest();
+    apiRequestCount += 1;
     const response = await fetch(url, {
       headers: {
         Accept: 'application/json',
@@ -80,10 +93,11 @@ async function apiGet(token, endpoint, params, { maxRetries = 5 } = {}) {
 
     const retryable = response.status === 429 || response.status >= 500;
     if (retryable && attempt < maxRetries) {
+      if (response.status === 429) rateLimitRetries += 1;
       const retryAfter = Number(response.headers.get('retry-after'));
       const delay = Number.isFinite(retryAfter) && retryAfter > 0
         ? retryAfter * 1000
-        : Math.min(1000 * (2 ** attempt), 15000);
+        : Math.min(5000 * (2 ** attempt), 60000);
       console.error(`Groww ${endpoint} returned ${response.status}; retrying in ${delay}ms`);
       await sleep(delay);
       continue;
@@ -125,30 +139,8 @@ async function fetchContracts(token, expiryDate) {
   return payload.contracts ?? [];
 }
 
-async function loadCandidateSet(token, date, candidates, pauseMs = 175) {
-  const rows = [];
-  for (const candidate of candidates) {
-    const candles = await fetchCandles(token, {
-      segment: 'FNO',
-      growwSymbol: candidate.symbol,
-      startTime: `${date} 09:25:00`,
-      endTime: `${date} 09:45:00`,
-      interval: '1minute',
-    });
-    const at925 = candleAt925(candles);
-    const premium = at925?.open ?? null;
-    rows.push({ candidate, premium, at925, candles });
-    if (pauseMs) await sleep(pauseMs);
-  }
-  return rows;
-}
-
-function selectCandidate(rows) {
-  const candidates = rows.map((r) => r.candidate);
-  const premiumBySymbol = Object.fromEntries(rows.map((r) => [r.candidate.symbol, r.premium]));
-  const selected = chooseClosestPremium(candidates, premiumBySymbol, PREMIUM_RULES.referencePremium);
-  if (!selected) return null;
-  const row = rows.find((r) => r.candidate.symbol === selected.symbol);
+function enrichSelection(row) {
+  const selected = row.selected;
   return {
     ...row,
     selected: {
@@ -158,6 +150,61 @@ function selectCandidate(rows) {
       openInterest925: row.at925?.openInterest ?? null,
     },
   };
+}
+
+async function selectProgressively(token, date, candidates) {
+  const rows = [];
+  let bracketed = false;
+
+  // Candidates are ordered from nearest ITM toward deeper ITM. For the same
+  // expiry/type, option value should increase as intrinsic value increases.
+  // Fetch only the 09:25 selection candle until ₹180 is reached/bracketed,
+  // rather than downloading a full 20-minute window for every candidate.
+  for (const candidate of candidates) {
+    const selectionCandles = await fetchCandles(token, {
+      segment: 'FNO',
+      growwSymbol: candidate.symbol,
+      startTime: `${date} 09:25:00`,
+      endTime: `${date} 09:26:00`,
+      interval: '1minute',
+    });
+    const at925 = candleAt925(selectionCandles);
+    const premium = at925?.open ?? null;
+    rows.push({ candidate, premium, at925, selectionCandles });
+    if (Number.isFinite(premium) && premium >= PREMIUM_RULES.referencePremium) {
+      bracketed = true;
+      break;
+    }
+  }
+
+  const usable = rows.filter((r) => Number.isFinite(r.premium));
+  if (!usable.length) return { pick: null, boundary: false, fetchedCandidates: rows.length };
+  const premiumBySymbol = Object.fromEntries(usable.map((r) => [r.candidate.symbol, r.premium]));
+  const selected = chooseClosestPremium(usable.map((r) => r.candidate), premiumBySymbol, PREMIUM_RULES.referencePremium);
+  const row = usable.find((r) => r.candidate.symbol === selected?.symbol);
+  if (!row || !selected) return { pick: null, boundary: false, fetchedCandidates: rows.length };
+
+  // If even the deepest allowed ITM candidate remains below ₹180, the true
+  // closest contract may be beyond our search boundary. Do not score the day.
+  const exhausted = rows.length === candidates.length;
+  const boundary = exhausted && !bracketed && usable.at(-1).premium < PREMIUM_RULES.referencePremium;
+  return {
+    pick: enrichSelection({ ...row, selected }),
+    boundary,
+    fetchedCandidates: rows.length,
+  };
+}
+
+async function loadFullSelectedCandles(token, date, pick) {
+  if (!pick) return null;
+  const candles = await fetchCandles(token, {
+    segment: 'FNO',
+    growwSymbol: pick.candidate.symbol,
+    startTime: `${date} 09:25:00`,
+    endTime: `${date} 09:45:00`,
+    interval: '1minute',
+  });
+  return { ...pick, candles };
 }
 
 function addCount(map, key) {
@@ -193,9 +240,14 @@ export async function backtestNifty180({
   startDate,
   endDate,
   maxCandidatesPerSide = 8,
-  pauseMs = 175,
   lotSize = null,
+  requestSpacingMsOverride = DEFAULT_REQUEST_SPACING_MS,
 }) {
+  requestSpacingMs = Math.max(0, Number(requestSpacingMsOverride) || DEFAULT_REQUEST_SPACING_MS);
+  lastRequestAt = 0;
+  apiRequestCount = 0;
+  rateLimitRetries = 0;
+
   const spotCandles = await fetchCandles(token, {
     segment: 'CASH',
     growwSymbol: 'NSE-NIFTY',
@@ -205,7 +257,9 @@ export async function backtestNifty180({
   });
   const dates = tradingDates(spotCandles).filter((d) => d >= startDate && d <= endDate);
   const years = [...new Set(dates.map((d) => Number(d.slice(0, 4))))];
-  const expiries = (await Promise.all(years.map((year) => fetchExpiries(token, year)))).flat().sort();
+  const expiries = [];
+  for (const year of years) expiries.push(...await fetchExpiries(token, year));
+  expiries.sort();
   const contractCache = new Map();
   const results = [];
 
@@ -228,49 +282,51 @@ export async function backtestNifty180({
     const ceCandidates = nearestItmCandidates(contracts, spot, 'CE', maxCandidatesPerSide);
     const peCandidates = nearestItmCandidates(contracts, spot, 'PE', maxCandidatesPerSide);
     if (!ceCandidates.length || !peCandidates.length) {
-      results.push({ date, status: 'DATA_MISSING', reason: 'ITM CE/PE candidate set unavailable', spot, expiry });
+      results.push({ date, status: 'DATA_MISSING', reason: 'ITM CE/PE candidate set unavailable', spot925: spot, expiry });
       continue;
     }
 
-    console.error(`${date}: spot ${spot.toFixed(2)}, expiry ${expiry}; fetching ${ceCandidates.length} CE + ${peCandidates.length} PE candidates`);
-    const ceRows = await loadCandidateSet(token, date, ceCandidates, pauseMs);
-    const peRows = await loadCandidateSet(token, date, peCandidates, pauseMs);
-    const callPick = selectCandidate(ceRows);
-    const putPick = selectCandidate(peRows);
+    console.error(`${date}: spot ${spot.toFixed(2)}, expiry ${expiry}; progressive ₹180 selection`);
+    const ceSelection = await selectProgressively(token, date, ceCandidates);
+    const peSelection = await selectProgressively(token, date, peCandidates);
+    const callPick = ceSelection.pick;
+    const putPick = peSelection.pick;
 
     if (!callPick || !putPick) {
-      results.push({ date, status: 'DATA_MISSING', reason: 'No 09:25 premium for one or both sides', spot, expiry });
+      results.push({ date, status: 'DATA_MISSING', reason: 'No 09:25 premium for one or both sides', spot925: spot, expiry });
       continue;
     }
 
-    const callBoundary = callPick.candidate.symbol === ceCandidates.at(-1)?.symbol;
-    const putBoundary = putPick.candidate.symbol === peCandidates.at(-1)?.symbol;
-    if (callBoundary || putBoundary) {
+    if (ceSelection.boundary || peSelection.boundary) {
       results.push({
         date,
         status: 'CANDIDATE_BOUNDARY',
-        reason: 'Closest premium landed on deepest fetched ITM candidate; enlarge search before scoring',
+        reason: '₹180 was not bracketed before the maximum ITM search depth',
         spot925: spot,
         expiry,
         callSelection: callPick.selected,
         putSelection: putPick.selected,
+        candidateFetches: { ce: ceSelection.fetchedCandidates, pe: peSelection.fetchedCandidates },
       });
       continue;
     }
 
+    const fullCallPick = await loadFullSelectedCandles(token, date, callPick);
+    const fullPutPick = await loadFullSelectedCandles(token, date, putPick);
     const evaluated = attachCostScenarios(evaluatePremiumDay({
-      call: callPick.selected,
-      put: putPick.selected,
-      callCandles: callPick.candles,
-      putCandles: putPick.candles,
+      call: fullCallPick.selected,
+      put: fullPutPick.selected,
+      callCandles: fullCallPick.candles,
+      putCandles: fullPutPick.candles,
     }), lotSize);
 
     results.push({
       date,
       spot925: spot,
       expiry,
-      callSelection: callPick.selected,
-      putSelection: putPick.selected,
+      callSelection: fullCallPick.selected,
+      putSelection: fullPutPick.selected,
+      candidateFetches: { ce: ceSelection.fetchedCandidates, pe: peSelection.fetchedCandidates },
       ...evaluated,
     });
   }
@@ -292,6 +348,8 @@ export async function backtestNifty180({
     period: { startDate, endDate },
     executionModel: {
       lotSize,
+      requestSpacingMs,
+      selector: 'progressive 09:25 ITM search until ₹180 is bracketed; full candles only for selected CE/PE',
       costSchedule: lotSize ? 'Groww NSE equity-option charges current in 2026; used as current-economics stress, not claimed as historical fee schedule' : null,
       slippageStressPointsPerLeg: lotSize ? [0, 0.5, 1.0] : [],
     },
@@ -306,6 +364,10 @@ export async function backtestNifty180({
       noTradeReasons,
       missingDays: results.filter((r) => r.status === 'DATA_MISSING').length,
       boundaryDays: results.filter((r) => r.status === 'CANDIDATE_BOUNDARY').length,
+      apiRequestCount,
+      rateLimitRetries,
+      averageCandidateFetchesCE: average(results.map((r) => r.candidateFetches?.ce)),
+      averageCandidateFetchesPE: average(results.map((r) => r.candidateFetches?.pe)),
       totalPnlPerUnitBeforeCosts: pnlPerUnit,
       averagePnlPerUnitBeforeCosts: trades.length ? pnlPerUnit / trades.length : null,
       averageEntryPremium: average(trades.map((r) => r.entry)),
@@ -335,7 +397,8 @@ async function main() {
   const endDate = args.end || '2026-08-14';
   const maxCandidatesPerSide = Number(args.candidates || 8);
   const lotSize = args['lot-size'] ? Number(args['lot-size']) : null;
-  const result = await backtestNifty180({ token, startDate, endDate, maxCandidatesPerSide, lotSize });
+  const spacing = args['request-spacing-ms'] ? Number(args['request-spacing-ms']) : Number(process.env.GROWW_REQUEST_SPACING_MS || DEFAULT_REQUEST_SPACING_MS);
+  const result = await backtestNifty180({ token, startDate, endDate, maxCandidatesPerSide, lotSize, requestSpacingMsOverride: spacing });
   if (args.out) fs.writeFileSync(args.out, JSON.stringify(result, null, 2));
   process.stdout.write(JSON.stringify(result, null, 2));
 }
