@@ -43,11 +43,18 @@ function timeOf(timestamp) {
   return m[1];
 }
 
-function firstConfirmation(candles, start = PREMIUM_RULES.signalStart, level = PREMIUM_RULES.referencePremium) {
-  return candles.find((c) => {
+function firstConfirmation(candles, start = PREMIUM_RULES.signalStart, level = PREMIUM_RULES.referencePremium, forcedExit = PREMIUM_RULES.forcedExit) {
+  // "Breaks above 180" means an actual post-09:30 close crossing from at/below
+  // the threshold to above it. A contract already trading above 180 before the
+  // signal window is not allowed to win merely by remaining above 180.
+  for (let i = 1; i < candles.length; i++) {
+    const c = candles[i];
+    const prev = candles[i - 1];
     const t = timeOf(c.timestamp);
-    return t >= start && t < PREMIUM_RULES.forcedExit && c.close > level;
-  }) ?? null;
+    if (t < start || t >= forcedExit) continue;
+    if (prev.close <= level && c.close > level) return c;
+  }
+  return null;
 }
 
 function findIndexByTimestamp(candles, timestamp) {
@@ -58,10 +65,31 @@ function evaluatePosition(candles, signal, rules = PREMIUM_RULES) {
   const signalIndex = findIndexByTimestamp(candles, signal.timestamp);
   if (signalIndex < 0 || signalIndex + 1 >= candles.length) return null;
 
+  // If the confirmation candle has already reached/passed the fixed target,
+  // the advertised 180 -> 220 setup has already played out before we can act.
+  if (signal.close >= rules.targetPremium) {
+    return {
+      rejected: true,
+      reason: 'Confirmation completed at or above the fixed target',
+      signalClose: signal.close,
+    };
+  }
+
   // Signal is known only at candle close. Enter at the next one-minute candle open.
   const entryBar = candles[signalIndex + 1];
   if (timeOf(entryBar.timestamp) > rules.forcedExit) return null;
   const entry = entryBar.open;
+
+  // The fixed 160/220 risk box is meaningful only while the executable entry is
+  // strictly between those levels. Never label a move down to 220 as a target.
+  if (!(entry > rules.stopPremium && entry < rules.targetPremium)) {
+    return {
+      rejected: true,
+      reason: 'Executable entry is outside the fixed stop/target band',
+      entry,
+      entryTime: entryBar.timestamp,
+    };
+  }
 
   for (let i = signalIndex + 1; i < candles.length; i++) {
     const c = candles[i];
@@ -81,11 +109,11 @@ function evaluatePosition(candles, signal, rules = PREMIUM_RULES) {
 }
 
 export function evaluatePremiumDay({ call, put, callCandles, putCandles, rules = PREMIUM_RULES }) {
-  const callSignal = firstConfirmation(callCandles, rules.signalStart, rules.referencePremium);
-  const putSignal = firstConfirmation(putCandles, rules.signalStart, rules.referencePremium);
-  if (!callSignal && !putSignal) return { status: 'NO_TRADE' };
+  const callSignal = firstConfirmation(callCandles, rules.signalStart, rules.referencePremium, rules.forcedExit);
+  const putSignal = firstConfirmation(putCandles, rules.signalStart, rules.referencePremium, rules.forcedExit);
+  if (!callSignal && !putSignal) return { status: 'NO_TRADE', reason: 'No post-window crossing above reference premium' };
   if (callSignal && putSignal && callSignal.timestamp === putSignal.timestamp) {
-    return { status: 'AMBIGUOUS', reason: 'CE and PE confirmed above reference premium in the same minute' };
+    return { status: 'AMBIGUOUS', reason: 'CE and PE crossed and confirmed above reference premium in the same minute' };
   }
 
   const side = !putSignal || (callSignal && callSignal.timestamp < putSignal.timestamp) ? 'CE' : 'PE';
@@ -93,7 +121,17 @@ export function evaluatePremiumDay({ call, put, callCandles, putCandles, rules =
   const candles = side === 'CE' ? callCandles : putCandles;
   const contract = side === 'CE' ? call : put;
   const position = evaluatePosition(candles, signal, rules);
-  if (!position) return { status: 'NO_TRADE', reason: 'No executable bar after confirmation' };
+  if (!position) return { status: 'NO_TRADE', side, contract, signalTime: signal.timestamp, signalClose: signal.close, reason: 'No executable bar after confirmation' };
+  if (position.rejected) {
+    return {
+      status: 'NO_TRADE',
+      side,
+      contract,
+      signalTime: signal.timestamp,
+      signalClose: signal.close,
+      ...position,
+    };
+  }
 
   return {
     status: 'TRADE', side, contract,
