@@ -38,22 +38,34 @@ Example timestamp:
 
 1. Opening range is the three completed 5-minute candles from 09:15 through 09:29:59.
 2. No signal may use the opening-range candle before it closes.
-3. Search for signals only from 09:30 through 10:45.
-4. Bullish setup:
+3. Bullish setup:
    - price trades below the opening low;
    - the same 5-minute candle closes back above the opening low;
    - that candle is a bullish hammer or bullish engulfing candle.
-5. Bearish setup:
+4. Bearish setup:
    - price trades above the opening high;
    - the same 5-minute candle closes back below the opening high;
    - that candle is a shooting-star/rejection candle or bearish engulfing candle.
-6. The reversal candle itself is never the entry candle.
-7. Entry occurs only if a later 5-minute candle breaks the reversal candle high (long) or low (short), before 10:45.
-8. Stop is the reversal-candle wick extreme.
-9. Target is the opposite edge of the 09:15-09:30 opening range.
-10. Maximum one trade per symbol per session.
-11. If both stop and target are touched inside the same 5-minute candle, score the stop first. This intentionally biases results conservatively.
-12. If neither stop nor target is reached, exit at the final available candle close and label the result `EOD`.
+5. The reversal candle itself is never the entry candle.
+6. Entry occurs only if a later 5-minute candle breaks the reversal candle high (long) or low (short), before the tested entry-window cutoff.
+7. Stop is the reversal-candle wick extreme.
+8. Target is the opposite edge of the 09:15-09:30 opening range.
+9. Maximum one trade per symbol per session.
+10. If both stop and target are touched inside the same 5-minute candle, score the stop first. This intentionally biases results conservatively.
+11. If neither stop nor target is reached, exit at the final available candle close and label the result `EOD`.
+
+## Entry-window study
+
+Keep the 09:15-09:30 opening range fixed and run the same setup with four different latest-entry cutoffs:
+
+| Study | Latest entry |
+| --- | --- |
+| 15 minutes after opening range | 09:45 |
+| 30 minutes after opening range | 10:00 |
+| 60 minutes after opening range | 10:30 |
+| 75 minutes after opening range | 10:45 |
+
+This avoids assuming that the setup must resolve immediately. The comparison tells us whether the edge is concentrated in the first 15-30 minutes or remains useful for 60-75 minutes.
 
 ## Metrics
 
@@ -67,15 +79,24 @@ The engine records:
 - maximum favorable excursion;
 - maximum adverse excursion;
 - same-bar ambiguous outcomes;
-- direction and candle-pattern breakdown.
+- direction and candle-pattern breakdown;
+- per-symbol results for every entry window.
 
 ## Run
+
+Single-window baseline:
 
 ```bash
 node research/opening-range-backtest.mjs data/RELIANCE-5m.csv data/HDFCBANK-5m.csv
 ```
 
-The command prints JSON containing a portfolio summary and every trade.
+Window comparison:
+
+```bash
+node research/opening-range-window-study.mjs data/RELIANCE-5m.csv data/HDFCBANK-5m.csv data/ICICIBANK-5m.csv data/SBIN-5m.csv data/INFY-5m.csv
+```
+
+The study prints each window's summary and ranks windows by average R, then total R, then sample size. Ranking is descriptive research output, not a rule change by itself.
 
 ## Research sequence
 
@@ -85,6 +106,7 @@ Use at least several months of 5-minute stock data. Compare:
 
 - 09:30-09:45 entries;
 - 09:30-10:00 entries;
+- 09:30-10:30 entries;
 - 09:30-10:45 entries;
 - bullish versus bearish sweeps;
 - hammer/shooting-star versus engulfing confirmation;
