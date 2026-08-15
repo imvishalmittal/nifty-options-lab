@@ -1,0 +1,61 @@
+name: Opening Range Backtest
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: Start date (YYYY-MM-DD)
+        required: true
+        default: '2020-01-01'
+      end_date:
+        description: End date (YYYY-MM-DD); leave blank to use yesterday IST
+        required: false
+        default: ''
+      symbols:
+        description: Comma-separated NSE symbols
+        required: true
+        default: 'RELIANCE,HDFCBANK,ICICIBANK,SBIN,INFY'
+
+permissions:
+  contents: read
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Fetch Groww 5-minute stock candles
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          START_DATE: ${{ inputs.start_date }}
+          END_DATE: ${{ inputs.end_date }}
+          SYMBOLS: ${{ inputs.symbols }}
+        run: |
+          args=("--start=${START_DATE}" "--symbols=${SYMBOLS}" "--out=work/groww/cash-5m")
+          if [[ -n "${END_DATE}" ]]; then args+=("--end=${END_DATE}"); fi
+          node research/groww-fetch-opening-range.mjs "${args[@]}" > work/groww/manifest-output.json
+
+      - name: Run 15/30/60/75-minute opening-range study
+        run: |
+          mkdir -p outputs/opening-range
+          mapfile -t files < <(find work/groww/cash-5m -maxdepth 1 -name '*.csv' -type f | sort)
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo 'No candle files were generated' >&2
+            exit 1
+          fi
+          node research/opening-range-window-study.mjs "${files[@]}" > outputs/opening-range/window-study.json
+          cp work/groww/cash-5m/manifest.json outputs/opening-range/data-manifest.json
+
+      - name: Upload research result
+        uses: actions/upload-artifact@v4
+        with:
+          name: opening-range-backtest-${{ github.run_id }}
+          path: outputs/opening-range/
+          if-no-files-found: error
+          retention-days: 30
