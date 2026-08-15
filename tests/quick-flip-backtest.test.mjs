@@ -30,10 +30,17 @@ test('opening range below 25% of prior ATR is rejected', () => {
   const rows = [];
   for (let i = 0; i < 15; i++) rows.push(...day(isoDay(i), 100 + i * 3, 12));
   const d = isoDay(15);
-  rows.push(...day(d, 145, 1));
-  rows.push(c(`${d}T09:30:00+05:30`, 145, 146, 140, 145.5));
-  rows.push(c(`${d}T09:35:00+05:30`, 145.5, 147, 145, 146.5));
+  // Keep all three opening candles inside a deliberately tiny 1-point box.
+  rows.push(
+    c(`${d}T09:15:00+05:30`, 145.0, 145.4, 144.6, 145.1),
+    c(`${d}T09:20:00+05:30`, 145.1, 145.5, 144.7, 145.0),
+    c(`${d}T09:25:00+05:30`, 145.0, 145.3, 144.5, 144.9),
+    c(`${d}T09:30:00+05:30`, 144.9, 145.2, 140.0, 144.8),
+    c(`${d}T09:35:00+05:30`, 144.8, 146.0, 144.7, 145.8),
+  );
   const result = backtestQuickFlip(rows);
+  assert.equal(result.diagnostics.openingCompleteDays, 1);
+  assert.ok(result.diagnostics.openingRangeAtrFractionStats.max < 0.25);
   assert.equal(result.trades.length, 0);
 });
 
