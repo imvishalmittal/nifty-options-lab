@@ -32,7 +32,6 @@ export function chooseClosestPremium(candidates, premiumBySymbol, referencePremi
     const da = Math.abs(a.premium - referencePremium);
     const db = Math.abs(b.premium - referencePremium);
     if (da !== db) return da - db;
-    // If equally close, prefer the more ITM/higher premium contract to avoid a hidden far-OTM bias.
     return b.premium - a.premium;
   })[0];
 }
@@ -44,9 +43,6 @@ function timeOf(timestamp) {
 }
 
 function firstConfirmation(candles, start = PREMIUM_RULES.signalStart, level = PREMIUM_RULES.referencePremium, forcedExit = PREMIUM_RULES.forcedExit) {
-  // "Breaks above 180" means an actual post-09:30 close crossing from at/below
-  // the threshold to above it. A contract already trading above 180 before the
-  // signal window is not allowed to win merely by remaining above 180.
   for (let i = 1; i < candles.length; i++) {
     const c = candles[i];
     const prev = candles[i - 1];
@@ -65,8 +61,6 @@ function evaluatePosition(candles, signal, rules = PREMIUM_RULES) {
   const signalIndex = findIndexByTimestamp(candles, signal.timestamp);
   if (signalIndex < 0 || signalIndex + 1 >= candles.length) return null;
 
-  // If the confirmation candle has already reached/passed the fixed target,
-  // the advertised 180 -> 220 setup has already played out before we can act.
   if (signal.close >= rules.targetPremium) {
     return {
       rejected: true,
@@ -75,13 +69,13 @@ function evaluatePosition(candles, signal, rules = PREMIUM_RULES) {
     };
   }
 
-  // Signal is known only at candle close. Enter at the next one-minute candle open.
+  // A candle timestamp marks the START of that one-minute interval. A 09:44
+  // signal is known only at 09:45 and therefore leaves no holding interval
+  // before the mandatory 09:45 exit. Reject any next-bar entry at/after 09:45.
   const entryBar = candles[signalIndex + 1];
-  if (timeOf(entryBar.timestamp) > rules.forcedExit) return null;
+  if (timeOf(entryBar.timestamp) >= rules.forcedExit) return null;
   const entry = entryBar.open;
 
-  // The fixed 160/220 risk box is meaningful only while the executable entry is
-  // strictly between those levels. Never label a move down to 220 as a target.
   if (!(entry > rules.stopPremium && entry < rules.targetPremium)) {
     return {
       rejected: true,
@@ -91,19 +85,26 @@ function evaluatePosition(candles, signal, rules = PREMIUM_RULES) {
     };
   }
 
+  // Process only bars that begin before the forced-exit clock. If a 09:45 bar
+  // exists, its OPEN is the executable 09:45 time exit; its high/low/close are
+  // after the deadline and must not influence the outcome.
   for (let i = signalIndex + 1; i < candles.length; i++) {
     const c = candles[i];
     const t = timeOf(c.timestamp);
-    if (t > rules.forcedExit) break;
+    if (t >= rules.forcedExit) break;
     const stopHit = c.low <= rules.stopPremium;
     const targetHit = c.high >= rules.targetPremium;
     if (stopHit && targetHit) return { entry, entryTime: entryBar.timestamp, exit: rules.stopPremium, exitTime: c.timestamp, result: 'STOP', ambiguousBar: true };
     if (stopHit) return { entry, entryTime: entryBar.timestamp, exit: rules.stopPremium, exitTime: c.timestamp, result: 'STOP', ambiguousBar: false };
     if (targetHit) return { entry, entryTime: entryBar.timestamp, exit: rules.targetPremium, exitTime: c.timestamp, result: 'TARGET', ambiguousBar: false };
-    if (t === rules.forcedExit) return { entry, entryTime: entryBar.timestamp, exit: c.close, exitTime: c.timestamp, result: 'TIME', ambiguousBar: false };
   }
 
-  const eligible = candles.filter((c) => timeOf(c.timestamp) <= rules.forcedExit);
+  const forcedBar = candles.find((c) => timeOf(c.timestamp) === rules.forcedExit);
+  if (forcedBar) {
+    return { entry, entryTime: entryBar.timestamp, exit: forcedBar.open, exitTime: forcedBar.timestamp, result: 'TIME', ambiguousBar: false };
+  }
+
+  const eligible = candles.filter((c) => timeOf(c.timestamp) < rules.forcedExit);
   const last = eligible.at(-1);
   return last ? { entry, entryTime: entryBar.timestamp, exit: last.close, exitTime: last.timestamp, result: 'TIME', ambiguousBar: false } : null;
 }
@@ -121,7 +122,7 @@ export function evaluatePremiumDay({ call, put, callCandles, putCandles, rules =
   const candles = side === 'CE' ? callCandles : putCandles;
   const contract = side === 'CE' ? call : put;
   const position = evaluatePosition(candles, signal, rules);
-  if (!position) return { status: 'NO_TRADE', side, contract, signalTime: signal.timestamp, signalClose: signal.close, reason: 'No executable bar after confirmation' };
+  if (!position) return { status: 'NO_TRADE', side, contract, signalTime: signal.timestamp, signalClose: signal.close, reason: 'No executable holding interval after confirmation' };
   if (position.rejected) {
     return {
       status: 'NO_TRADE',
