@@ -54,3 +54,33 @@ test('does not enter merely because opening range was swept without reversal con
   const result = backtest(rows);
   assert.equal(result.trades.length, 0);
 });
+
+test('isolates opening ranges and trades by symbol on the same trading date', () => {
+  const date = '2026-08-13';
+  const makeSetup = (symbol, base) => [
+    c(`${date}T09:15:00+05:30`, base, base + 4, base - 1, base + 3, 1000, symbol),
+    c(`${date}T09:20:00+05:30`, base + 3, base + 6, base + 2, base + 5, 1000, symbol),
+    c(`${date}T09:25:00+05:30`, base + 5, base + 7, base + 1, base + 2, 1000, symbol),
+    c(`${date}T09:30:00+05:30`, base + 2, base + 3, base - 2, base + 2.5, 1000, symbol),
+    c(`${date}T09:35:00+05:30`, base + 2.5, base + 4, base + 2, base + 3.5, 1000, symbol),
+    c(`${date}T09:40:00+05:30`, base + 3.5, base + 8, base + 3, base + 7, 1000, symbol),
+  ];
+
+  const result = backtest([...makeSetup('AAA', 100), ...makeSetup('BBB', 1000)]);
+  assert.equal(result.trades.length, 2);
+  assert.deepEqual(result.trades.map((t) => t.symbol).sort(), ['AAA', 'BBB']);
+  assert.equal(result.trades.find((t) => t.symbol === 'AAA').openingHigh, 107);
+  assert.equal(result.trades.find((t) => t.symbol === 'BBB').openingHigh, 1007);
+});
+
+test('skips a setup when the opposite opening edge is not beyond the entry trigger', () => {
+  const rows = [
+    c('2026-08-14T09:15:00+05:30',100,104,99,103),
+    c('2026-08-14T09:20:00+05:30',103,106,102,105),
+    c('2026-08-14T09:25:00+05:30',105,107,101,102),
+    c('2026-08-14T09:30:00+05:30',102,109,98,102.5),
+    c('2026-08-14T09:35:00+05:30',102.5,110,102,109),
+  ];
+  const result = backtest(rows);
+  assert.equal(result.trades.length, 0);
+});
