@@ -52,6 +52,8 @@ Frozen rules:
 
 The regular-session ATR requirement was added as a data-correctness fix after Groww 09:00 pre-open candles were found to create impossible ATR values in 2026. It does not change the intended 25%-ATR strategy rule.
 
+The corrected 2026 5-minute result is gross-positive but weak and highly symbol/month dependent. It is not considered a live candidate unless older validation periods materially strengthen the evidence without post-hoc stock selection.
+
 Next refinement is not parameter tuning: fetch 1-minute raw data, construct 1m/3m/5m confirmations from the same raw feed, and compare them as predeclared variants.
 
 ## S2 — 30-minute breakout / option-selling strategy
@@ -74,24 +76,28 @@ Still unresolved and therefore not guessed:
 
 ## S3 — NIFTY ₹180 Premium Momentum V1
 
-Status: **selector/execution specification frozen; actual Groww FNO pipeline implemented; five-session real-contract smoke test running before wider history**.
+Status: **actual Groww FNO pipeline implemented; execution bugs found by smoke testing and fixed; cost-aware 2026 validation in progress**.
 
 Frozen baseline rules:
 
 1. Use the contemporaneous nearest weekly NIFTY expiry from the historical expiry list; do not assume a fixed weekday across history.
 2. At 09:25, use the NIFTY 09:25 candle **open** to identify genuinely ITM CE and ITM PE contracts without using future information.
 3. On each side select the ITM contract whose 09:25 option-candle open is closest to ₹180. Do not use future candles to choose the strike.
-4. From 09:30 onward, the first selected contract with a completed 1-minute candle closing above ₹180 triggers the trade. This is the frozen mechanical definition of “breaks and sustains”.
-5. Baseline entry price is the next 1-minute candle open after that confirming close; this deliberately avoids filling retrospectively at the ₹180 threshold.
-6. Stop = ₹160; target = ₹220.
-7. If neither is hit, exit by 09:45 at the executable market price.
-8. No trailing stop in V1. Cost-to-cost trailing is a later, separately validated variant.
-9. Only one side/trade per day; if both confirm in the same minute, mark the day ambiguous rather than choosing with hindsight.
-10. Candidate selection searches outward from nearest ITM. If the closest-to-₹180 contract is the deepest contract fetched, mark the day `CANDIDATE_BOUNDARY` and enlarge the search rather than assuming the selected strike is correct.
-11. Preserve historical option volume and open interest in the raw test data. Liquidity/OI filters are not retrofitted into V1 after inspecting its result; any such filter is a separately frozen variant.
-12. Report actual option premium P&L including historical lot size, brokerage/statutory charges, and slippage assumptions before any trading conclusion.
+4. From 09:30 onward, a signal requires an actual completed 1-minute **cross from a previous close at/below ₹180 to a close above ₹180**. A contract already above ₹180 before 09:30 does not qualify merely by remaining above it.
+5. Baseline entry price is the next 1-minute candle open after the crossing candle; this deliberately avoids filling retrospectively at ₹180.
+6. If the confirming candle has already closed at/above ₹220, reject the setup because the advertised move has completed before the trade can be executed.
+7. The executable entry must be strictly between ₹160 and ₹220. An entry at/above the fixed target or at/below the fixed stop is a no-trade, never a retroactive win.
+8. Stop = ₹160; target = ₹220. If neither is hit, exit by 09:45 at the executable market price.
+9. No trailing stop in V1. Cost-to-cost trailing is a later, separately validated variant.
+10. Only one side/trade per day; if CE and PE cross in the same minute, mark the day ambiguous rather than choosing with hindsight.
+11. Candidate selection searches outward from nearest ITM. If the closest-to-₹180 contract is the deepest contract fetched, mark the day `CANDIDATE_BOUNDARY` and enlarge the search rather than assuming the selected strike is correct.
+12. Preserve historical option volume and open interest at selection time. Liquidity/OI filters are not retrofitted into V1 after inspecting its result; any such filter is a separately frozen variant.
+13. For 2026 NIFTY contracts use the applicable 65-unit market lot. Older periods must use date-appropriate lot sizes rather than back-applying 65.
+14. Report actual option premium P&L plus Groww brokerage/statutory charges and explicit 0.5/1.0 premium-point-per-leg slippage stress before any trading conclusion.
 
-Groww historical FNO expiries, contracts, and candles are the intended source. No synthetic option pricing will be used to claim performance.
+The corrected five-session Aug 10-14 smoke test produced only two valid trades and both were losing 09:45 time exits before costs. That sample is only a pipeline check and is not sufficient to accept or reject the strategy; it justifies widening the sample without changing the rules.
+
+Groww historical FNO expiries, contracts, candles, volume and open interest are the intended source. No synthetic option pricing will be used to claim performance.
 
 ## S4 — Morning Tea stock-option strategy
 
