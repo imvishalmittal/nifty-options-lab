@@ -72,7 +72,9 @@ test('unresolved trade ignores 15:25/CAS-era prints and exits on 15:10 bar close
   for (let i=0;i<15;i++) rows.push(...rowsForDay(isoDay(i), { firstVolume:1000 }));
   const d=isoDay(15);
   rows.push(...rowsForDay(d, { base:103, firstVolume:1500, bullish:true, breakout:true }));
-  const result=backtestStocksInPlayOrb(rows,{minRelativeVolume:1.2});
+  // Use a deliberately wide stop only in this fixture so the assertion isolates
+  // the closing-auction boundary instead of being resolved by a normal stop.
+  const result=backtestStocksInPlayOrb(rows,{minRelativeVolume:1.2,stopAtrFraction:1.0});
   const trade=result.trades[0];
   assert.equal(trade.result,'CONTINUOUS_CLOSE');
   assert.equal(trade.exitTime,`${d}T15:10:00+05:30`);
