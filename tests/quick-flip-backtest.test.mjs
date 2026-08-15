@@ -26,6 +26,25 @@ test('Wilder ATR becomes available only after enough completed sessions', () => 
   assert.equal(atr.has(isoDay(14)), true);
 });
 
+test('Wilder ATR ignores corrupt 09:00 pre-open prints', () => {
+  const cleanDays = new Map();
+  const noisyDays = new Map();
+  for (let i = 0; i < 16; i++) {
+    const date = isoDay(i);
+    const regular = day(date, 100 + i, 8);
+    cleanDays.set(date, regular);
+    noisyDays.set(date, [
+      c(`${date}T09:00:00+05:30`, 1, 5000, 0.1, 1),
+      ...regular,
+    ]);
+  }
+  const clean = computeWilderAtrByDate(cleanDays, 14);
+  const noisy = computeWilderAtrByDate(noisyDays, 14);
+  for (const [date, value] of clean.entries()) {
+    assert.equal(noisy.get(date), value);
+  }
+});
+
 test('opening range below 25% of prior ATR is rejected', () => {
   const rows = [];
   for (let i = 0; i < 15; i++) rows.push(...day(isoDay(i), 100 + i * 3, 12));
