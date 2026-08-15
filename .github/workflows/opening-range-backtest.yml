@@ -6,6 +6,9 @@ on:
       - agent/opening-range-backtest
     paths:
       - '.github/workflows/opening-range-backtest.yml'
+      - 'research/groww-fetch-opening-range.mjs'
+      - 'research/opening-range-backtest.mjs'
+      - 'research/opening-range-window-study.mjs'
   workflow_dispatch:
     inputs:
       start_date:
