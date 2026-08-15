@@ -13,7 +13,11 @@ const DEFAULTS = Object.freeze({
   rvolLookback: 14,
   atrPeriod: 14,
   stopAtrFraction: 0.10,
-  lastEntryTime: '15:20',
+  // From Aug 3 2026, F&O stocks stop continuous cash trading at 15:15 and
+  // enter the Closing Auction Session. Use the 15:10 five-minute bar close
+  // (the last continuous-session close at 15:15) uniformly across history.
+  lastEntryTime: '15:10',
+  forcedExitBarTime: '15:10',
 });
 
 function parts(timestamp) {
@@ -75,9 +79,13 @@ function priorAtrForDate(sortedDates, atrByDate, date) {
   return atrByDate.get(sortedDates[idx - 1]) ?? null;
 }
 
-function scoreTrade(day, entryIndex, direction, entry, stop) {
+function scoreTrade(day, entryIndex, direction, entry, stop, forcedExitBarTime) {
+  let lastEligible = null;
   for (let i = entryIndex; i < day.length; i++) {
     const bar = day[i];
+    const time = parts(bar.timestamp).time;
+    if (time > forcedExitBarTime) break;
+    lastEligible = bar;
     if (direction === 'LONG' && bar.low <= stop) {
       return { result: 'STOP', exit: stop, exitTime: bar.timestamp, pnlPoints: stop - entry, ambiguousEntryBar: i === entryIndex };
     }
@@ -85,9 +93,9 @@ function scoreTrade(day, entryIndex, direction, entry, stop) {
       return { result: 'STOP', exit: stop, exitTime: bar.timestamp, pnlPoints: entry - stop, ambiguousEntryBar: i === entryIndex };
     }
   }
-  const last = day.at(-1);
-  const pnlPoints = direction === 'LONG' ? last.close - entry : entry - last.close;
-  return { result: 'EOD', exit: last.close, exitTime: last.timestamp, pnlPoints, ambiguousEntryBar: false };
+  if (!lastEligible) return null;
+  const pnlPoints = direction === 'LONG' ? lastEligible.close - entry : entry - lastEligible.close;
+  return { result: 'CONTINUOUS_CLOSE', exit: lastEligible.close, exitTime: lastEligible.timestamp, pnlPoints, ambiguousEntryBar: false };
 }
 
 export function backtestStocksInPlayOrb(candles, options = {}) {
@@ -151,7 +159,8 @@ export function backtestStocksInPlayOrb(candles, options = {}) {
       if (entryIndex < 0) continue;
       diagnostics.breakoutTrades += 1;
 
-      const outcome = scoreTrade(day, entryIndex, direction, trigger, stop);
+      const outcome = scoreTrade(day, entryIndex, direction, trigger, stop, cfg.forcedExitBarTime);
+      if (!outcome) continue;
       trades.push({
         date,
         symbol,
@@ -166,6 +175,7 @@ export function backtestStocksInPlayOrb(candles, options = {}) {
         relativeVolume: rvol.relativeVolume,
         atr14: atr,
         stopAtrFraction: cfg.stopAtrFraction,
+        forcedExitBarTime: cfg.forcedExitBarTime,
         entryTime: day[entryIndex].timestamp,
         entry: trigger,
         stop,
@@ -177,7 +187,12 @@ export function backtestStocksInPlayOrb(candles, options = {}) {
   }
 
   return {
-    variant: { minRelativeVolume, stopAtrFraction: cfg.stopAtrFraction, rvolLookback: cfg.rvolLookback },
+    variant: {
+      minRelativeVolume,
+      stopAtrFraction: cfg.stopAtrFraction,
+      rvolLookback: cfg.rvolLookback,
+      forcedExitBarTime: cfg.forcedExitBarTime,
+    },
     summary: summarize(trades),
     diagnostics,
     trades,
