@@ -21,6 +21,9 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    concurrency:
+      group: groww-backtest-api
+      queue: max
     steps:
       - uses: actions/checkout@v4
 
@@ -34,6 +37,7 @@ jobs:
       - name: Run five-session Groww FNO smoke test
         env:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_REQUEST_SPACING_MS: '1500'
         run: |
           mkdir -p outputs/nifty-180-premium-smoke
           node research/groww-backtest-nifty-180.mjs \
