@@ -67,6 +67,36 @@ function priorAtrForDate(sortedDates, atrByDate, date) {
   return atrByDate.get(sortedDates[idx - 1]) ?? null;
 }
 
+function quantile(sorted, q) {
+  if (!sorted.length) return null;
+  const pos = (sorted.length - 1) * q;
+  const lo = Math.floor(pos);
+  const hi = Math.ceil(pos);
+  if (lo === hi) return sorted[lo];
+  const weight = pos - lo;
+  return sorted[lo] * (1 - weight) + sorted[hi] * weight;
+}
+
+function distribution(values) {
+  const sorted = [...values].filter(Number.isFinite).sort((a, b) => a - b);
+  if (!sorted.length) return { count: 0, min: null, p10: null, p25: null, p50: null, p75: null, p90: null, max: null };
+  return {
+    count: sorted.length,
+    min: sorted[0],
+    p10: quantile(sorted, 0.10),
+    p25: quantile(sorted, 0.25),
+    p50: quantile(sorted, 0.50),
+    p75: quantile(sorted, 0.75),
+    p90: quantile(sorted, 0.90),
+    max: sorted.at(-1),
+  };
+}
+
+function bump(histogram, key) {
+  const k = String(key ?? 'UNKNOWN');
+  histogram[k] = (histogram[k] ?? 0) + 1;
+}
+
 function outcomeAfterEntry(day, entryIndex, direction, entry, stop, target) {
   let mfe = 0;
   let mae = 0;
@@ -109,7 +139,19 @@ function bearishPattern(prev, c) {
 export function backtestQuickFlip(candles, options = {}) {
   const cfg = { ...DEFAULTS, ...options };
   const trades = [];
-  const diagnostics = { symbolDays: 0, atrReadyDays: 0, qualifiedOpeningDays: 0, reversalDays: 0 };
+  const diagnostics = {
+    symbolDays: 0,
+    atrReadyDays: 0,
+    openingCompleteDays: 0,
+    openingIncompleteDays: 0,
+    qualifiedOpeningDays: 0,
+    reversalDays: 0,
+    openingCountHistogram: {},
+    dayStartTimeHistogram: {},
+  };
+  const openingRangeAtrFractions = [];
+  const openingRanges = [];
+  const atrValues = [];
   const grouped = groupBySymbolDay(candles);
 
   for (const [symbol, days] of grouped.entries()) {
@@ -118,6 +160,7 @@ export function backtestQuickFlip(candles, options = {}) {
     for (const date of sortedDates) {
       diagnostics.symbolDays += 1;
       const day = days.get(date);
+      bump(diagnostics.dayStartTimeHistogram, parts(day[0].timestamp).time);
       const atr = priorAtrForDate(sortedDates, atrByDate, date);
       if (!(atr > 0)) continue;
       diagnostics.atrReadyDays += 1;
@@ -126,11 +169,21 @@ export function backtestQuickFlip(candles, options = {}) {
         const t = parts(c.timestamp).time;
         return t >= cfg.openingStart && t < cfg.openingEnd;
       });
-      if (opening.length < 3) continue;
+      bump(diagnostics.openingCountHistogram, opening.length);
+      if (opening.length < 3) {
+        diagnostics.openingIncompleteDays += 1;
+        continue;
+      }
+      diagnostics.openingCompleteDays += 1;
+
       const openingHigh = Math.max(...opening.map((c) => c.high));
       const openingLow = Math.min(...opening.map((c) => c.low));
       const openingRange = openingHigh - openingLow;
-      if (!(openingRange >= cfg.minOpeningRangeAtrFraction * atr)) continue;
+      const openingRangeAtrFraction = openingRange / atr;
+      openingRanges.push(openingRange);
+      atrValues.push(atr);
+      openingRangeAtrFractions.push(openingRangeAtrFraction);
+      if (!(openingRangeAtrFraction >= cfg.minOpeningRangeAtrFraction)) continue;
       diagnostics.qualifiedOpeningDays += 1;
 
       let reversalSeen = false;
@@ -175,7 +228,7 @@ export function backtestQuickFlip(candles, options = {}) {
           date, symbol, direction, pattern,
           atr14: atr,
           openingHigh, openingLow, openingRange,
-          openingRangeAtrFraction: openingRange / atr,
+          openingRangeAtrFraction,
           reversalTime: c.timestamp,
           entryTime: day[entryIndex].timestamp,
           entry: trigger, stop, target,
@@ -196,6 +249,10 @@ export function backtestQuickFlip(candles, options = {}) {
       if (reversalSeen) diagnostics.reversalDays += 1;
     }
   }
+
+  diagnostics.openingRangeAtrFractionStats = distribution(openingRangeAtrFractions);
+  diagnostics.openingRangeStats = distribution(openingRanges);
+  diagnostics.atrStats = distribution(atrValues);
 
   return { trades, summary: summarize(trades), diagnostics };
 }
