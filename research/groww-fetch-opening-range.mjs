@@ -45,27 +45,50 @@ export function candlesToCsv(symbol, candles) {
   return [header, ...rows].join('\n') + '\n';
 }
 
-async function growwGet(token, endpoint, params) {
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function growwGet(token, endpoint, params, { maxRetries = 5 } = {}) {
   const url = new URL(`${BASE_URL}${endpoint}`);
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, String(value));
-  const response = await fetch(url, {
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${token}`,
-      'X-API-VERSION': '1.0',
-    },
-  });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok || body.status === 'FAILURE') {
-    const detail = body?.error?.message || JSON.stringify(body);
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const response = await fetch(url, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+        'X-API-VERSION': '1.0',
+      },
+    });
+    const body = await response.json().catch(() => ({}));
+    const retryable = response.status === 429 || response.status >= 500;
+
+    if (response.ok && body.status !== 'FAILURE') return body.payload ?? body;
+
+    if (retryable && attempt < maxRetries) {
+      const retryAfterSeconds = Number(response.headers.get('retry-after'));
+      const delayMs = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+        ? retryAfterSeconds * 1000
+        : Math.min(1000 * (2 ** attempt), 15000);
+      console.error(`Groww ${endpoint} returned ${response.status}; retrying in ${delayMs}ms`);
+      await sleep(delayMs);
+      continue;
+    }
+
+    const detail = body?.error?.message || body?.message || JSON.stringify(body);
     throw new Error(`Groww ${endpoint} failed (${response.status}): ${detail}`);
   }
-  return body.payload ?? body;
+
+  throw new Error(`Groww ${endpoint} exhausted retries`);
 }
 
 export async function fetchCash5m({ token, symbol, startDate, endDate, pauseMs = 250 }) {
   const all = [];
-  for (const chunk of chunkDateRange(startDate, endDate)) {
+  const chunks = chunkDateRange(startDate, endDate);
+  for (let index = 0; index < chunks.length; index++) {
+    const chunk = chunks[index];
+    console.error(`  ${symbol}: chunk ${index + 1}/${chunks.length} ${chunk.startDate}..${chunk.endDate}`);
     const payload = await growwGet(token, '/historical/candles', {
       exchange: 'NSE',
       segment: 'CASH',
@@ -75,7 +98,7 @@ export async function fetchCash5m({ token, symbol, startDate, endDate, pauseMs =
       candle_interval: '5minute',
     });
     all.push(...(payload.candles ?? []));
-    if (pauseMs) await new Promise((resolve) => setTimeout(resolve, pauseMs));
+    if (pauseMs) await sleep(pauseMs);
   }
 
   const byTimestamp = new Map();
@@ -113,7 +136,15 @@ async function main() {
   const outDir = args.out || 'work/groww/cash-5m';
   fs.mkdirSync(outDir, { recursive: true });
 
-  const manifest = { source: 'Groww', interval: '5minute', startDate, endDate, symbols: [], generatedAt: new Date().toISOString() };
+  const manifest = {
+    source: 'Groww',
+    interval: '5minute',
+    startDate,
+    endDate,
+    symbols: [],
+    generatedAt: new Date().toISOString(),
+  };
+
   for (const symbol of symbols) {
     console.error(`Fetching ${symbol} ${startDate}..${endDate}`);
     const candles = await fetchCash5m({ token, symbol, startDate, endDate });
@@ -122,6 +153,7 @@ async function main() {
     manifest.symbols.push({ symbol, candles: candles.length, file });
     console.error(`Saved ${candles.length} candles -> ${file}`);
   }
+
   fs.writeFileSync(path.join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
   process.stdout.write(JSON.stringify(manifest, null, 2));
 }
