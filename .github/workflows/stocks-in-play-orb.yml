@@ -9,6 +9,7 @@ on:
       - 'research/stocks-in-play-orb-backtest.mjs'
       - 'research/quick-flip-backtest.mjs'
       - 'research/groww-fetch-opening-range.mjs'
+      - 'research/strategy-robustness-report.mjs'
       - 'tests/stocks-in-play-orb-backtest.test.mjs'
   workflow_dispatch:
 
@@ -44,9 +45,17 @@ jobs:
           node-version: '22'
 
       - name: Validate Stocks in Play rules
-        run: node --test tests/stocks-in-play-orb-backtest.test.mjs tests/quick-flip-backtest.test.mjs
+        run: node --test tests/stocks-in-play-orb-backtest.test.mjs tests/quick-flip-backtest.test.mjs tests/performance-statistics.test.mjs tests/strategy-robustness-report.test.mjs
 
-      - name: Fetch liquid-stock Groww 5-minute candles
+      - name: Restore shared 15-stock Groww candle snapshot
+        id: candles-cache
+        uses: actions/cache@v4
+        with:
+          path: work/groww/shared/${{ matrix.period.key }}/cash-5m
+          key: groww-cash5m-15-v1-${{ matrix.period.key }}
+
+      - name: Fetch shared Groww 5-minute candles on cache miss
+        if: steps.candles-cache.outputs.cache-hit != 'true'
         env:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
           START_DATE: ${{ matrix.period.start }}
@@ -54,20 +63,20 @@ jobs:
           PERIOD_KEY: ${{ matrix.period.key }}
           SYMBOLS: 'RELIANCE,HDFCBANK,ICICIBANK,SBIN,INFY,AXISBANK,KOTAKBANK,BAJFINANCE,BHARTIARTL,ITC,TCS,TATAMOTORS,LT,TATASTEEL,ONGC'
         run: |
-          out="work/groww/stocks-in-play/${PERIOD_KEY}/cash-5m"
+          out="work/groww/shared/${PERIOD_KEY}/cash-5m"
           mkdir -p "${out}"
           node research/groww-fetch-opening-range.mjs \
             "--start=${START_DATE}" \
             "--end=${END_DATE}" \
             "--symbols=${SYMBOLS}" \
             "--out=${out}" \
-            > "work/groww/stocks-in-play/${PERIOD_KEY}/manifest-output.json"
+            > "work/groww/shared/${PERIOD_KEY}/manifest-output.json"
 
       - name: Run predeclared RVOL variants
         env:
           PERIOD_KEY: ${{ matrix.period.key }}
         run: |
-          input="work/groww/stocks-in-play/${PERIOD_KEY}/cash-5m"
+          input="work/groww/shared/${PERIOD_KEY}/cash-5m"
           output="outputs/stocks-in-play-orb/${PERIOD_KEY}"
           mkdir -p "${output}"
           mapfile -t files < <(find "${input}" -maxdepth 1 -name '*.csv' -type f | sort)
@@ -76,6 +85,7 @@ jobs:
             exit 1
           fi
           node research/stocks-in-play-orb-backtest.mjs "${files[@]}" > "${output}/study.json"
+          node research/strategy-robustness-report.mjs "${output}/study.json" "${output}/robustness.json" > /dev/null
           cp "${input}/manifest.json" "${output}/data-manifest.json"
 
       - name: Upload study result
