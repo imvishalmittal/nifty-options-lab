@@ -6,6 +6,12 @@ on:
       - agent/opening-range-backtest
     paths:
       - '.github/workflows/nifty-180-premium-2026.yml'
+      - 'research/nifty-180-premium-strategy.mjs'
+      - 'research/groww-backtest-nifty-180.mjs'
+      - 'research/groww-option-costs.mjs'
+      - 'tests/nifty-180-premium-strategy.test.mjs'
+      - 'tests/groww-backtest-nifty-180.test.mjs'
+      - 'tests/groww-option-costs.test.mjs'
   workflow_dispatch:
 
 permissions:
