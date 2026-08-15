@@ -9,7 +9,7 @@ function day(date, base = 100, openingRange = 6, symbol = 'TEST') {
     c(`${date}T09:15:00+05:30`, base, base + openingRange / 2, base - openingRange / 2, base + 1, 1000, symbol),
     c(`${date}T09:20:00+05:30`, base + 1, base + 2, base - 1, base + 0.5, 1000, symbol),
     c(`${date}T09:25:00+05:30`, base + 0.5, base + 2, base - 1, base, 1000, symbol),
-    c(`${date}T15:25:00+05:30`, base, base + 1, base - 1, base, 1000, symbol),
+    c(`${date}T15:10:00+05:30`, base, base + 1, base - 1, base, 1000, symbol),
   ];
 }
 
@@ -26,7 +26,7 @@ test('Wilder ATR becomes available only after enough completed sessions', () => 
   assert.equal(atr.has(isoDay(14)), true);
 });
 
-test('Wilder ATR ignores corrupt 09:00 pre-open prints', () => {
+test('Wilder ATR ignores corrupt pre-open and closing-auction prints', () => {
   const cleanDays = new Map();
   const noisyDays = new Map();
   for (let i = 0; i < 16; i++) {
@@ -36,20 +36,18 @@ test('Wilder ATR ignores corrupt 09:00 pre-open prints', () => {
     noisyDays.set(date, [
       c(`${date}T09:00:00+05:30`, 1, 5000, 0.1, 1),
       ...regular,
+      c(`${date}T15:20:00+05:30`, 1, 9000, 0.01, 7000),
     ]);
   }
   const clean = computeWilderAtrByDate(cleanDays, 14);
   const noisy = computeWilderAtrByDate(noisyDays, 14);
-  for (const [date, value] of clean.entries()) {
-    assert.equal(noisy.get(date), value);
-  }
+  for (const [date, value] of clean.entries()) assert.equal(noisy.get(date), value);
 });
 
 test('opening range below 25% of prior ATR is rejected', () => {
   const rows = [];
   for (let i = 0; i < 15; i++) rows.push(...day(isoDay(i), 100 + i * 3, 12));
   const d = isoDay(15);
-  // Keep all three opening candles inside a deliberately tiny 1-point box.
   rows.push(
     c(`${d}T09:15:00+05:30`, 145.0, 145.4, 144.6, 145.1),
     c(`${d}T09:20:00+05:30`, 145.1, 145.5, 144.7, 145.0),
@@ -83,6 +81,26 @@ test('qualified low sweep plus hammer enters after reversal and targets opposite
   assert.equal(trade.entryTime, `${d}T09:35:00+05:30`);
   assert.equal(trade.target, 107);
   assert.ok(trade.openingRangeAtrFraction >= 0.25);
+});
+
+test('unresolved Quick Flip ignores 15:20 auction spike for exit', () => {
+  const rows = [];
+  for (let i = 0; i < 15; i++) rows.push(...day(isoDay(i), 100, 8));
+  const d = isoDay(15);
+  rows.push(
+    c(`${d}T09:15:00+05:30`, 100, 104, 98, 103),
+    c(`${d}T09:20:00+05:30`, 103, 106, 102, 105),
+    c(`${d}T09:25:00+05:30`, 105, 107, 101, 102),
+    c(`${d}T09:30:00+05:30`, 102, 103, 96, 102.5),
+    c(`${d}T09:35:00+05:30`, 102.5, 104, 102, 103.5),
+    c(`${d}T15:10:00+05:30`, 103.5, 104.5, 103, 104),
+    c(`${d}T15:20:00+05:30`, 104, 500, 1, 400),
+  );
+  const result = backtestQuickFlip(rows);
+  assert.equal(result.trades.length, 1);
+  assert.equal(result.trades[0].result, 'EOD');
+  assert.equal(result.trades[0].exitTime, `${d}T15:10:00+05:30`);
+  assert.equal(result.trades[0].exit, 104);
 });
 
 test('multi-symbol data remains isolated by symbol and date', () => {
