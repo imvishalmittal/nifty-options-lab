@@ -20,27 +20,34 @@ A strategy that works only in one recent slice is not treated as validated. Post
 
 These are research-quality gates, not parameters to optimize against the historical data.
 
-1. **Data integrity:** no unresolved timestamp, corporate-action, expiry-selection, strike-selection, look-ahead, or missing-session defect can materially affect the measured result.
-2. **Real instruments:** option strategies must use the actual historical contract and actual option candles. Synthetic Black-Scholes premiums cannot establish profitability.
-3. **Costs included:** expectancy must remain positive after brokerage, statutory charges, bid/ask or slippage assumptions, and the actual historical lot size where available.
-4. **Cost stress:** the conclusion must not reverse under a deliberately worse fill/slippage scenario. A strategy whose edge disappears with modest execution friction is rejected for live use.
-5. **Out-of-sample survival:** a positive development result is insufficient. The frozen strategy must remain economically positive in the 2025 validation period and must not be materially contradicted by the available 2026 period.
-6. **Breadth / regime robustness:** profits must not be explained almost entirely by one stock, one direction, one isolated month, or one exceptional volatility episode unless that concentration was part of a predeclared strategy hypothesis.
-7. **Sample adequacy:** no live recommendation is made from a handful of trades. The report must show enough independent sessions to make loss streak, drawdown, and expectancy estimates meaningful; confidence intervals/bootstraps will be reported rather than relying on win rate alone.
-8. **Risk profile:** maximum drawdown, worst trade, consecutive losses, exposure, and capital required must fit the defined learning account before paper-forward approval.
-9. **Paper-forward gate:** after historical acceptance, the exact frozen rules must run prospectively with no manual cherry-picking. Any rule change restarts the affected validation stage.
-10. **Live gate:** live automation is considered only after the paper-forward ledger agrees materially with historical assumptions and operational controls (stale-data no-trade, max daily loss, kill switch, reconciliation, no averaging) are tested.
+1. **Data integrity:** no unresolved timestamp, corporate-action, expiry-selection, strike-selection, look-ahead, missing-session, auction-session, or API-rate-limit defect can materially affect the measured result.
+2. **API completeness:** a period affected by HTTP 429/rate-limit exhaustion, partial contract search, or incomplete candle retrieval is invalid evidence. It must be rerun; missing API data must never silently become a no-trade day.
+3. **Real instruments:** option strategies must use the actual historical contract and actual option candles. Synthetic Black-Scholes premiums cannot establish profitability.
+4. **Costs included:** expectancy must remain positive after brokerage, statutory charges, bid/ask or slippage assumptions, and the actual historical lot size where available.
+5. **Cost stress:** the conclusion must not reverse under a deliberately worse fill/slippage scenario. A strategy whose edge disappears with modest execution friction is rejected for live use.
+6. **Out-of-sample survival:** a positive development result is insufficient. The frozen strategy must remain economically positive in the 2025 validation period and must not be materially contradicted by the available 2026 period.
+7. **Breadth / regime robustness:** profits must not be explained almost entirely by one stock, one direction, one isolated month, or one exceptional volatility episode unless that concentration was part of a predeclared strategy hypothesis.
+8. **Sample adequacy:** no live recommendation is made from a handful of trades. The report must show enough independent sessions to make loss streak, drawdown, and expectancy estimates meaningful; confidence intervals/bootstraps will be reported rather than relying on win rate alone.
+9. **Risk profile:** maximum drawdown, worst trade, consecutive losses, exposure, and capital required must fit the defined learning account before paper-forward approval.
+10. **Paper-forward gate:** after historical acceptance, the exact frozen rules must run prospectively with no manual cherry-picking. Any rule change restarts the affected validation stage.
+11. **Live gate:** live automation is considered only after the paper-forward ledger agrees materially with historical assumptions and operational controls (stale-data no-trade, max daily loss, kill switch, reconciliation, no averaging) are tested.
 
 High win rate is not an acceptance criterion. Positive expectancy after costs, robustness, and bounded downside are.
 
+### Shared Groww research infrastructure
+
+All Groww-heavy GitHub Actions jobs use the repository-wide `groww-backtest-api` concurrency group with `queue: max`, so API jobs execute one at a time instead of racing a single token. Matrix data jobs use `max-parallel: 1`. Legacy runs started before this queue existed are not mixed with queued-methodology results.
+
+Stock-candle fetches already use retry/backoff and a pause between chunks. The option backtester additionally spaces Groww calls, records request/rate-limit diagnostics, and uses progressive strike selection to reduce historical API load.
+
 ## S1 — Quick Flip Scalper V1
 
-Status: **implemented for 5-minute confirmation; ATR data-quality defect fixed; corrected full-history rerun in progress; 1m/3m confirmation pending**.
+Status: **implemented for 5-minute confirmation; pre-open and closing-auction data defects corrected; fresh full-history rerun queued; 1m/3m confirmation pending**.
 
 Frozen rules:
 
 1. Build opening box from 09:15 through 09:30.
-2. Compute Wilder ATR(14) from completed prior **regular NSE cash sessions (09:15-15:30)** only; pre-open/auction prints are excluded.
+2. Compute Wilder ATR(14) from completed prior **continuous NSE cash sessions 09:15-15:15** only. Groww 09:00 pre-open/auction prints and 15:15+ closing-auction prints are excluded.
 3. Day qualifies only if opening-range size is at least 25% of prior ATR(14).
 4. Price must trade outside the opening box.
 5. Reversal confirmation outside the box: hammer/inverted-hammer-style rejection or directional engulfing.
@@ -49,10 +56,11 @@ Frozen rules:
 8. Target the opposite side of the opening box.
 9. No new entry after 10:45.
 10. One trade per symbol/session. If stop and target are both touched within the same unresolved bar, score stop first.
+11. An unresolved trade ignores 15:15+ closing-auction bars and exits from the last eligible continuous-session five-minute bar.
 
-The regular-session ATR requirement was added as a data-correctness fix after Groww 09:00 pre-open candles were found to create impossible ATR values in 2026. It does not change the intended 25%-ATR strategy rule.
+The 09:15-15:15 session definition is a data-comparability rule, not a strategy optimization. It was added after Groww pre-open prints created impossible 2026 ATRs and after NSE introduced the closing-auction session for eligible F&O stocks in August 2026.
 
-The corrected 2026 5-minute result is gross-positive but weak and highly symbol/month dependent. It is not considered a live candidate unless older validation periods materially strengthen the evidence without post-hoc stock selection.
+Earlier 2025/2026 Quick Flip outputs produced before the continuous-session correction are retained only as diagnostics and are stale for strategy acceptance. A separate corporate-action audit checks structural overnight discontinuities before those periods are judged.
 
 Next refinement is not parameter tuning: fetch 1-minute raw data, construct 1m/3m/5m confirmations from the same raw feed, and compare them as predeclared variants.
 
@@ -76,26 +84,29 @@ Still unresolved and therefore not guessed:
 
 ## S3 — NIFTY ₹180 Premium Momentum V1
 
-Status: **actual Groww FNO pipeline implemented; execution bugs found by smoke testing and fixed; cost-aware 2026 validation in progress**.
+Status: **actual Groww FNO pipeline implemented; execution/clock defects found by smoke testing and fixed; throttled cost-aware validation queued**.
 
 Frozen baseline rules:
 
 1. Use the contemporaneous nearest weekly NIFTY expiry from the historical expiry list; do not assume a fixed weekday across history.
 2. At 09:25, use the NIFTY 09:25 candle **open** to identify genuinely ITM CE and ITM PE contracts without using future information.
 3. On each side select the ITM contract whose 09:25 option-candle open is closest to ₹180. Do not use future candles to choose the strike.
-4. From 09:30 onward, a signal requires an actual completed 1-minute **cross from a previous close at/below ₹180 to a close above ₹180**. A contract already above ₹180 before 09:30 does not qualify merely by remaining above it.
-5. Baseline entry price is the next 1-minute candle open after the crossing candle; this deliberately avoids filling retrospectively at ₹180.
-6. If the confirming candle has already closed at/above ₹220, reject the setup because the advertised move has completed before the trade can be executed.
-7. The executable entry must be strictly between ₹160 and ₹220. An entry at/above the fixed target or at/below the fixed stop is a no-trade, never a retroactive win.
-8. Stop = ₹160; target = ₹220. If neither is hit, exit by 09:45 at the executable market price.
-9. No trailing stop in V1. Cost-to-cost trailing is a later, separately validated variant.
-10. Only one side/trade per day; if CE and PE cross in the same minute, mark the day ambiguous rather than choosing with hindsight.
-11. Candidate selection searches outward from nearest ITM. If the closest-to-₹180 contract is the deepest contract fetched, mark the day `CANDIDATE_BOUNDARY` and enlarge the search rather than assuming the selected strike is correct.
-12. Preserve historical option volume and open interest at selection time. Liquidity/OI filters are not retrofitted into V1 after inspecting its result; any such filter is a separately frozen variant.
-13. For 2026 NIFTY contracts use the applicable 65-unit market lot. Older periods must use date-appropriate lot sizes rather than back-applying 65.
-14. Report actual option premium P&L plus Groww brokerage/statutory charges and explicit 0.5/1.0 premium-point-per-leg slippage stress before any trading conclusion.
+4. Candidate search proceeds from nearest ITM toward deeper ITM and fetches only 09:25 selection data until ₹180 is bracketed. Full 09:25-09:45 candles are then fetched only for the selected CE and PE. If the maximum search depth still does not bracket ₹180, mark `CANDIDATE_BOUNDARY`; do not score the day.
+5. From 09:30 onward, a signal requires an actual completed 1-minute **cross from a previous close at/below ₹180 to a close above ₹180**. A contract already above ₹180 before 09:30 does not qualify merely by remaining above it.
+6. Baseline entry price is the next 1-minute candle open after the crossing candle; this deliberately avoids filling retrospectively at ₹180.
+7. If the confirming candle has already closed at/above ₹220, reject the setup because the advertised move has completed before the trade can be executed.
+8. The executable entry must be strictly between ₹160 and ₹220. An entry at/above the fixed target or at/below the fixed stop is a no-trade, never a retroactive win.
+9. Stop = ₹160; target = ₹220.
+10. A one-minute timestamp is treated as the start of that interval. A 09:44 signal cannot create a 09:45 entry because no holding interval remains before the forced exit.
+11. Stops/targets are evaluated only on bars beginning before 09:45. If still open at 09:45, exit at the **09:45 bar open**; do not use that bar's later high/low/close.
+12. No trailing stop in V1. Cost-to-cost trailing is a later, separately validated variant.
+13. Only one side/trade per day; if CE and PE cross in the same minute, mark the day ambiguous rather than choosing with hindsight.
+14. Preserve historical option volume and open interest at selection time. Liquidity/OI filters are not retrofitted into V1 after inspecting its result; any such filter is a separately frozen variant.
+15. For 2026 NIFTY contracts use the applicable 65-unit market lot. Older periods must use date-appropriate lot sizes rather than back-applying 65.
+16. Report actual option premium P&L plus Groww brokerage/statutory charges and explicit 0.5/1.0 premium-point-per-leg slippage stress before any trading conclusion.
+17. Record API request count and rate-limit retries. Any run ending in 429 exhaustion is operationally invalid and cannot be interpreted as a strategy result.
 
-The corrected five-session Aug 10-14 smoke test produced only two valid trades and both were losing 09:45 time exits before costs. That sample is only a pipeline check and is not sufficient to accept or reject the strategy; it justifies widening the sample without changing the rules.
+The earlier five-session smoke outputs found important implementation defects and therefore served their purpose as pipeline tests. Performance from any smoke/monthly run predating the exact 09:45 clock model or current throttled selector is stale and is not used for acceptance.
 
 Groww historical FNO expiries, contracts, candles, volume and open interest are the intended source. No synthetic option pricing will be used to claim performance.
 
@@ -122,20 +133,22 @@ Missing mechanical details:
 
 These must be recovered from the source material before implementation.
 
-## Evidence-guided ORB research track (separate from video strategies)
+## S5 — Evidence-guided Stocks-in-Play ORB
 
-Published ORB/intraday-momentum research motivates a separate hypothesis in which opening breakouts are conditioned on abnormal activity/volatility. This track is deliberately not used to rewrite Quick Flip after seeing its results.
+Status: **implemented as a separate literature-motivated hypothesis; fresh continuous-session historical study queued**.
 
-Candidate predeclared features for a future development-only study:
+This is deliberately not a rewrite of Quick Flip. Its rules were declared before performance was inspected:
 
-- first 5-minute opening direction/range;
-- opening relative volume versus the same opening interval over prior sessions;
-- prior ATR-normalized range/volatility;
-- broad liquid-stock universe and a predeclared “stocks in play” ranking;
-- breakout in the opening direction;
-- fixed ATR-normalized risk and end-of-day/time exit.
+1. Liquid 15-stock F&O universe fixed in advance.
+2. First 5-minute candle (09:15-09:20) establishes opening direction and breakout level.
+3. Relative opening volume compares that first 5-minute volume with the same interval over the prior 14 sessions only.
+4. Report externally motivated RVOL variants separately: `>=1.0`, `>=1.2`, `>=1.5`; do not select the historical winner and call it proven.
+5. Trade only a later breakout in the opening candle's direction.
+6. Stop distance = 10% of prior ATR(14).
+7. Use the same 09:15-15:15 continuous-session definition for ATR.
+8. No new entry after the 15:10 five-minute bar; unresolved positions exit on the 15:10 bar close, which represents the 15:15 end of continuous cash trading and avoids the newer closing auction.
 
-Any thresholds are frozen from external literature or a development sample before a fresh holdout is touched. If the underlying-stock edge survives, the option overlay is then tested on actual option candles.
+If an underlying-stock variant survives development and validation, only then is an actual historical stock-option overlay tested with real contracts, lot sizes, spreads/slippage and costs.
 
 ## Existing simplified opening-range baseline
 
