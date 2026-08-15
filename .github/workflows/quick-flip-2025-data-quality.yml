@@ -1,0 +1,50 @@
+name: Quick Flip 2025 Data Quality
+
+on:
+  push:
+    branches:
+      - agent/opening-range-backtest
+    paths:
+      - '.github/workflows/quick-flip-2025-data-quality.yml'
+      - 'research/quick-flip-data-quality.mjs'
+      - 'tests/quick-flip-data-quality.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate audit logic
+        run: node --test tests/quick-flip-data-quality.test.mjs tests/quick-flip-backtest.test.mjs
+      - name: Fetch 2025 comparison data
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          SYMBOLS: 'RELIANCE,HDFCBANK,ICICIBANK,SBIN,INFY,AXISBANK,KOTAKBANK,BAJFINANCE,BHARTIARTL,ITC,TCS,TATAMOTORS,LT,TATASTEEL,ONGC'
+        run: |
+          mkdir -p work/groww/qf-data-quality/2025
+          node research/groww-fetch-opening-range.mjs \
+            --start=2025-01-01 --end=2025-12-31 \
+            "--symbols=${SYMBOLS}" \
+            --out=work/groww/qf-data-quality/2025 \
+            > work/groww/qf-data-quality/manifest-output.json
+      - name: Audit regular-session gaps and ATRs
+        run: |
+          mkdir -p outputs/quick-flip-data-quality
+          mapfile -t files < <(find work/groww/qf-data-quality/2025 -maxdepth 1 -name '*.csv' -type f | sort)
+          node research/quick-flip-data-quality.mjs "${files[@]}" > outputs/quick-flip-data-quality/audit.json
+          cp work/groww/qf-data-quality/2025/manifest.json outputs/quick-flip-data-quality/data-manifest.json
+      - name: Upload audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: quick-flip-2025-data-quality-${{ github.run_id }}
+          path: outputs/quick-flip-data-quality/
+          if-no-files-found: error
+          retention-days: 14
