@@ -17,8 +17,12 @@ jobs:
   diagnose:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    concurrency:
+      group: groww-backtest-api
+      queue: max
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         period:
           - key: jan-feb-2025
