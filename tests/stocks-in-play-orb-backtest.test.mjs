@@ -19,7 +19,8 @@ function rowsForDay(date, { base = 100, firstVolume = 1000, bullish = true, brea
     opening,
     second,
     c(`${date}T09:25:00+05:30`, base + 1, base + 1.5, base - 0.5, base + 1, 700, symbol),
-    c(`${date}T15:25:00+05:30`, base + 1, base + 1.5, base + 0.5, base + 1, 900, symbol),
+    c(`${date}T15:10:00+05:30`, base + 1, base + 2, base + 0.5, base + 1.5, 850, symbol),
+    c(`${date}T15:25:00+05:30`, base + 10, base + 20, base - 10, base + 15, 900, symbol),
   ];
 }
 
@@ -64,4 +65,16 @@ test('bearish opening produces a short breakout with ATR-normalized stop', () =>
   assert.equal(result.trades[0].direction, 'SHORT');
   assert.ok(result.trades[0].stop > result.trades[0].entry);
   assert.equal(result.trades[0].stopAtrFraction, 0.10);
+});
+
+test('unresolved trade ignores 15:25/CAS-era prints and exits on 15:10 bar close', () => {
+  const rows=[];
+  for (let i=0;i<15;i++) rows.push(...rowsForDay(isoDay(i), { firstVolume:1000 }));
+  const d=isoDay(15);
+  rows.push(...rowsForDay(d, { base:103, firstVolume:1500, bullish:true, breakout:true }));
+  const result=backtestStocksInPlayOrb(rows,{minRelativeVolume:1.2});
+  const trade=result.trades[0];
+  assert.equal(trade.result,'CONTINUOUS_CLOSE');
+  assert.equal(trade.exitTime,`${d}T15:10:00+05:30`);
+  assert.equal(trade.exit,104.5);
 });
