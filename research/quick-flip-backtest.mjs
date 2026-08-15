@@ -31,14 +31,30 @@ function groupBySymbolDay(candles) {
   return bySymbol;
 }
 
+function regularSessionRows(rows) {
+  return rows.filter((c) => {
+    const t = parts(c.timestamp).time;
+    return t >= '09:15' && t < '15:30';
+  });
+}
+
 function dailyBars(days) {
-  return [...days.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, rows]) => ({
-    date,
-    open: rows[0].open,
-    high: Math.max(...rows.map((c) => c.high)),
-    low: Math.min(...rows.map((c) => c.low)),
-    close: rows.at(-1).close,
-  }));
+  return [...days.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, rows]) => {
+      // Groww can return 09:00 pre-open/auction candles. ATR for this strategy is
+      // based on the continuous NSE cash session, so exclude pre-open prints.
+      const regular = regularSessionRows(rows);
+      if (!regular.length) return null;
+      return {
+        date,
+        open: regular[0].open,
+        high: Math.max(...regular.map((c) => c.high)),
+        low: Math.min(...regular.map((c) => c.low)),
+        close: regular.at(-1).close,
+      };
+    })
+    .filter(Boolean);
 }
 
 export function computeWilderAtrByDate(days, period = 14) {
