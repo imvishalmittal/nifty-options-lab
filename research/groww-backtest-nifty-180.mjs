@@ -10,10 +10,13 @@ import { calculateLongOptionRoundTripCosts } from './groww-option-costs.mjs';
 
 const BASE_URL = 'https://api.groww.in/v1';
 const DEFAULT_REQUEST_SPACING_MS = 1500;
+const SAFE_ONE_MINUTE_CHUNK_DAYS = 28;
 let requestSpacingMs = DEFAULT_REQUEST_SPACING_MS;
 let lastRequestAt = 0;
 let apiRequestCount = 0;
 let rateLimitRetries = 0;
+let contractHistoryFetches = 0;
+let contractHistoryCacheHits = 0;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -40,6 +43,34 @@ function timeOf(timestamp) {
   return m?.[1] ?? null;
 }
 
+function parseDateUtc(date) {
+  return new Date(`${date}T00:00:00Z`);
+}
+
+function formatDateUtc(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function plusDays(date, days) {
+  const value = parseDateUtc(date);
+  value.setUTCDate(value.getUTCDate() + days);
+  return formatDateUtc(value);
+}
+
+export function splitDateRange(startDate, endDate, maxCalendarDays = SAFE_ONE_MINUTE_CHUNK_DAYS) {
+  if (!(maxCalendarDays > 0)) throw new Error('maxCalendarDays must be positive');
+  if (startDate > endDate) return [];
+  const chunks = [];
+  let cursor = startDate;
+  while (cursor <= endDate) {
+    const proposedEnd = plusDays(cursor, maxCalendarDays - 1);
+    const chunkEnd = proposedEnd < endDate ? proposedEnd : endDate;
+    chunks.push({ startDate: cursor, endDate: chunkEnd });
+    cursor = plusDays(chunkEnd, 1);
+  }
+  return chunks;
+}
+
 export function normalizeCandles(raw = []) {
   return raw.map((c) => ({
     timestamp: normalizeTimestamp(c[0]),
@@ -50,6 +81,16 @@ export function normalizeCandles(raw = []) {
     volume: Number(c[5] ?? 0),
     openInterest: c[6] == null ? null : Number(c[6]),
   })).sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+}
+
+export function candlesForDate(candles, date, startTime = null, endTime = null) {
+  return candles.filter((c) => {
+    if (dateOf(c.timestamp) !== date) return false;
+    const t = timeOf(c.timestamp);
+    if (startTime && t < startTime) return false;
+    if (endTime && t > endTime) return false;
+    return true;
+  });
 }
 
 function candleAt925(candles) {
@@ -121,6 +162,28 @@ async function fetchCandles(token, { segment, growwSymbol, startTime, endTime, i
   return normalizeCandles(payload.candles ?? []);
 }
 
+async function fetchOneMinutePeriod(token, {
+  segment,
+  growwSymbol,
+  startDate,
+  endDate,
+  startClock,
+  endClock,
+}) {
+  const rows = [];
+  for (const chunk of splitDateRange(startDate, endDate)) {
+    const chunkRows = await fetchCandles(token, {
+      segment,
+      growwSymbol,
+      startTime: `${chunk.startDate} ${startClock}:00`,
+      endTime: `${chunk.endDate} ${endClock}:00`,
+      interval: '1minute',
+    });
+    rows.push(...chunkRows);
+  }
+  return rows.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+}
+
 async function fetchExpiries(token, year) {
   const payload = await apiGet(token, '/historical/expiries', {
     exchange: 'NSE',
@@ -152,25 +215,42 @@ function enrichSelection(row) {
   };
 }
 
-async function selectProgressively(token, date, candidates) {
+async function loadContractHistory(token, candidate, {
+  startDate,
+  endDate,
+  historyCache,
+}) {
+  const key = candidate.symbol;
+  if (historyCache.has(key)) {
+    contractHistoryCacheHits += 1;
+    return historyCache.get(key);
+  }
+  contractHistoryFetches += 1;
+  const rows = await fetchOneMinutePeriod(token, {
+    segment: 'FNO',
+    growwSymbol: candidate.symbol,
+    startDate,
+    endDate,
+    startClock: '09:25',
+    endClock: '09:45',
+  });
+  historyCache.set(key, rows);
+  return rows;
+}
+
+async function selectProgressively(token, date, candidates, context) {
   const rows = [];
   let bracketed = false;
 
-  // Candidates are ordered from nearest ITM toward deeper ITM. For the same
-  // expiry/type, option value should increase as intrinsic value increases.
-  // Fetch only the 09:25 selection candle until ₹180 is reached/bracketed,
-  // rather than downloading a full 20-minute window for every candidate.
+  // Candidate histories are loaded once for the whole test period and cached.
+  // Selection still sees only the current date's 09:25 candle. Batching future
+  // raw rows in one HTTP request is a transport optimization, not look-ahead.
   for (const candidate of candidates) {
-    const selectionCandles = await fetchCandles(token, {
-      segment: 'FNO',
-      growwSymbol: candidate.symbol,
-      startTime: `${date} 09:25:00`,
-      endTime: `${date} 09:26:00`,
-      interval: '1minute',
-    });
-    const at925 = candleAt925(selectionCandles);
+    const history = await loadContractHistory(token, candidate, context);
+    const dayRows = candlesForDate(history, date, '09:25', '09:45');
+    const at925 = candleAt925(dayRows);
     const premium = at925?.open ?? null;
-    rows.push({ candidate, premium, at925, selectionCandles });
+    rows.push({ candidate, premium, at925, dayRows });
     if (Number.isFinite(premium) && premium >= PREMIUM_RULES.referencePremium) {
       bracketed = true;
       break;
@@ -184,8 +264,6 @@ async function selectProgressively(token, date, candidates) {
   const row = usable.find((r) => r.candidate.symbol === selected?.symbol);
   if (!row || !selected) return { pick: null, boundary: false, fetchedCandidates: rows.length };
 
-  // If even the deepest allowed ITM candidate remains below ₹180, the true
-  // closest contract may be beyond our search boundary. Do not score the day.
   const exhausted = rows.length === candidates.length;
   const boundary = exhausted && !bracketed && usable.at(-1).premium < PREMIUM_RULES.referencePremium;
   return {
@@ -193,18 +271,6 @@ async function selectProgressively(token, date, candidates) {
     boundary,
     fetchedCandidates: rows.length,
   };
-}
-
-async function loadFullSelectedCandles(token, date, pick) {
-  if (!pick) return null;
-  const candles = await fetchCandles(token, {
-    segment: 'FNO',
-    growwSymbol: pick.candidate.symbol,
-    startTime: `${date} 09:25:00`,
-    endTime: `${date} 09:45:00`,
-    interval: '1minute',
-  });
-  return { ...pick, candles };
 }
 
 function addCount(map, key) {
@@ -247,24 +313,30 @@ export async function backtestNifty180({
   lastRequestAt = 0;
   apiRequestCount = 0;
   rateLimitRetries = 0;
+  contractHistoryFetches = 0;
+  contractHistoryCacheHits = 0;
 
-  const spotCandles = await fetchCandles(token, {
+  const spotCandles = await fetchOneMinutePeriod(token, {
     segment: 'CASH',
     growwSymbol: 'NSE-NIFTY',
-    startTime: `${startDate} 09:15:00`,
-    endTime: `${endDate} 09:45:00`,
-    interval: '1minute',
+    startDate,
+    endDate,
+    startClock: '09:15',
+    endClock: '09:45',
   });
   const dates = tradingDates(spotCandles).filter((d) => d >= startDate && d <= endDate);
   const years = [...new Set(dates.map((d) => Number(d.slice(0, 4))))];
   const expiries = [];
   for (const year of years) expiries.push(...await fetchExpiries(token, year));
   expiries.sort();
-  const contractCache = new Map();
+
+  const contractsByExpiry = new Map();
+  const historyCache = new Map();
+  const context = { startDate, endDate, historyCache };
   const results = [];
 
   for (const date of dates) {
-    const dateSpot = spotCandles.filter((c) => dateOf(c.timestamp) === date);
+    const dateSpot = candlesForDate(spotCandles, date, '09:15', '09:45');
     const spot = spotAt925(dateSpot);
     if (!Number.isFinite(spot)) {
       results.push({ date, status: 'DATA_MISSING', reason: 'No 09:25 NIFTY spot open' });
@@ -276,8 +348,8 @@ export async function backtestNifty180({
       results.push({ date, status: 'DATA_MISSING', reason: 'No contemporaneous NIFTY expiry' });
       continue;
     }
-    if (!contractCache.has(expiry)) contractCache.set(expiry, await fetchContracts(token, expiry));
-    const contracts = contractCache.get(expiry);
+    if (!contractsByExpiry.has(expiry)) contractsByExpiry.set(expiry, await fetchContracts(token, expiry));
+    const contracts = contractsByExpiry.get(expiry);
 
     const ceCandidates = nearestItmCandidates(contracts, spot, 'CE', maxCandidatesPerSide);
     const peCandidates = nearestItmCandidates(contracts, spot, 'PE', maxCandidatesPerSide);
@@ -286,9 +358,9 @@ export async function backtestNifty180({
       continue;
     }
 
-    console.error(`${date}: spot ${spot.toFixed(2)}, expiry ${expiry}; progressive ₹180 selection`);
-    const ceSelection = await selectProgressively(token, date, ceCandidates);
-    const peSelection = await selectProgressively(token, date, peCandidates);
+    console.error(`${date}: spot ${spot.toFixed(2)}, expiry ${expiry}; cached progressive ₹180 selection`);
+    const ceSelection = await selectProgressively(token, date, ceCandidates, context);
+    const peSelection = await selectProgressively(token, date, peCandidates, context);
     const callPick = ceSelection.pick;
     const putPick = peSelection.pick;
 
@@ -311,21 +383,19 @@ export async function backtestNifty180({
       continue;
     }
 
-    const fullCallPick = await loadFullSelectedCandles(token, date, callPick);
-    const fullPutPick = await loadFullSelectedCandles(token, date, putPick);
     const evaluated = attachCostScenarios(evaluatePremiumDay({
-      call: fullCallPick.selected,
-      put: fullPutPick.selected,
-      callCandles: fullCallPick.candles,
-      putCandles: fullPutPick.candles,
+      call: callPick.selected,
+      put: putPick.selected,
+      callCandles: callPick.dayRows,
+      putCandles: putPick.dayRows,
     }), lotSize);
 
     results.push({
       date,
       spot925: spot,
       expiry,
-      callSelection: fullCallPick.selected,
-      putSelection: fullPutPick.selected,
+      callSelection: callPick.selected,
+      putSelection: putPick.selected,
       candidateFetches: { ce: ceSelection.fetchedCandidates, pe: peSelection.fetchedCandidates },
       ...evaluated,
     });
@@ -349,7 +419,8 @@ export async function backtestNifty180({
     executionModel: {
       lotSize,
       requestSpacingMs,
-      selector: 'progressive 09:25 ITM search until ₹180 is bracketed; full candles only for selected CE/PE',
+      oneMinuteChunkDays: SAFE_ONE_MINUTE_CHUNK_DAYS,
+      selector: 'cached whole-period contract histories; current-date 09:25 ITM search until ₹180 is bracketed',
       costSchedule: lotSize ? 'Groww NSE equity-option charges current in 2026; used as current-economics stress, not claimed as historical fee schedule' : null,
       slippageStressPointsPerLeg: lotSize ? [0, 0.5, 1.0] : [],
     },
@@ -366,6 +437,9 @@ export async function backtestNifty180({
       boundaryDays: results.filter((r) => r.status === 'CANDIDATE_BOUNDARY').length,
       apiRequestCount,
       rateLimitRetries,
+      contractHistoryFetches,
+      contractHistoryCacheHits,
+      uniqueContractHistories: historyCache.size,
       averageCandidateFetchesCE: average(results.map((r) => r.candidateFetches?.ce)),
       averageCandidateFetchesPE: average(results.map((r) => r.candidateFetches?.pe)),
       totalPnlPerUnitBeforeCosts: pnlPerUnit,
