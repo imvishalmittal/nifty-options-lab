@@ -1,4 +1,5 @@
 name: NIFTY 180 Premium Smoke
+# Auth refresh retry: 2026-08-16
 
 on:
   push:
