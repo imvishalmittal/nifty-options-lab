@@ -21,7 +21,7 @@ test('12-Aug-style momentum continues beyond 220 and exits on trailing stop', ()
   assert.equal(result.result, 'TRAIL_STOP');
   assert.equal(result.exit, 227);
   assert.equal(result.peakPremium, 247);
-  assert.equal(result.mfePoints, 62.85);
+  assert.ok(Math.abs(result.mfePoints - 62.85) < 1e-9);
 });
 
 test('new stop from a completed bar is not applied retroactively inside that same bar', () => {
