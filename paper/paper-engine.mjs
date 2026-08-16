@@ -2,14 +2,20 @@ export const PAPER_RULES = Object.freeze({
   referencePremium: 180,
   initialStop: 160,
   entryCeiling: 220,
+  v2TrailActivation: 220,
   trailGap: 20,
-  trailStep: 10,
   signalStart: '09:30',
   signalCutoff: '09:45',
   sessionExit: '15:29',
   capital: 60000,
   lotSize: 65,
 });
+
+export const PAPER_VARIANTS = Object.freeze([
+  Object.freeze({ id: 'V2', strategy: 'NIFTY ₹180 Momentum V2', strategyVersion: 'V2', kind: 'v2' }),
+  Object.freeze({ id: 'V3_5', strategy: 'NIFTY ₹180 Stepped Trail V3', strategyVersion: 'V3', kind: 'v3', trailStep: 5 }),
+  Object.freeze({ id: 'V3_10', strategy: 'NIFTY ₹180 Stepped Trail V3', strategyVersion: 'V3', kind: 'v3', trailStep: 10 }),
+]);
 
 export function timeOf(timestamp) {
   const match = String(timestamp).match(/T(\d{2}:\d{2})/);
@@ -80,15 +86,29 @@ export function lotsAffordable(entryPremium, rules = PAPER_RULES) {
   return Math.floor(rules.capital / (entryPremium * rules.lotSize));
 }
 
-export function steppedStop(entry, peakHigh, rules = PAPER_RULES) {
-  const move = Math.max(0, peakHigh - entry);
-  const steps = Math.floor((move + 1e-9) / rules.trailStep);
-  if (steps < 1) return rules.initialStop;
-  return Math.max(rules.initialStop, entry + steps * rules.trailStep - rules.trailGap);
+export function v2Stop(entry, peakHigh, rules = PAPER_RULES) {
+  if (peakHigh < rules.v2TrailActivation) return rules.initialStop;
+  return Math.max(rules.initialStop, peakHigh - rules.trailGap);
 }
 
-export function initialPosition({ entry, entryTime, rules = PAPER_RULES }) {
+export function steppedStop(entry, peakHigh, trailStep, rules = PAPER_RULES) {
+  if (!(trailStep > 0)) throw new Error('trailStep must be positive');
+  const move = Math.max(0, peakHigh - entry);
+  const steps = Math.floor((move + 1e-9) / trailStep);
+  if (steps < 1) return rules.initialStop;
+  return Math.max(rules.initialStop, entry + steps * trailStep - rules.trailGap);
+}
+
+export function proposedStop(position, variant, rules = PAPER_RULES) {
+  if (variant.kind === 'v2') return v2Stop(position.entry, position.peakHigh, rules);
+  if (variant.kind === 'v3') return steppedStop(position.entry, position.peakHigh, variant.trailStep, rules);
+  throw new Error(`Unknown paper variant: ${variant?.kind}`);
+}
+
+export function initialPosition({ entry, entryTime, variant, rules = PAPER_RULES }) {
+  if (!variant) throw new Error('paper variant is required');
   return {
+    variant,
     entry,
     entryTime,
     activeStop: rules.initialStop,
@@ -105,9 +125,9 @@ export function processCompletedBar(position, candle, rules = PAPER_RULES) {
   if (position.exit || candle.timestamp === position.lastProcessed) return position;
   const next = { ...position, stopHistory: [...position.stopHistory], lastProcessed: candle.timestamp };
 
-  // Causal stop-first rule: only the stop already active before this completed
-  // one-minute bar can execute inside it. Do not credit the exit bar's later
-  // high/low because OHLC does not reveal intrabar ordering.
+  // Stop-first convention for one-minute OHLC. Only the stop already active
+  // before this candle can execute inside it. If touched, the trade ends and
+  // the candle's unknowable post-stop high/low is not credited.
   if (candle.low <= next.activeStop) {
     const fill = candle.open <= next.activeStop ? candle.open : next.activeStop;
     next.troughLow = Math.min(next.troughLow, fill);
@@ -119,15 +139,22 @@ export function processCompletedBar(position, candle, rules = PAPER_RULES) {
     return next;
   }
 
-  // Only a bar that survives the active stop contributes its full excursion.
-  // Its stepped stop is calculated after completion and is effective next bar.
+  // A surviving completed candle contributes its full excursion. Any raised
+  // V2 or V3 stop calculated from it becomes executable only on the next bar.
   next.peakHigh = Math.max(next.peakHigh, candle.high);
   next.troughLow = Math.min(next.troughLow, candle.low);
-  const proposed = steppedStop(next.entry, next.peakHigh, rules);
+  const proposed = proposedStop(next, next.variant, rules);
   if (proposed > next.activeStop) {
     next.trailActivated = true;
     next.activeStop = proposed;
-    next.stopHistory.push({ effectiveFrom: null, stop: proposed, reason: 'stepped-trailing', sourceBar: candle.timestamp, sourcePeak: next.peakHigh });
+    next.stopHistory.push({
+      effectiveFrom: null,
+      stop: proposed,
+      reason: next.variant.kind === 'v3' ? 'stepped-trailing' : 'continuous-trailing',
+      sourceBar: candle.timestamp,
+      sourcePeak: next.peakHigh,
+      trailStep: next.variant.trailStep ?? null,
+    });
   }
   return next;
 }
