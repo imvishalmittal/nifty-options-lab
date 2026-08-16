@@ -1,7 +1,7 @@
 export const PAPER_RULES = Object.freeze({
   referencePremium: 180,
   initialStop: 160,
-  trailActivation: 220,
+  entryCeiling: 220,
   trailGap: 20,
   signalStart: '09:30',
   signalCutoff: '09:45',
@@ -70,7 +70,7 @@ export function nextBarEntry(candles, signal, rules = PAPER_RULES) {
   const entryBar = candles[index + 1];
   if (timeOf(entryBar.timestamp) >= rules.signalCutoff) return null;
   const entry = entryBar.open;
-  if (!(entry > rules.initialStop && entry < rules.trailActivation)) return { rejected: true, entry, entryBar };
+  if (!(entry > rules.initialStop && entry < rules.entryCeiling)) return { rejected: true, entry, entryBar };
   return { entry, entryBar };
 }
 
@@ -100,6 +100,9 @@ export function processCompletedBar(position, candle, rules = PAPER_RULES) {
   next.troughLow = Math.min(next.troughLow, candle.low);
   next.lastProcessed = candle.timestamp;
 
+  // The stop that existed before this bar is the only stop that can execute
+  // inside this bar. Any higher stop derived from this completed bar becomes
+  // effective only on the following bar, preventing intrabar look-ahead.
   if (candle.low <= next.activeStop) {
     const fill = candle.open <= next.activeStop ? candle.open : next.activeStop;
     next.exit = {
@@ -110,13 +113,11 @@ export function processCompletedBar(position, candle, rules = PAPER_RULES) {
     return next;
   }
 
-  if (next.peakHigh >= rules.trailActivation) {
-    const proposed = Math.max(rules.initialStop, next.peakHigh - rules.trailGap);
-    if (proposed > next.activeStop) {
-      next.trailActivated = true;
-      next.activeStop = proposed;
-      next.stopHistory.push({ effectiveFrom: null, stop: proposed, reason: 'trailing', sourceBar: candle.timestamp, sourcePeak: next.peakHigh });
-    }
+  const proposed = Math.max(rules.initialStop, next.peakHigh - rules.trailGap);
+  if (proposed > next.activeStop) {
+    next.trailActivated = true;
+    next.activeStop = proposed;
+    next.stopHistory.push({ effectiveFrom: null, stop: proposed, reason: 'trailing', sourceBar: candle.timestamp, sourcePeak: next.peakHigh });
   }
   return next;
 }
