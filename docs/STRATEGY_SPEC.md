@@ -2,28 +2,26 @@
 
 ## Purpose
 
-This document separates the original V0.1 learning dashboard from the current research/paper strategy so historical results and future paper trades remain auditable.
+This document keeps strategy versions explicit so historical results and forward paper trades remain auditable. The original learning dashboard is V0.1, the completed historical momentum-trail research is V2, and the current stepped-trail paper/research candidate is **NIFTY ₹180 Stepped Trail V3**.
 
-The current forward-observation strategy is **NIFTY ₹180 Momentum V2**. It is paper-only and does not place broker orders.
+No strategy version places broker orders.
 
 ## Legacy V0.1
 
-The original `/` dashboard remains available as a learning tool for manually verified 15-minute/5-minute chart facts, EMA22/ADX/DI direction checks, one-OTM contract education, and conservative wait/no-trade states. Those rules are preserved as a named baseline; they are not the automated paper strategy.
+The root `/` dashboard remains a learning tool for manually verified chart facts, EMA22/ADX/DI checks, one-OTM contract education, and conservative WAIT/NO-TRADE/READY states. It is not the automated paper strategy.
 
-## Momentum V2 — frozen paper rule
+## Shared V2/V3 entry family
 
-### Underlying and contracts
+### Underlying and contract selection
 
 - Underlying: NIFTY only.
 - Direction: long CE or long PE only.
 - Expiry: nearest weekly expiry available for the session date.
 - At 09:25, use NIFTY spot and progressively inspect nearest ITM CE and PE candidates.
 - Select the usable CE and PE whose 09:25 premium is closest to ₹180.
-- The candidate search must bracket ₹180 within its configured depth; otherwise classify the session as a data/candidate boundary instead of forcing a contract.
+- The search must bracket ₹180 within configured depth; otherwise classify a data/candidate boundary instead of forcing a contract.
 
 ### Signal
-
-For each selected CE/PE contract, evaluate completed 1-minute candles.
 
 A confirmation exists when:
 
@@ -33,58 +31,74 @@ current completed close > 180
 09:30 <= current candle start < 09:45
 ```
 
-- If neither side confirms, there is no trade.
-- If CE and PE confirm in the same minute, the day is ambiguous and no trade is taken.
-- Otherwise the side with the earlier confirmation is selected.
+If neither side confirms, there is no trade. If CE and PE confirm in the same minute, the session is ambiguous and no trade is taken. Otherwise the earlier confirmation wins.
 
 ### Entry
 
-- Enter at the **next 1-minute bar open** after the confirmed crossing.
+- Enter at the next executable 1-minute bar open after confirmation.
 - Entry must be strictly above ₹160 and strictly below ₹220.
 - A next-bar entry at/after the cutoff is invalid.
-- Historical fills are simulated from candle data; they are not reconstructed sub-minute broker fills.
+- Historical fills are simulated from candle data, not reconstructed sub-minute broker fills.
 
-### Stop and momentum trail
+## V2 — preserved historical momentum trail
 
-Initial active stop:
+V2 starts with a ₹160 stop and waits for a completed-bar peak of at least ₹220 before activating a 20-point trailing stop. V2 historical rows and artifacts remain immutable as V2 evidence.
+
+## V3 — stepped trailing stop candidate
+
+### Initial stop
 
 ```text
 ₹160
 ```
 
-Trail activation:
+### Trailing geometry
+
+The V3 trail keeps a fixed **20-point gap** behind the highest completed-bar peak, but the stop moves only after the peak has advanced by a configured step from the entry anchor.
+
+Forward-paper candidate:
 
 ```text
-completed-bar peak >= ₹220
+trail gap  = 20 points
+trail step = 10 points
 ```
 
-Forward paper trail gap:
+Research comparison:
 
 ```text
-20 premium points
+5-point step vs 10-point step
+same 20-point gap
+same contracts, signals, entries, costs, and session rules
 ```
 
-After each fully completed 1-minute bar:
+For entry `E`, step `S`, and completed-bar peak `P`:
 
 ```text
-proposed stop = max(160, peak premium - 20)
-active stop   = max(previous active stop, proposed stop)
+steps earned = floor((P - E) / S)
+stepped peak = E + steps earned * S
+proposed stop = max(160, stepped peak - 20)
+active stop = max(previous active stop, proposed stop)
 ```
 
-The updated stop becomes effective only from the **next** bar. This prevents same-bar look-ahead.
+The stop never moves lower.
 
-Stop execution model:
+### Breakeven interpretation
 
-- stop check occurs before calculating a new stop from that candle;
-- if the next bar opens below the active stop, exit at that bar open;
-- otherwise if the bar trades through the active stop, exit at the stop price;
-- the stop never moves lower.
+Gross breakeven is reached when the active stop rises to at least the actual entry premium. With a 20-point gap, that normally requires the completed-bar peak to earn approximately a 20-point favorable move from the actual entry, subject to step rounding.
 
-### Session end
+A stop at the entry premium is only **gross** breakeven. Transaction charges and adverse slippage can still produce a small negative net P/L.
+
+### Causal stop update
+
+The stop that existed before a candle is the only stop eligible to execute inside that candle. A higher stop derived from that candle's completed high becomes effective only on the following bar. This prevents same-bar look-ahead.
+
+If the following bar opens below the active stop, modeled exit is at that open; otherwise a trade-through exits at the stop.
+
+## Session end
 
 There is no overnight carry. If no stop exits the position, use the final available completed bar through 15:29 as the session exit fallback.
 
-### Position sizing
+## Position sizing
 
 Forward paper capital is ₹60,000.
 
@@ -93,42 +107,25 @@ lots = floor(capital / (entry premium × lot size))
 units = lots × lot size
 ```
 
-Only whole lots are allowed. Historical studies use the lot size applicable to their period; current paper sessions use the configured current NIFTY lot size.
+Only whole lots are allowed. Historical studies use the period-correct lot size; current paper sessions use the configured current NIFTY lot size.
 
-### Costs and slippage
+## Costs
 
-Research and ledger P/L include modeled NSE/Groww option transaction costs with date-sensitive STT. Historical robustness analysis also includes adverse slippage scenarios.
+Paper/ledger P&L uses modeled option transaction charges with date-sensitive STT. Historical research also stresses adverse slippage. These are simulations, not real fills.
 
-The dashboard's historical rows therefore represent **historical-market-data simulations with modeled execution/costs**, not real trades.
+## Research discipline
 
-## Development/holdout discipline
+- V2 history remains V2; it is not retroactively recomputed and relabeled V3.
+- V3 is a separately named hypothesis prompted by the risk-management objective of reducing loss after favorable movement.
+- 5-point and 10-point steps are predeclared V3 research variants with the same 20-point gap.
+- Prefer the variant only after reviewing complete clean evidence, costs, drawdown, losing streaks, temporal consistency, and sensitivity; do not choose from one known winner.
+- Integrity-failed periods remain excluded.
+- Forward paper observations must be tagged with their strategy version.
 
-- 2025 is the V2 development period.
-- Predeclared trail gaps of 5/10/15/20 points may be compared in 2025 research.
-- Forward paper observation is frozen at 20 points unless a new, separately named hypothesis is created and evaluated prospectively.
-- 2026 is holdout evidence; the dashboard/holdout process consumes the frozen 20-point variant rather than choosing a better trail after seeing 2026.
-- Integrity-failed months are excluded from evidence.
+## Prohibited behavior
 
-## Known 12-Aug-2025 benchmark
-
-The known historical broker screenshot trade was NIFTY 14-Aug-2025 24500 CE, approximately ₹184.15 entry at 09:31:29 and ₹244.05 exit at 10:02:40.
-
-The research engine independently selected the same contract/date family. That benchmark is a fidelity check, not a tuning target. A trail must be judged across the full development sample, not selected because it best reproduces one winning trade.
-
-## Non-rules / prohibited tuning
-
-Do not:
-
-- place live broker orders from this system;
-- average down;
-- carry overnight;
-- use incomplete one-minute candles to move a stop;
-- move a stop lower;
-- accept same-minute CE/PE ambiguity;
-- force a contract when ₹180 is not bracketed;
-- treat stale, missing, rate-limited, authentication-failed, CI-failed, or integrity-failed data as valid evidence;
-- change the frozen paper trail merely because a different trail improves a known outcome.
+Do not place live broker orders, average down, carry overnight, use incomplete candles to tighten stops, move a stop lower, accept same-minute CE/PE ambiguity, force unbracketed ₹180 contracts, or treat stale/missing/auth-failed/rate-limited/CI-failed/integrity-failed data as valid evidence.
 
 ## Readiness gate
 
-Live-money automation is not justified until the frozen strategy shows credible historical/holdout behavior and then survives a meaningful forward paper period with reliable market-data, execution, cost, and operational controls.
+Live-money automation is not justified until the selected strategy version has credible historical evidence and a meaningful unchanged forward paper period with reliable market-data, cost, execution, reconciliation, and operational controls.

@@ -1,8 +1,9 @@
 export const PAPER_RULES = Object.freeze({
   referencePremium: 180,
   initialStop: 160,
-  trailActivation: 220,
+  entryCeiling: 220,
   trailGap: 20,
+  trailStep: 10,
   signalStart: '09:30',
   signalCutoff: '09:45',
   sessionExit: '15:29',
@@ -70,13 +71,22 @@ export function nextBarEntry(candles, signal, rules = PAPER_RULES) {
   const entryBar = candles[index + 1];
   if (timeOf(entryBar.timestamp) >= rules.signalCutoff) return null;
   const entry = entryBar.open;
-  if (!(entry > rules.initialStop && entry < rules.trailActivation)) return { rejected: true, entry, entryBar };
+  if (!(entry > rules.initialStop && entry < rules.entryCeiling)) return { rejected: true, entry, entryBar };
   return { entry, entryBar };
 }
 
 export function lotsAffordable(entryPremium, rules = PAPER_RULES) {
   if (!(entryPremium > 0)) return 0;
   return Math.floor(rules.capital / (entryPremium * rules.lotSize));
+}
+
+export function steppedTrailStop({ entry, peakHigh, initialStop, trailGap, trailStep }) {
+  if (!(trailGap > 0) || !(trailStep > 0)) throw new Error('trailGap and trailStep must be positive');
+  const favorableMove = Math.max(0, peakHigh - entry);
+  const completedSteps = Math.floor((favorableMove + 1e-9) / trailStep);
+  if (completedSteps < 1) return initialStop;
+  const steppedPeak = entry + completedSteps * trailStep;
+  return Math.max(initialStop, steppedPeak - trailGap);
 }
 
 export function initialPosition({ entry, entryTime, rules = PAPER_RULES }) {
@@ -100,6 +110,8 @@ export function processCompletedBar(position, candle, rules = PAPER_RULES) {
   next.troughLow = Math.min(next.troughLow, candle.low);
   next.lastProcessed = candle.timestamp;
 
+  // Only the stop that existed before this bar can execute inside this bar.
+  // A higher stop calculated from this completed bar is effective next bar.
   if (candle.low <= next.activeStop) {
     const fill = candle.open <= next.activeStop ? candle.open : next.activeStop;
     next.exit = {
@@ -110,13 +122,25 @@ export function processCompletedBar(position, candle, rules = PAPER_RULES) {
     return next;
   }
 
-  if (next.peakHigh >= rules.trailActivation) {
-    const proposed = Math.max(rules.initialStop, next.peakHigh - rules.trailGap);
-    if (proposed > next.activeStop) {
-      next.trailActivated = true;
-      next.activeStop = proposed;
-      next.stopHistory.push({ effectiveFrom: null, stop: proposed, reason: 'trailing', sourceBar: candle.timestamp, sourcePeak: next.peakHigh });
-    }
+  const proposed = steppedTrailStop({
+    entry: next.entry,
+    peakHigh: next.peakHigh,
+    initialStop: rules.initialStop,
+    trailGap: rules.trailGap,
+    trailStep: rules.trailStep,
+  });
+  if (proposed > next.activeStop) {
+    next.trailActivated = true;
+    next.activeStop = proposed;
+    next.stopHistory.push({
+      effectiveFrom: null,
+      stop: proposed,
+      reason: 'stepped-trailing',
+      sourceBar: candle.timestamp,
+      sourcePeak: next.peakHigh,
+      trailStep: rules.trailStep,
+      trailGap: rules.trailGap,
+    });
   }
   return next;
 }
