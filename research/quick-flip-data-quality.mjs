@@ -3,6 +3,8 @@ import { parseCsv } from './opening-range-backtest.mjs';
 import { computeWilderAtrByDate } from './quick-flip-backtest.mjs';
 
 const MAX_ATR_TO_MEDIAN_CLOSE = 0.50;
+const LARGE_DAILY_RANGE_TO_MEDIAN_CLOSE = 0.20;
+const OUTLIER_LIMIT = 12;
 
 function parts(timestamp) {
   const m = String(timestamp).match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
@@ -55,6 +57,9 @@ export function auditQuickFlipData(candles) {
     const gaps=[];
     const monthlyOpeningCoverage={};
     const continuousCloses=[];
+    const sessionRanges=[];
+    const intradayRanges=[];
+    const malformedCandles=[];
     let prevClose=null;
     for (const date of dates) {
       const rows=regular(days.get(date));
@@ -66,6 +71,40 @@ export function auditQuickFlipData(candles) {
       if (!rows.length) continue;
       const open=rows[0].open;
       const close=rows.at(-1).close;
+      const highBar=rows.reduce((best,row)=>row.high>best.high?row:best);
+      const lowBar=rows.reduce((best,row)=>row.low<best.low?row:best);
+      sessionRanges.push({
+        date,
+        open,
+        high:highBar.high,
+        highTimestamp:highBar.timestamp,
+        low:lowBar.low,
+        lowTimestamp:lowBar.timestamp,
+        close,
+        range:highBar.high-lowBar.low,
+      });
+      for (const row of rows) {
+        const range=row.high-row.low;
+        intradayRanges.push({
+          timestamp:row.timestamp,
+          open:row.open,
+          high:row.high,
+          low:row.low,
+          close:row.close,
+          range,
+        });
+        const malformed = row.open<=0 || row.high<=0 || row.low<=0 || row.close<=0
+          || row.high<Math.max(row.open,row.close)
+          || row.low>Math.min(row.open,row.close)
+          || row.high<row.low;
+        if (malformed) malformedCandles.push({
+          timestamp:row.timestamp,
+          open:row.open,
+          high:row.high,
+          low:row.low,
+          close:row.close,
+        });
+      }
       if (Number.isFinite(close) && close > 0) continuousCloses.push(close);
       if (prevClose>0 && open>0) {
         const gap=(open/prevClose)-1;
@@ -77,6 +116,16 @@ export function auditQuickFlipData(candles) {
     const absGaps=gaps.map((g)=>Math.abs(g.gapPct));
     const atrStats=stats(atrValues);
     const medianClose=stats(continuousCloses).p50;
+    const withRangeFraction=(row)=>({
+      ...row,
+      rangeToMedianClose:medianClose>0?row.range/medianClose:null,
+    });
+    const rankedSessionRanges=sessionRanges
+      .map(withRangeFraction)
+      .sort((a,b)=>b.rangeToMedianClose-a.rangeToMedianClose);
+    const rankedIntradayRanges=intradayRanges
+      .map(withRangeFraction)
+      .sort((a,b)=>b.rangeToMedianClose-a.rangeToMedianClose);
     const maxAtrToMedianClose=(atrStats.max != null && medianClose>0) ? atrStats.max/medianClose : null;
     const qualityValid=maxAtrToMedianClose == null || maxAtrToMedianClose <= MAX_ATR_TO_MEDIAN_CLOSE;
     if (!qualityValid) invalidSymbols.push({symbol,maxAtrToMedianClose,medianClose,maxAtr:atrStats.max});
@@ -89,6 +138,10 @@ export function auditQuickFlipData(candles) {
       absoluteOvernightGapPct:stats(absGaps),
       gapsOver20Pct:gaps.filter((g)=>Math.abs(g.gapPct)>=20).sort((a,b)=>Math.abs(b.gapPct)-Math.abs(a.gapPct)),
       topOvernightGaps:gaps.sort((a,b)=>Math.abs(b.gapPct)-Math.abs(a.gapPct)).slice(0,8),
+      largeDailyRanges:rankedSessionRanges.filter((row)=>row.rangeToMedianClose>=LARGE_DAILY_RANGE_TO_MEDIAN_CLOSE),
+      topDailyRanges:rankedSessionRanges.slice(0,OUTLIER_LIMIT),
+      topIntradayRanges:rankedIntradayRanges.slice(0,OUTLIER_LIMIT),
+      malformedCandles:malformedCandles.slice(0,OUTLIER_LIMIT),
       monthlyOpeningCoverage,
     };
   }
@@ -97,6 +150,7 @@ export function auditQuickFlipData(candles) {
     quality: {
       valid: invalidSymbols.length===0,
       maxAtrToMedianCloseThreshold: MAX_ATR_TO_MEDIAN_CLOSE,
+      largeDailyRangeToMedianCloseThreshold: LARGE_DAILY_RANGE_TO_MEDIAN_CLOSE,
       invalidSymbols: invalidSymbols.sort((a,b)=>b.maxAtrToMedianClose-a.maxAtrToMedianClose),
     },
     bySymbol,
