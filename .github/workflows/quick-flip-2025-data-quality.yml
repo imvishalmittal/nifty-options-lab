@@ -1,0 +1,65 @@
+name: Quick Flip 2025 Data Quality
+
+on:
+  push:
+    branches:
+      - agent/opening-range-backtest
+    paths:
+      - '.github/workflows/quick-flip-2025-data-quality.yml'
+      - 'research/quick-flip-data-quality.mjs'
+      - 'research/groww-fetch-opening-range.mjs'
+      - 'tests/quick-flip-data-quality.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: groww-backtest-api
+      queue: max
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate audit logic
+        run: node --test tests/quick-flip-data-quality.test.mjs tests/quick-flip-backtest.test.mjs
+
+      - name: Restore shared 15-stock 2025 Groww candle snapshot
+        id: candles-cache
+        uses: actions/cache@v4
+        with:
+          path: work/groww/shared/validation-2025/cash-5m
+          key: groww-cash5m-15-v1-validation-2025
+
+      - name: Fetch shared 2025 candles on cache miss
+        if: steps.candles-cache.outputs.cache-hit != 'true'
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          SYMBOLS: 'RELIANCE,HDFCBANK,ICICIBANK,SBIN,INFY,AXISBANK,KOTAKBANK,BAJFINANCE,BHARTIARTL,ITC,TCS,TATAMOTORS,LT,TATASTEEL,ONGC'
+        run: |
+          mkdir -p work/groww/shared/validation-2025/cash-5m
+          node research/groww-fetch-opening-range.mjs \
+            --start=2025-01-01 --end=2025-12-31 \
+            "--symbols=${SYMBOLS}" \
+            --out=work/groww/shared/validation-2025/cash-5m \
+            > work/groww/shared/validation-2025/manifest-output.json
+
+      - name: Audit continuous-session gaps and ATRs
+        run: |
+          mkdir -p outputs/quick-flip-data-quality
+          mapfile -t files < <(find work/groww/shared/validation-2025/cash-5m -maxdepth 1 -name '*.csv' -type f | sort)
+          node research/quick-flip-data-quality.mjs "${files[@]}" > outputs/quick-flip-data-quality/audit.json
+          cp work/groww/shared/validation-2025/cash-5m/manifest.json outputs/quick-flip-data-quality/data-manifest.json
+
+      - name: Upload audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: quick-flip-2025-data-quality-${{ github.run_id }}
+          path: outputs/quick-flip-data-quality/
+          if-no-files-found: error
+          retention-days: 14
