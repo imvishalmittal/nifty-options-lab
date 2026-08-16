@@ -93,16 +93,13 @@ export default function PaperLedger() {
   const years = useMemo(() => Array.from(new Set(rows.map((r) => r.date.slice(0, 4)))).sort().reverse(), [rows]);
   const months = useMemo(() => Array.from(new Set(rows.filter((r) => year === "ALL" || r.date.startsWith(`${year}-`)).map((r) => r.date.slice(0, 7)))).sort().reverse(), [rows, year]);
   const trailSteps = useMemo(() => Array.from(new Set(rows.filter((r) => r.strategy === V3).map((r) => r.trailStepPoints).filter((v): v is number => v !== undefined))).sort((a,b) => a-b), [rows]);
-
-  useEffect(() => {
-    if (strategyMode === "V3" && trailSteps.length && !trailSteps.includes(Number(trailStep))) setTrailStep(String(trailSteps[0]));
-  }, [strategyMode, trailStep, trailSteps]);
+  const effectiveTrailStep = trailSteps.includes(Number(trailStep)) ? Number(trailStep) : (trailSteps[0] ?? 5);
 
   const displayed = useMemo(() => {
     const wantedStrategy = strategyMode === "V2" ? V2 : V3;
     const base = rows.map((trade, index) => ({ trade, originalRow: index + 1 })).filter(({ trade }) => {
       if (trade.strategy !== wantedStrategy) return false;
-      if (strategyMode === "V3" && trade.trailStepPoints !== Number(trailStep)) return false;
+      if (strategyMode === "V3" && trade.trailStepPoints !== effectiveTrailStep) return false;
       if (year !== "ALL" && !trade.date.startsWith(`${year}-`)) return false;
       if (month !== "ALL" && !trade.date.startsWith(month)) return false;
       if (callType !== "ALL" && trade.callType !== callType) return false;
@@ -112,7 +109,7 @@ export default function PaperLedger() {
     });
     base.sort((a,b) => { const av = sortKey === "rowNo" ? a.originalRow : a.trade[sortKey as keyof PaperTrade]; const bv = sortKey === "rowNo" ? b.originalRow : b.trade[sortKey as keyof PaperTrade]; const result = compareValues(av,bv); return sortDir === "asc" ? result : -result; });
     return base;
-  }, [rows, year, month, callType, strategyMode, trailStep, pnlFilter, sortKey, sortDir]);
+  }, [rows, year, month, callType, strategyMode, effectiveTrailStep, pnlFilter, sortKey, sortDir]);
 
   const totalPnl = displayed.reduce((s,r) => s + r.trade.totalPnl, 0); const profits = displayed.filter((r) => r.trade.totalPnl > 0).length;
   const losses = displayed.filter((r) => r.trade.totalPnl < 0); const beReached = displayed.filter((r) => r.trade.breakevenReached === true).length;
@@ -126,7 +123,7 @@ export default function PaperLedger() {
 
     <div className={styles.filters}>
       <label><span>Strategy</span><select value={strategyMode} onChange={(e) => setStrategyMode(e.target.value as StrategyMode)}><option value="V2">V2 · Momentum trail</option><option value="V3">V3 · Stepped trail</option></select></label>
-      {strategyMode === "V3" && <label><span>Stepped points</span><select value={trailStep} onChange={(e) => setTrailStep(e.target.value)}>{trailSteps.map((v) => <option key={v} value={String(v)}>{num.format(v)} pts</option>)}</select></label>}
+      {strategyMode === "V3" && <label><span>Stepped points</span><select value={String(effectiveTrailStep)} onChange={(e) => setTrailStep(e.target.value)}>{trailSteps.map((v) => <option key={v} value={String(v)}>{num.format(v)} pts</option>)}</select></label>}
       <label><span>Year</span><select value={year} onChange={(e) => { setYear(e.target.value); setMonth("ALL"); }}><option value="ALL">All years</option>{years.map((v) => <option key={v}>{v}</option>)}</select></label>
       <label><span>Month</span><select value={month} onChange={(e) => setMonth(e.target.value)}><option value="ALL">All months</option>{months.map((v) => <option key={v} value={v}>{new Date(`${v}-01T00:00:00`).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</option>)}</select></label>
       <label><span>Call type</span><select value={callType} onChange={(e) => setCallType(e.target.value as "ALL" | CallType)}><option value="ALL">All</option><option value="CE">CE</option><option value="PE">PE</option></select></label>
