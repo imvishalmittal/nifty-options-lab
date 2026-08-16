@@ -7,7 +7,7 @@ type CallType = "CE" | "PE";
 type PnlFilter = "ALL" | "PROFIT" | "LOSS";
 type SortDir = "asc" | "desc";
 type Source = "BACKTEST" | "PAPER";
-type DataSource = "github" | "published" | null;
+type DataSource = "proxy" | "published" | null;
 
 type PaperTrade = {
   source?: Source;
@@ -41,7 +41,6 @@ type SortKey = "rowNo" | keyof PaperTrade;
 
 const money = new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const num = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 });
-const LIVE_LEDGER_URL = "https://raw.githubusercontent.com/imvishalmittal/nifty-options-lab/main/public/paper/trades.json";
 
 const columns: Array<{ key: SortKey; label: string }> = [
   { key: "rowNo", label: "#" },
@@ -118,6 +117,7 @@ export default function PaperLedger() {
   const [month, setMonth] = useState("ALL");
   const [callType, setCallType] = useState<"ALL" | CallType>("ALL");
   const [strategy, setStrategy] = useState("ALL");
+  const [trailStep, setTrailStep] = useState("ALL");
   const [pnlFilter, setPnlFilter] = useState<PnlFilter>("ALL");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -129,7 +129,7 @@ export default function PaperLedger() {
     let active = true;
     const load = async () => {
       const sources: Array<{ url: string; source: Exclude<DataSource, null> }> = [
-        { url: `${LIVE_LEDGER_URL}?t=${Date.now()}`, source: "github" },
+        { url: `/api/paper-trades?t=${Date.now()}`, source: "proxy" },
         { url: `/paper/trades.json?t=${Date.now()}`, source: "published" },
       ];
       for (const candidate of sources) {
@@ -147,7 +147,7 @@ export default function PaperLedger() {
           }
           return;
         } catch {
-          // Try the published-site snapshot if the live GitHub ledger is unreachable.
+          // Fall back to the published-site snapshot if the live proxy is unavailable.
         }
       }
       if (active) { setLoadState("error"); setDataSource(null); }
@@ -162,6 +162,10 @@ export default function PaperLedger() {
     .filter((row) => year === "ALL" || row.date.startsWith(`${year}-`))
     .map((row) => row.date.slice(0, 7)))).sort().reverse(), [rows, year]);
   const strategies = useMemo(() => Array.from(new Set(rows.map((row) => row.strategy).filter(Boolean) as string[])).sort(), [rows]);
+  const trailSteps = useMemo(() => Array.from(new Set(rows
+    .map((row) => row.trailStepPoints)
+    .filter((value): value is number => value !== undefined)))
+    .sort((a, b) => a - b), [rows]);
 
   const displayed = useMemo(() => {
     const base = rows.map((trade, index) => ({ trade, originalRow: index + 1 })).filter(({ trade }) => {
@@ -169,6 +173,7 @@ export default function PaperLedger() {
       if (month !== "ALL" && !trade.date.startsWith(month)) return false;
       if (callType !== "ALL" && trade.callType !== callType) return false;
       if (strategy !== "ALL" && trade.strategy !== strategy) return false;
+      if (trailStep !== "ALL" && trade.trailStepPoints !== Number(trailStep)) return false;
       if (pnlFilter === "PROFIT" && trade.totalPnl <= 0) return false;
       if (pnlFilter === "LOSS" && trade.totalPnl >= 0) return false;
       return true;
@@ -180,7 +185,7 @@ export default function PaperLedger() {
       return sortDir === "asc" ? result : -result;
     });
     return base;
-  }, [rows, year, month, callType, strategy, pnlFilter, sortKey, sortDir]);
+  }, [rows, year, month, callType, strategy, trailStep, pnlFilter, sortKey, sortDir]);
 
   const totalPnl = displayed.reduce((sum, row) => sum + row.trade.totalPnl, 0);
   const profits = displayed.filter((row) => row.trade.totalPnl > 0).length;
@@ -200,7 +205,7 @@ export default function PaperLedger() {
       <div><p className={styles.eyebrow}>Backtest + live paper journal</p><h2>Trade ledger</h2>
         <p>Historical V2 rows stay reproducible. Peak/MFE shows how far each trade moved in our favour before its final outcome; V3 paper rows expose stepped-trail behavior and costs.</p></div>
       <div className={styles.status}><span className={loadState === "ok" ? styles.ok : styles.warn} />
-        {loadState === "loading" ? "Loading…" : loadState === "error" ? "Journal unavailable" : `${dataSource === "github" ? "Live GitHub ledger" : "Published snapshot"} · Updated ${lastUpdated}`}</div>
+        {loadState === "loading" ? "Loading…" : loadState === "error" ? "Journal unavailable" : `${dataSource === "proxy" ? "Live GitHub ledger" : "Published snapshot"} · Updated ${lastUpdated}`}</div>
     </div>
 
     <div className={styles.filters}>
@@ -212,6 +217,8 @@ export default function PaperLedger() {
         <option value="ALL">All</option><option value="CE">CE</option><option value="PE">PE</option></select></label>
       <label><span>Strategy</span><select value={strategy} onChange={(e) => setStrategy(e.target.value)}>
         <option value="ALL">All strategies</option>{strategies.map((value) => <option key={value}>{value}</option>)}</select></label>
+      <label><span>Trail step</span><select value={trailStep} onChange={(e) => setTrailStep(e.target.value)}>
+        <option value="ALL">All steps</option>{trailSteps.map((value) => <option key={value} value={String(value)}>{num.format(value)} pts</option>)}</select></label>
       <label><span>Profit / Loss</span><select value={pnlFilter} onChange={(e) => setPnlFilter(e.target.value as PnlFilter)}>
         <option value="ALL">All trades</option><option value="PROFIT">Profit only</option><option value="LOSS">Loss only</option></select></label>
     </div>
