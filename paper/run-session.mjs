@@ -110,7 +110,15 @@ function appendTrade(row) {
   if (fs.existsSync(JOURNAL)) payload = JSON.parse(fs.readFileSync(JOURNAL, 'utf8'));
   payload.trades = Array.isArray(payload.trades) ? payload.trades : [];
   if (!payload.trades.some((trade) => trade.source === 'PAPER' && trade.date === row.date)) payload.trades.push(row);
-  payload.meta = { ...payload.meta, strategy: 'NIFTY ₹180 Momentum V2', capital: PAPER_RULES.capital, trailGapPoints: PAPER_RULES.trailGap, paperMode: true, lastPaperSession: row.date };
+  payload.meta = {
+    ...payload.meta,
+    strategy: 'NIFTY ₹180 Stepped Trail V3',
+    capital: PAPER_RULES.capital,
+    trailGapPoints: PAPER_RULES.trailGap,
+    trailStepPoints: PAPER_RULES.trailStep,
+    paperMode: true,
+    lastPaperSession: row.date,
+  };
   fs.writeFileSync(JOURNAL, JSON.stringify(payload, null, 2));
 }
 
@@ -118,7 +126,7 @@ async function main() {
   const token = process.env.GROWW_ACCESS_TOKEN;
   if (!token) throw new Error('GROWW_ACCESS_TOKEN is required');
   const { date } = indiaParts();
-  writeStatus({ date, status: 'STARTING', rules: PAPER_RULES });
+  writeStatus({ date, status: 'STARTING', strategy: 'NIFTY ₹180 Stepped Trail V3', rules: PAPER_RULES });
   await waitUntil('09:27');
 
   let spotCandles = [];
@@ -191,12 +199,34 @@ async function main() {
   if (!position.exit) { writeStatus({ date, status: 'ERROR', reason: 'No executable exit' }); return; }
   const units = lots * PAPER_RULES.lotSize;
   const pnl = optionCosts(position.entry, position.exit.price, units, date);
+  const mfe = position.peakHigh - position.entry;
   const row = {
-    source: 'PAPER', date, indexStockName: 'NIFTY 50', weeklyExpiry: expiry, lots, callType: chosen.side,
-    strikePrice: chosen.strike, startTarget: PAPER_RULES.trailActivation, startStopLoss: PAPER_RULES.initialStop,
-    endStopLoss: Number(position.activeStop.toFixed(2)), entryTime: timeOf(position.entryTime), exitTime: timeOf(position.exit.time),
-    stopLossAdjustments: Math.max(0, position.stopHistory.length - 1), totalPnl: Number(pnl.net.toFixed(2)),
-    entryPremium: position.entry, exitPremium: position.exit.price, exitReason: position.exit.result,
+    source: 'PAPER',
+    strategy: 'NIFTY ₹180 Stepped Trail V3',
+    strategyVersion: 'V3',
+    date,
+    indexStockName: 'NIFTY 50',
+    weeklyExpiry: expiry,
+    lots,
+    callType: chosen.side,
+    strikePrice: chosen.strike,
+    startTarget: Number((position.entry + PAPER_RULES.trailGap).toFixed(2)),
+    startStopLoss: PAPER_RULES.initialStop,
+    endStopLoss: Number(position.activeStop.toFixed(2)),
+    entryTime: timeOf(position.entryTime),
+    exitTime: timeOf(position.exit.time),
+    stopLossAdjustments: Math.max(0, position.stopHistory.length - 1),
+    totalPnl: Number(pnl.net.toFixed(2)),
+    entryPremium: position.entry,
+    peakPremium: Number(position.peakHigh.toFixed(2)),
+    maxFavorableMove: Number(mfe.toFixed(2)),
+    breakevenReached: mfe >= PAPER_RULES.trailGap,
+    trailGapPoints: PAPER_RULES.trailGap,
+    trailStepPoints: PAPER_RULES.trailStep,
+    exitPremium: position.exit.price,
+    exitReason: position.exit.result,
+    grossPnl: Number(pnl.gross.toFixed(2)),
+    charges: Number(pnl.charges.toFixed(2)),
   };
   appendTrade(row);
   writeStatus({ date, status: 'CLOSED', trade: row, grossPnl: pnl.gross, charges: pnl.charges });
