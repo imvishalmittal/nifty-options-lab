@@ -8,7 +8,7 @@
 - Next.js compatibility APIs
 - Vinext/Vite
 - Cloudflare-compatible worker output
-- OpenAI Sites project integration
+- OpenAI Sites integration
 - GitHub Actions for CI, research, ledger backfill, and paper sessions
 
 ## Setup
@@ -27,80 +27,65 @@ npm ci
 | `npm run lint` | Run ESLint |
 | `npm run build` | Build and validate worker artifact |
 | `npm test` | Build, validate, and test rendered HTML |
-| `node --test tests/paper-engine.test.mjs` | Test paper strategy mechanics |
+| `node --test tests/paper-engine.test.mjs` | Test current paper mechanics |
+| `node --test tests/nifty-180-stepped-trail.test.mjs` | Test V3 stepped-trail mechanics |
 | `npm run validate:artifact` | Validate an existing build artifact |
 
-Research workflows run additional strategy-specific tests directly with Node's test runner.
-
-## Current source responsibilities
+## Source responsibilities
 
 - `app/page.tsx` — legacy learning dashboard.
 - `app/paper/page.tsx` — paper dashboard route.
-- `app/paper-ledger.tsx` — filters/sorting/table presentation.
-- `paper/paper-engine.mjs` — deterministic forward paper mechanics.
+- `app/paper-ledger.tsx` — version-aware filters/sorting/outcome table.
+- `paper/paper-engine.mjs` — current forward paper mechanics.
 - `paper/run-session.mjs` — Groww-backed continuous paper session.
-- `paper/build-ledger.mjs` — validated artifact normalization.
-- `research/` — historical strategy and robustness tooling.
-- `public/paper/` — ledger/status files consumed by the dashboard.
+- `paper/build-ledger.mjs` — accepted historical artifact normalization.
+- `research/nifty-180-momentum-trail.mjs` — preserved V2 mechanics.
+- `research/nifty-180-stepped-trail.mjs` — V3 stepped mechanics.
+- `research/groww-backtest-nifty-180-stepped.mjs` — 5-vs-10 step comparison.
+- `research/stepped-result-integrity.mjs` — V3 artifact completeness gate.
+- `public/paper/` — ledger/status consumed by the dashboard.
 
 ## Implementation rules
 
 - Keep strategy mechanics deterministic and separate from display text.
-- Never use an incomplete one-minute candle to create a signal or tighten a stop.
-- A trailing stop derived from a completed bar becomes effective only on the next bar.
-- Do not silently change frozen paper thresholds.
-- Treat a different rule as a separately named strategy version/hypothesis.
-- Do not add broker execution under a generic paper/dashboard feature.
-- Reject partial, stale, missing, authentication-failed, rate-limited, CI-failed, or integrity-failed artifacts as accepted evidence.
-- Update `STRATEGY_SPEC.md`, tests, `DECISIONS.md`, and `CHANGELOG.md` when mechanics change.
+- Never use incomplete one-minute candles to signal or tighten a stop.
+- A stop derived from a completed bar becomes effective only on the next bar.
+- Stops never move lower.
+- Do not silently redefine V2; new mechanics are V3 or a later named version.
+- Keep 5-point and 10-point V3 step comparisons on the same 20-point gap and same entry/cost assumptions.
+- Do not add broker execution under paper/dashboard work.
+- Reject partial, stale, missing, auth-failed, rate-limited, CI-failed, or integrity-failed artifacts as accepted evidence.
+- Update strategy spec, tests, decisions, roadmap/safety where applicable, README, and changelog when mechanics change.
 
 ## CI expectations
 
-Every material UI/paper change should run at least:
+Every material UI/paper change should run:
 
 ```bash
 npm run lint
 npm test
-node --test tests/paper-engine.test.mjs
+node --test tests/paper-engine.test.mjs tests/nifty-180-stepped-trail.test.mjs
 ```
 
-Strategy research changes should also run the relevant V1/V2 runner and integrity tests.
+Research changes must also run their workflow-specific tests and integrity gates.
 
 ## GitHub workflows
 
-The repository currently uses GitHub Actions for:
+- `CI` validates application and deterministic tests.
+- `NIFTY Paper Session` starts around 09:20 IST Monday-Friday and runs one continuous paper session.
+- `NIFTY 180 Stepped Trail 2025` compares V3 5-point and 10-point steps.
+- V2 research/backfill and negative controls remain available for audit/history.
 
-- CI;
-- 2025/2026 NIFTY ₹180 historical research;
-- negative-control research;
-- validated artifact backfill;
-- one continuous weekday paper session.
-
-The paper session intentionally does **not** schedule a job every minute. A single job begins around 09:20 IST and polls market data throughout the session. This is acceptable for paper observation, not an endorsement of GitHub Actions for production live-order execution.
-
-Groww-heavy jobs share a serialized concurrency group and request spacing to reduce provider throttling/rate-limit failures.
+The paper workflow intentionally does not schedule every minute. GitHub Actions is being evaluated only for paper observation, not production live-order execution.
 
 ## Secrets
 
-- `GROWW_ACCESS_TOKEN` is stored as a GitHub Actions secret and must never be committed.
-- Do not commit `.env*` files.
-- Prefer read-only market-data credentials.
-- No broker order credentials are required or permitted by the current paper workflow.
+`GROWW_ACCESS_TOKEN` is stored as a GitHub Actions secret and is used only for market-data access in the current workflow. Do not commit tokens or `.env*` files. No broker order credential is required or permitted.
 
 ## ChatGPT Sites deployment
 
-`.openai/hosting.json` binds the repository to the existing Sites project. Preserve that identity.
-
-Important release distinction:
-
-```text
-GitHub main updated + CI green
-        ≠
-public chatgpt.site build automatically updated
-```
-
-The public Sites project may need an explicit republish after source changes. Verify the public route after deployment rather than assuming it from repository state.
+`.openai/hosting.json` preserves the existing Sites project identity. GitHub `main` being current and CI-green does not itself prove the public `chatgpt.site` build is current; republish and direct verification are separate release steps.
 
 ## Paper ledger updates
 
-Historical backfill writes normalized validated rows into `public/paper/trades.json`. Forward paper sessions append completed `PAPER` rows while preserving existing validated `BACKTEST` rows. Avoid manual edits to trade outcomes except to repair a demonstrable data/serialization bug with an auditable commit.
+Forward V3 paper rows record strategy version, entry/peak/exit premium, MFE, trail step/gap, gross-breakeven state, exit reason, gross P/L, charges, and net P/L. Existing V2 rows remain untouched; unavailable historical fields display as `—`.
