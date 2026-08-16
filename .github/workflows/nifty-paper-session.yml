@@ -23,9 +23,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run deterministic paper session
+      - name: Resolve Groww access token
         env:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run deterministic paper session
+        env:
           GROWW_REQUEST_SPACING_MS: '1500'
         run: node paper/run-session.mjs
       - name: Persist paper journal
