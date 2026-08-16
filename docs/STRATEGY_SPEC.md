@@ -2,160 +2,133 @@
 
 ## Purpose
 
-This document freezes the V0.1 decision rules so UI copy, future AI extraction,
-market-data automation, tests, and backtests all evaluate the same strategy.
+This document separates the original V0.1 learning dashboard from the current research/paper strategy so historical results and future paper trades remain auditable.
 
-The engine classifies a setup. It does not predict the future and does not
-execute an order.
+The current forward-observation strategy is **NIFTY ₹180 Momentum V2**. It is paper-only and does not place broker orders.
 
-## Inputs
+## Legacy V0.1
 
-### Evidence
+The original `/` dashboard remains available as a learning tool for manually verified 15-minute/5-minute chart facts, EMA22/ADX/DI direction checks, one-OTM contract education, and conservative wait/no-trade states. Those rules are preserved as a named baseline; they are not the automated paper strategy.
 
-- 15-minute NIFTY chart screenshot
-- 5-minute NIFTY chart screenshot
-- optional nearest-weekly option-chain screenshot
+## Momentum V2 — frozen paper rule
 
-In V0.1 the screenshots are supporting evidence only. A user verifies the
-normalized values.
+### Underlying and contracts
 
-### Normalized 15-minute facts
+- Underlying: NIFTY only.
+- Direction: long CE or long PE only.
+- Expiry: nearest weekly expiry available for the session date.
+- At 09:25, use NIFTY spot and progressively inspect nearest ITM CE and PE candidates.
+- Select the usable CE and PE whose 09:25 premium is closest to ₹180.
+- The candidate search must bracket ₹180 within its configured depth; otherwise classify the session as a data/candidate boundary instead of forcing a contract.
 
-- NIFTY spot price
-- price relation to EMA22: above, below, or unclear
-- EMA22 slope: rising, falling, or flat
-- ADX(14)
-- +DI
-- -DI
+### Signal
 
-### Normalized 5-minute facts
+For each selected CE/PE contract, evaluate completed 1-minute candles.
 
-- pullback near EMA22: yes/no
-- rejection candle: yes/no
-- breakout confirmation: yes/no
-- confirmation level
-- NIFTY invalidation level
-- data freshness and timeframe validity
-
-### Contract and risk facts
-
-- nearest weekly expiry
-- one-OTM premium
-- option stop premium
-- whether today is expiry day
-- whether a trade has already been taken today
-
-## Direction filters
-
-### Bullish
-
-All conditions must be true:
+A confirmation exists when:
 
 ```text
-price above EMA22
-EMA22 rising
-ADX(14) > 20
-+DI > -DI
+previous close <= 180
+current completed close > 180
+09:30 <= current candle start < 09:45
 ```
 
-The permitted direction is CALL.
+- If neither side confirms, there is no trade.
+- If CE and PE confirm in the same minute, the day is ambiguous and no trade is taken.
+- Otherwise the side with the earlier confirmation is selected.
 
-### Bearish
+### Entry
 
-All conditions must be true:
+- Enter at the **next 1-minute bar open** after the confirmed crossing.
+- Entry must be strictly above ₹160 and strictly below ₹220.
+- A next-bar entry at/after the cutoff is invalid.
+- Historical fills are simulated from candle data; they are not reconstructed sub-minute broker fills.
+
+### Stop and momentum trail
+
+Initial active stop:
 
 ```text
-price below EMA22
-EMA22 falling
-ADX(14) > 20
--DI > +DI
+₹160
 ```
 
-The permitted direction is PUT.
-
-If neither filter passes, the result is `NO TRADE`.
-
-## State precedence
-
-The first matching state wins:
-
-1. `DATA UNCERTAIN`
-   - both required chart screenshots/sample evidence are not present; or
-   - timeframe validation fails; or
-   - data freshness validation fails.
-2. `NO TRADE`
-   - neither direction filter passes.
-3. `WAIT FOR PULLBACK`
-   - direction passes; and
-   - 5-minute pullback is absent.
-4. `WAIT FOR CONFIRMATION`
-   - pullback exists; and
-   - rejection or breakout confirmation is absent.
-5. `CALL READY` or `PUT READY`
-   - direction, pullback, rejection, and breakout confirmation pass; and
-   - every safety gate passes.
-6. `NO TRADE`
-   - technical setup passes but at least one safety gate fails.
-
-## Contract resolution
-
-V0.1 uses a 50-point strike interval:
+Trail activation:
 
 ```text
-ATM = round(NIFTY spot / 50) × 50
-CALL one OTM = ATM + 50
-PUT one OTM  = ATM - 50
+completed-bar peak >= ₹220
 ```
 
-The selected expiry must be the nearest weekly expiry.
-
-The configured one-lot quantity is 65 units. Exchange specifications can
-change, so this value must become provider/configuration-driven before live use.
-
-## Risk calculations
+Forward paper trail gap:
 
 ```text
-capital required = option premium × lot size
-risk points      = max(0, entry premium - stop premium)
-maximum loss     = risk points × lot size
-2R target        = entry premium + (2 × risk points)
-3R level         = entry premium + (3 × risk points)
+20 premium points
 ```
 
-All ready states require:
+After each fully completed 1-minute bar:
 
-- capital required ≤ ₹5,000;
-- stop premium > 0;
-- stop premium < entry premium;
-- maximum loss > 0 and ≤ ₹300;
-- nearest weekly expiry is present;
-- today is not expiry day;
-- no earlier trade today.
+```text
+proposed stop = max(160, peak premium - 20)
+active stop   = max(previous active stop, proposed stop)
+```
 
-The NIFTY structure invalidation remains primary. The premium stop is an
-estimate for learning and must not contradict the underlying invalidation.
+The updated stop becomes effective only from the **next** bar. This prevents same-bar look-ahead.
 
-## Non-rules
+Stop execution model:
 
-The following are deliberately excluded from V0.1:
+- stop check occurs before calculating a new stop from that candle;
+- if the next bar opens below the active stop, exit at that bar open;
+- otherwise if the bar trades through the active stop, exit at the stop price;
+- the stop never moves lower.
 
-- option selling;
-- automatic broker execution;
-- averaging down;
-- overnight positions;
-- more than one trade per day;
-- moving the stop farther after entry;
-- selecting a farther OTM strike because the one-OTM contract is unaffordable;
-- forcing a trade when data is unclear;
-- changing thresholds based on recent wins or losses.
+### Session end
 
-## Change control
+There is no overnight carry. If no stop exits the position, use the final available completed bar through 15:29 as the session exit fallback.
 
-Do not modify strategy thresholds based on anecdotal outcomes. Proposed
-strategy changes should:
+### Position sizing
 
-1. be implemented as a separately named variant;
-2. include deterministic tests;
-3. be evaluated over an adequate paper-trade/backtest sample;
-4. preserve the V0.1 baseline for comparison;
-5. be documented in the changelog and an architecture decision.
+Forward paper capital is ₹60,000.
+
+```text
+lots = floor(capital / (entry premium × lot size))
+units = lots × lot size
+```
+
+Only whole lots are allowed. Historical studies use the lot size applicable to their period; current paper sessions use the configured current NIFTY lot size.
+
+### Costs and slippage
+
+Research and ledger P/L include modeled NSE/Groww option transaction costs with date-sensitive STT. Historical robustness analysis also includes adverse slippage scenarios.
+
+The dashboard's historical rows therefore represent **historical-market-data simulations with modeled execution/costs**, not real trades.
+
+## Development/holdout discipline
+
+- 2025 is the V2 development period.
+- Predeclared trail gaps of 5/10/15/20 points may be compared in 2025 research.
+- Forward paper observation is frozen at 20 points unless a new, separately named hypothesis is created and evaluated prospectively.
+- 2026 is holdout evidence; the dashboard/holdout process consumes the frozen 20-point variant rather than choosing a better trail after seeing 2026.
+- Integrity-failed months are excluded from evidence.
+
+## Known 12-Aug-2025 benchmark
+
+The known historical broker screenshot trade was NIFTY 14-Aug-2025 24500 CE, approximately ₹184.15 entry at 09:31:29 and ₹244.05 exit at 10:02:40.
+
+The research engine independently selected the same contract/date family. That benchmark is a fidelity check, not a tuning target. A trail must be judged across the full development sample, not selected because it best reproduces one winning trade.
+
+## Non-rules / prohibited tuning
+
+Do not:
+
+- place live broker orders from this system;
+- average down;
+- carry overnight;
+- use incomplete one-minute candles to move a stop;
+- move a stop lower;
+- accept same-minute CE/PE ambiguity;
+- force a contract when ₹180 is not bracketed;
+- treat stale, missing, rate-limited, authentication-failed, CI-failed, or integrity-failed data as valid evidence;
+- change the frozen paper trail merely because a different trail improves a known outcome.
+
+## Readiness gate
+
+Live-money automation is not justified until the frozen strategy shows credible historical/holdout behavior and then survives a meaningful forward paper period with reliable market-data, execution, cost, and operational controls.

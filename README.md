@@ -1,158 +1,128 @@
 # NIFTY Options Lab
 
-A conservative, mobile-friendly learning dashboard for evaluating one specific
-intraday NIFTY options setup.
+A conservative NIFTY options research and paper-trading lab built around deterministic rules, historical actual-contract backtests, and forward paper observation.
 
-**Live dashboard:** [nifty-options-lab.imvishalmittal.chatgpt.site](https://nifty-options-lab.imvishalmittal.chatgpt.site)
+**Hosted root dashboard:** https://nifty-options-lab.imvishalmittal.chatgpt.site/
 
-> This project is for education, paper trading, and decision support. It does
-> not provide investment advice, guarantee outcomes, connect to a broker, or
-> place orders.
+> The project is for research, education, and paper trading. It does not place broker orders or guarantee profitable outcomes.
 
-## What it does
+## Current system
 
-The dashboard turns user-verified chart facts into a deterministic decision:
+The repository now contains two distinct paths:
 
-```text
-15-minute trend facts
-        +
-5-minute entry facts
-        +
-weekly option and risk facts
-        ↓
-fixed rules and safety gates
-        ↓
-DATA UNCERTAIN / NO TRADE / WAIT / CALL READY / PUT READY
-```
+1. **Legacy learning dashboard (V0.1)** at `/` — manual/screenshot-based chart-fact learning UI.
+2. **Momentum paper system (V2)** at `/paper` — historical trade ledger plus forward paper-trading journal. The route is present in `main`; the hosted Sites build may require republishing before the public `/paper` URL reflects the newest code.
 
-Current capabilities:
+## Current paper strategy — NIFTY ₹180 Momentum V2
 
-- upload and preview 15-minute and 5-minute NIFTY screenshots;
-- optionally upload an option-chain screenshot;
-- review or edit the facts visible in those screenshots;
-- apply EMA22, ADX(14), and directional-indicator rules;
-- distinguish no-trade, pullback-waiting, confirmation-waiting, and ready states;
-- resolve the nearest 50-point ATM strike and exactly one OTM strike;
-- calculate one-lot capital, stop risk, 2R target, and tracked 3R level;
-- block trades that exceed ₹5,000 capital or ₹300 intended risk;
-- block expiry-day trades and a second trade on the same day;
-- load a guided sample for learning and regression checks.
+The forward paper rule is frozen for observation; it must not be tuned based on tomorrow's outcome or one known historical trade.
 
-## Frozen V0.1 strategy
-
-| Parameter | Rule |
+| Parameter | Paper rule |
 | --- | --- |
 | Underlying | NIFTY only |
-| Direction | Buy CE or PE only; never sell options |
-| Expiry | Nearest weekly expiry |
-| Strike | Exactly one strike OTM |
-| Position | One lot |
-| Learning capital | ₹5,000 |
-| Intended maximum loss | ₹300 per trade |
-| Trend timeframe | 15 minutes |
-| Entry timeframe | 5 minutes |
-| Bullish filter | Price above rising EMA22, ADX > 20, +DI > -DI |
-| Bearish filter | Price below falling EMA22, ADX > 20, -DI > +DI |
-| Setup | Pullback toward 5-minute EMA22 |
-| Trigger | Rejection followed by breakout confirmation |
-| Exit | 2R; record whether 3R was subsequently reached |
-| Daily frequency | Maximum one learning trade |
-| Exclusions | No expiry day, averaging, overnight holding, or automatic execution |
+| Direction | Buy CE or PE only |
+| Contract source | Actual nearest weekly NIFTY option contracts from Groww historical/current data |
+| Selection reference | ITM CE/PE premium closest to ₹180 at 09:25, using progressive bounded search |
+| Signal window | Completed 1-minute crossing above ₹180 from 09:30 until before 09:45 |
+| Entry | Next completed/executable 1-minute bar open; entry must be > ₹160 and < ₹220 |
+| Starting stop | ₹160 |
+| Trail activation | Completed 1-minute bar peak reaches ₹220 |
+| Trail | 20 premium points below completed-bar peak; stop only moves upward and becomes effective from the next bar |
+| Ambiguity | Same-minute CE and PE signal is rejected |
+| Overnight | Never; final intraday fallback is 15:29 |
+| Model capital | ₹60,000 |
+| Position sizing | Whole lots affordable from model capital and date-correct lot size |
+| Execution | Paper only; no broker order placement |
+| Costs | Date-sensitive transaction costs plus explicit slippage stress in research |
 
-The full, testable definition is in
-[docs/STRATEGY_SPEC.md](docs/STRATEGY_SPEC.md).
+Historical results use real historical option candles and contracts but simulated causal execution. They are not actual fills.
 
-## Important current limitation
+## Paper dashboard
 
-Screenshot files are previewed locally in the browser, but **V0.1 does not yet
-extract chart values with AI**. The user must verify or enter the displayed
-facts before running the rules engine. This is intentional: the deterministic
-engine should never convert an uncertain image interpretation directly into a
-trade-ready result.
+The `/paper` table includes:
 
-The currently configured lot size is `65` and the strike interval is `50`.
-Both are exchange-controlled values and must be verified against current NSE
-contract specifications before any live use.
+- row number;
+- date;
+- index/stock name;
+- weekly expiry;
+- number of lots;
+- CE/PE call type;
+- strike price;
+- starting target/trail activation;
+- starting stop loss;
+- ending stop loss;
+- trade entry time;
+- trade exit time;
+- stop-loss adjustment count;
+- total net profit/loss.
 
-## Decision states
+Filters: **year, month, CE/PE, profit/loss**. Every displayed column is sortable and rows use alternating shading.
 
-| State | Meaning |
-| --- | --- |
-| `DATA UNCERTAIN` | Required chart evidence, timeframe, or freshness is not verified |
-| `NO TRADE` | Trend rules fail or a safety gate blocks the setup |
-| `WAIT FOR PULLBACK` | The 15-minute direction is valid, but the 5-minute pullback is absent |
-| `WAIT FOR CONFIRMATION` | The pullback exists, but rejection/breakout confirmation is incomplete |
-| `CALL READY` | Every bullish rule and safety gate passes |
-| `PUT READY` | Every bearish rule and safety gate passes |
+The ledger currently contains **110 integrity-passed 2025 momentum trades** from Jan–Sep and Nov. October and December 2025 are intentionally excluded because their monthly completeness checks failed. A 2026 Jan–Aug holdout is being generated separately and only integrity-passed 20-point rows are eligible for the paper ledger.
 
-`READY` means eligible for a **paper learning trade**, not a prediction that
-the trade will be profitable.
+## Automation
 
-## Local development
+Key active GitHub Actions workflows include:
 
-### Prerequisites
+- `CI` — lint, build, rendered-site tests, and paper-engine regression tests.
+- `NIFTY 180 Momentum 2025` — monthly development research.
+- `NIFTY 180 Momentum 2026` — holdout validation.
+- `NIFTY Paper Session` — weekday continuous paper session starting around 09:20 IST.
+- `Paper Ledger Backfill` — converts validated research artifacts into the dashboard ledger.
+- Existing opening-range, quick-flip, stocks-in-play, and V1 ₹180 workflows remain as research history/negative controls.
 
-- Node.js 22.13 or newer
-- npm
-- Linux tooling used by the verified build scripts: `flock`, `curl`,
-  `sha256sum`, and GNU `timeout`
+Groww-heavy research jobs share a serialized API concurrency group to reduce rate-limit conflicts.
 
-### Run
+## Important methodology controls
 
-```bash
-npm ci
-npm run dev
-```
-
-### Validate
-
-```bash
-npm run lint
-npm test
-```
-
-`npm test` creates and validates the production worker artifact, then checks
-the rendered HTML contract.
+- No same-bar look-ahead for trailing-stop updates.
+- New stops become effective only after the source 1-minute bar has completed.
+- Invalid, partial, authentication-failed, rate-limited, CI-failed, or integrity-failed artifacts are not accepted as evidence.
+- 2025 is development evidence for V2; 2026 is treated as holdout evidence.
+- The paper rule is not changed merely because another trail gap matches a known winning trade more closely.
+- Live-money automation is out of scope until historical validation and forward paper evidence are both credible.
 
 ## Repository map
 
 ```text
 app/
-  page.tsx              Dashboard state, calculations, and UI
-  globals.css           Responsive design
-  layout.tsx            Metadata and root layout
-worker/
-  index.ts              Cloudflare worker entry point
-build/
-  sites-vite-plugin.ts  Hosting artifact integration
-scripts/                Reproducible install/build validation
-tests/                  Rendered artifact test
-docs/                   Strategy, architecture, safety, roadmap, and operations
-.github/workflows/      GitHub Actions CI
-.openai/hosting.json    Existing ChatGPT Sites project identity
+  page.tsx                 legacy learning dashboard
+  paper/page.tsx           paper dashboard route
+  paper-ledger.tsx         sortable/filterable trade ledger
+paper/
+  paper-engine.mjs         deterministic paper strategy mechanics
+  run-session.mjs          Groww-backed continuous paper session
+  build-ledger.mjs         research-artifact → dashboard ledger conversion
+public/paper/
+  trades.json              historical + forward paper trade ledger
+  session-status.json      paper-session status snapshot
+research/                   historical strategy engines/backtests
+.github/workflows/          CI, research, backfill, and paper workflows
+docs/                       current strategy, architecture, safety, roadmap, decisions
+.openai/hosting.json        existing ChatGPT Sites project identity
 ```
+
+## Validation
+
+```bash
+npm ci
+npm run lint
+npm test
+node --test tests/paper-engine.test.mjs
+```
+
+Research workflows also run their strategy-specific tests and monthly integrity gates.
 
 ## Documentation
 
-- [Strategy specification](docs/STRATEGY_SPEC.md)
+- [Current strategy specification](docs/STRATEGY_SPEC.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Safety and limitations](docs/SAFETY_AND_LIMITATIONS.md)
-- [Development and deployment](docs/DEVELOPMENT.md)
+- [Development](docs/DEVELOPMENT.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Architecture decisions](docs/DECISIONS.md)
-- [Contributing](CONTRIBUTING.md)
-- [Security policy](SECURITY.md)
 - [Changelog](CHANGELOG.md)
 
-## Project boundaries
+## Project boundary
 
-This repository is intentionally separate from `global-trading-lab`. That
-system covers broader India/US research and automated observation. NIFTY
-Options Lab has a narrower intraday learning workflow, screenshot inputs,
-stricter safety requirements, and a different future path for market-data and
-broker integrations.
-
-## License
-
-No open-source license has been granted yet. Copyright remains with the
-repository owner.
+This repository remains separate from `global-trading-lab`. NIFTY Options Lab is the focused options research/paper environment; the broader repository remains the India/US systematic research platform.

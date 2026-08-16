@@ -4,46 +4,64 @@
 
 **Decision:** Keep NIFTY Options Lab separate from `global-trading-lab`.
 
-**Reason:** The projects have different users, time horizons, interfaces, risk
-profiles, data freshness requirements, and future credentials. Separation
-prevents an intraday learning experiment from destabilizing the broader
-India/US research platform.
+**Reason:** The options lab has different data, execution, risk, UI, and paper-trading concerns from the broader India/US systematic research platform.
 
-## ADR-002: Deterministic decision engine
+## ADR-002: Deterministic strategy mechanics
 
-**Decision:** AI may extract and explain facts, but fixed code assigns the
-strategy state.
+**Decision:** Strategy state, entries, exits, stops, and trail updates are assigned by fixed code.
 
-**Reason:** Visual models can misread precise chart values. A deterministic
-engine is testable, auditable, and easier to compare across screenshot and
-automated-data paths.
+**Reason:** Deterministic mechanics are auditable, testable, and reproducible across backtests and forward paper sessions.
 
-## ADR-003: Human verification before readiness
+## ADR-003: Preserve legacy learning mode
 
-**Decision:** Critical screenshot facts require explicit verification.
+**Decision:** Keep the original screenshot/manual-fact V0.1 dashboard at `/` as a learning path rather than silently redefining it.
 
-**Reason:** A confident but incorrect value must not silently produce a
-trade-ready state. Uncertainty should fail closed.
+**Reason:** Historical meaning and educational value should remain stable even while research moves to a different automated strategy family.
 
-## ADR-004: Manual and paper execution
+## ADR-004: Paper only; no broker orders
 
-**Decision:** V0.1 stops at a paper-trade eligibility result.
+**Decision:** Momentum V2 may automate data collection and simulated trade management, but it must not place live orders.
 
-**Reason:** The user is learning options mechanics, and the strategy does not
-yet have adequate evidence, automated data validation, or operational controls
-for live execution.
+**Reason:** Historical evidence is still under validation and forward operational behavior has not yet been observed long enough.
 
-## ADR-005: GitHub Actions is CI, not a live signal loop
+## ADR-005: Continuous GitHub Actions session is acceptable for paper observation
 
-**Decision:** Use GitHub Actions for builds, tests, backtests, and journal
-validation, but not time-critical five-minute triggers.
+**Decision:** Use a single weekday GitHub Actions job that starts around 09:20 IST and stays alive through the market session for paper observation.
 
-**Reason:** Scheduled workflows can be delayed. Intraday evaluation requires a
-continuously available service that evaluates completed candles predictably.
+**Reason:** One-minute cron scheduling is unsuitable, but a continuous job can poll completed candles predictably enough for paper validation. This is not a claim that GitHub Actions is suitable for production live execution.
 
-## ADR-006: One frozen baseline
+## ADR-006: Causal completed-bar trailing stop
 
-**Decision:** Preserve V0.1 rules as a named baseline.
+**Decision:** Trail updates use only fully completed 1-minute bars and become effective from the next bar.
 
-**Reason:** Strategy changes should be evaluated as explicit variants rather
-than retroactively changing the meaning of historical paper trades.
+**Reason:** This prevents same-bar look-ahead and makes historical and forward paper mechanics comparable.
+
+## ADR-007: Freeze the forward paper trail at 20 points
+
+**Decision:** Forward paper observation uses a 20-point trail after ₹220 activation, with ₹160 initial stop and the ₹180 entry family.
+
+**Reason:** The paper observation needs one stable rule. A different trail must be introduced as a separately named hypothesis rather than selected because it better reproduces a known winner or improves already-seen holdout results.
+
+## ADR-008: 2025 development, 2026 holdout
+
+**Decision:** Use 2025 to characterize V2 variants; treat 2026 as holdout evidence for the frozen paper rule.
+
+**Reason:** Separating development and validation reduces post-hoc threshold selection.
+
+## ADR-009: Integrity gates override performance
+
+**Decision:** Missing, boundary, partial, authentication-failed, rate-limited, CI-failed, or integrity-failed periods are excluded from accepted evidence.
+
+**Reason:** A profitable-looking artifact is not useful if the underlying data/process is incomplete or unreliable.
+
+## ADR-010: GitHub ledger before database
+
+**Decision:** Use `public/paper/trades.json` and `session-status.json` as the current durable/auditable journal before adding a database.
+
+**Reason:** The current paper volume is small, repository history is easy to inspect, and this avoids adding persistence complexity before the workflow is proven. A database can replace it later when write frequency, retention, or concurrency require it.
+
+## ADR-011: Hosting and source deployment are separate states
+
+**Decision:** Treat GitHub `main` and the public ChatGPT Sites deployment as separate release states.
+
+**Reason:** Code can be merged and validated while the hosted `chatgpt.site` build still serves an older release until the Sites project is republished. Documentation and user messaging must not claim a route is live solely because it exists on `main`.

@@ -2,94 +2,87 @@
 
 ## Intended use
 
-NIFTY Options Lab is an educational and paper-trading tool. It helps a beginner
-follow a fixed checklist and understand why a setup is blocked, waiting, or
-eligible for paper execution.
+NIFTY Options Lab is a research, education, and paper-trading system. It is not financial advice, a prediction service, a SEBI-registered advisory product, a broker terminal, or an order-management system.
 
-It is not:
-
-- financial or investment advice;
-- a prediction service;
-- a SEBI-registered advisory product;
-- a broker terminal;
-- an order-management system;
-- a guarantee that displayed inputs, calculations, or outcomes are correct.
+The current automated path simulates trades only. It does **not** place, modify, or cancel broker orders.
 
 ## Financial risk
 
-Options can lose value rapidly, including the entire premium paid. Leverage,
-volatility, time decay, spreads, slippage, taxes, charges, and liquidity can
-make actual outcomes materially worse than simple premium calculations.
+Options can lose the entire premium rapidly. Volatility, time decay, spreads, slippage, fees, taxes, liquidity, and execution gaps can make real outcomes materially worse than a historical candle simulation.
 
-The ₹5,000 capital and ₹300 risk limits are learning constraints, not a claim
-that losses are negligible. Multiple losses and execution errors can still
-deplete the account.
+The ₹60,000 paper capital is an observation parameter, not a recommended account size or a guarantee that losses are bounded to a comfortable level.
 
-## Data limitations
+## Historical-backtest limitations
 
-V0.1 does not independently verify:
+Historical V2 results use real historical NIFTY option contracts/candles from Groww, but execution is simulated causally from one-minute bars.
 
-- live NIFTY prices;
-- candle completion;
-- EMA, ADX, or DI calculations;
-- exchange holidays or expiry adjustments;
-- current lot size or strike interval;
-- current option premium, spread, depth, or liquidity;
-- whether the entered expiry is truly the nearest weekly expiry;
-- whether the broker accepted or filled an order.
+Therefore backtests cannot know:
 
-Inputs must be confirmed from an authoritative market-data or broker surface.
-Exchange-controlled contract specifications must be checked before live use.
+- exact sub-minute fill timing;
+- queue position or partial fills;
+- bid/ask spread at the precise execution instant;
+- whether a broker stop would fill exactly at the modeled stop;
+- transient API/broker outages that could occur live.
 
-## Screenshot limitations
+Modeled transaction costs and slippage stress reduce, but do not remove, those limitations.
 
-Uploaded images are currently used for local preview only. No automated
-extraction occurs in V0.1.
+## Forward paper-data limitations
 
-When vision extraction is introduced:
+The paper session depends on Groww API availability and GitHub Actions runtime reliability. It can fail because of authentication, throttling, missing candles, delayed data, runner interruption, or incomplete contract metadata.
 
-- low-resolution or cropped screenshots must produce `DATA UNCERTAIN`;
-- every extracted value must include confidence and provenance;
-- critical facts must require user confirmation;
-- the deterministic rules engine must remain the only component that assigns a
-  strategy state;
-- screenshots must not be retained without an explicit policy and user intent.
+A provider/runtime failure must be recorded as a data/operational failure, not converted into a hypothetical successful trade.
 
-## Execution limitations
+## Candle-completion rule
 
-The dashboard does not:
+Signals and trailing-stop changes that rely on close/high/low must use only fully completed one-minute candles. The current bar must not be treated as complete merely because the provider returned it.
 
-- log in to a broker;
-- place, modify, or cancel orders;
-- monitor an open position;
-- enforce a stop;
-- calculate all fees and taxes;
-- prevent the user from trading outside the rules.
+A new trailing stop becomes effective only on the following bar. This conservative rule prevents same-bar look-ahead.
 
-All execution remains manual.
+## Contract-selection limitations
 
-## Safe failure
+The strategy selects actual weekly NIFTY contracts and searches progressively for premiums around ₹180. If the configured search depth does not bracket the reference premium or required data is absent, the session is invalid/boundary rather than a forced substitute.
 
-The system should prefer a missed trade to an unsafe recommendation.
+Lot sizes and exchange contract specifications change over time. Historical and current sizing must remain date/configuration aware.
 
-Any critical uncertainty should result in `DATA UNCERTAIN` or `NO TRADE`.
-Do not silently substitute:
+## Research-integrity limitations
 
-- a different strike;
-- a later expiry;
-- a wider stop;
-- a larger risk limit;
-- another trade after the daily limit.
+Do not use as strategy evidence any period that is:
 
-## Before considering live use
+- incomplete;
+- missing critical session data;
+- candidate-boundary invalid;
+- authentication failed;
+- materially rate-limited without recovery;
+- CI failed;
+- integrity-gate failed.
 
-At minimum:
+A profitable number does not override data-quality failure.
 
-1. complete a meaningful paper-trading sample;
-2. add deterministic unit tests for every state transition and edge case;
-3. source exchange specifications dynamically;
-4. account for charges, spread, and slippage;
-5. validate data freshness and completed candles automatically;
-6. implement an auditable journal;
-7. perform a security and privacy review;
-8. obtain appropriate professional and regulatory guidance.
+## Strategy-selection risk
+
+The 5/10/15/20-point trails were research variants. The current forward paper rule is frozen at 20 points.
+
+Do not switch to another trail because it reproduces the 12-Aug-2025 known winning trade more closely or because it performs better on already-seen 2026 data. That would convert holdout/paper evidence into tuning data.
+
+## Hosting limitation
+
+GitHub `main` and the public ChatGPT Sites deployment are separate release states. A route can exist in the repository while the public site still serves an older build until republished. Public availability must be verified directly.
+
+## Legacy screenshot dashboard
+
+The root `/` V0.1 learning interface still previews screenshots locally and requires user-verified facts. It should not be confused with the automated ₹180 Momentum V2 paper strategy.
+
+## Before live-money use
+
+At minimum, require:
+
+1. credible historical development and holdout evidence after realistic costs/slippage;
+2. a meaningful forward paper period using the unchanged rule;
+3. reliable provider freshness/contract selection and restart behavior;
+4. explicit hard risk limits and kill switches;
+5. robust logging/reconciliation for every signal, stop update, and exit;
+6. secure broker credential architecture separated from the client/UI;
+7. regulatory, security, and operational review;
+8. a new explicit approval decision for live execution.
+
+No current component should be interpreted as authorization for automatic real-money trading.
