@@ -3,6 +3,14 @@ import { parseCsv, isBullishHammer, isBearishShootingStar, isBullishEngulfing, i
 
 const CONTINUOUS_SESSION_END = '15:15';
 
+export const HISTORICAL_DATA_QUALITY = Object.freeze({
+  // Research-integrity limits, not strategy parameters. A continuous-session
+  // candle whose own prices span 2x is treated as corrupt, while a 20% jump
+  // between adjacent bars/sessions is treated as a structural price break.
+  maxCandlePriceRatio: 2,
+  maxPriceJumpFraction: 0.20,
+});
+
 const DEFAULTS = {
   openingStart: '09:15',
   openingEnd: '09:30',
@@ -43,41 +51,95 @@ function regularSessionRows(rows) {
   });
 }
 
-function dailyBars(days) {
-  return [...days.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, rows]) => {
-      // Exclude both 09:00 pre-open/auction candles and 15:15+ closing-auction
-      // candles so ATR is based on a stable continuous-session definition.
-      const regular = regularSessionRows(rows);
-      if (!regular.length) return null;
-      return {
-        date,
-        open: regular[0].open,
-        high: Math.max(...regular.map((c) => c.high)),
-        low: Math.min(...regular.map((c) => c.low)),
-        close: regular.at(-1).close,
-      };
-    })
-    .filter(Boolean);
+function priceJumpFraction(from, to) {
+  return from > 0 && to > 0 ? Math.abs((to / from) - 1) : Infinity;
+}
+
+function candleQualityIssue(candle, maxCandlePriceRatio) {
+  const prices = [candle.open, candle.high, candle.low, candle.close];
+  if (!prices.every((value) => Number.isFinite(value) && value > 0)) return 'NON_POSITIVE_OR_NON_FINITE_OHLC';
+  if (candle.high < Math.max(candle.open, candle.close)
+    || candle.low > Math.min(candle.open, candle.close)
+    || candle.high < candle.low) return 'MALFORMED_OHLC';
+  if (Math.max(...prices) / Math.min(...prices) > maxCandlePriceRatio) return 'WITHIN_CANDLE_SCALE_DISLOCATION';
+  return null;
+}
+
+export function inspectContinuousSessions(days, options = {}) {
+  const cfg = { ...HISTORICAL_DATA_QUALITY, ...options };
+  const qualityByDate = new Map();
+  const segments = [];
+  let segment = [];
+  let previousBar = null;
+
+  const closeSegment = () => {
+    if (segment.length) segments.push(segment);
+    segment = [];
+  };
+
+  for (const [date, sourceRows] of [...days.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+    const rows = regularSessionRows(sourceRows);
+    if (!rows.length) {
+      qualityByDate.set(date, { valid: false, tradeEligible: false, reasons: ['NO_CONTINUOUS_SESSION_CANDLES'] });
+      closeSegment();
+      previousBar = null;
+      continue;
+    }
+
+    const reasons = [];
+    for (let i = 0; i < rows.length; i++) {
+      const issue = candleQualityIssue(rows[i], cfg.maxCandlePriceRatio);
+      if (issue && !reasons.includes(issue)) reasons.push(issue);
+      if (i > 0 && priceJumpFraction(rows[i - 1].close, rows[i].open) >= cfg.maxPriceJumpFraction
+        && !reasons.includes('INTRADAY_STRUCTURAL_BREAK')) reasons.push('INTRADAY_STRUCTURAL_BREAK');
+    }
+
+    if (reasons.length) {
+      qualityByDate.set(date, { valid: false, tradeEligible: false, reasons });
+      closeSegment();
+      previousBar = null;
+      continue;
+    }
+
+    const bar = {
+      date,
+      open: rows[0].open,
+      high: Math.max(...rows.map((c) => c.high)),
+      low: Math.min(...rows.map((c) => c.low)),
+      close: rows.at(-1).close,
+    };
+    const structuralBreak = previousBar != null
+      && priceJumpFraction(previousBar.close, bar.open) >= cfg.maxPriceJumpFraction;
+    if (structuralBreak) closeSegment();
+    qualityByDate.set(date, {
+      valid: true,
+      tradeEligible: !structuralBreak,
+      reasons: structuralBreak ? ['OVERNIGHT_STRUCTURAL_BREAK'] : [],
+    });
+    segment.push(bar);
+    previousBar = bar;
+  }
+  closeSegment();
+  return { qualityByDate, segments };
 }
 
 export function computeWilderAtrByDate(days, period = 14) {
-  const bars = dailyBars(days);
-  const tr = bars.map((bar, i) => {
-    if (i === 0) return bar.high - bar.low;
-    const prevClose = bars[i - 1].close;
-    return Math.max(bar.high - bar.low, Math.abs(bar.high - prevClose), Math.abs(bar.low - prevClose));
-  });
   const atrByDate = new Map();
-  if (bars.length <= period) return atrByDate;
-
-  let atr = tr.slice(1, period + 1).reduce((a, b) => a + b, 0) / period;
-  // ATR stored for a date represents information available only after that date closes.
-  atrByDate.set(bars[period].date, atr);
-  for (let i = period + 1; i < bars.length; i++) {
-    atr = ((atr * (period - 1)) + tr[i]) / period;
-    atrByDate.set(bars[i].date, atr);
+  const { segments } = inspectContinuousSessions(days);
+  for (const bars of segments) {
+    if (bars.length <= period) continue;
+    const tr = bars.map((bar, i) => {
+      if (i === 0) return bar.high - bar.low;
+      const prevClose = bars[i - 1].close;
+      return Math.max(bar.high - bar.low, Math.abs(bar.high - prevClose), Math.abs(bar.low - prevClose));
+    });
+    let atr = tr.slice(1, period + 1).reduce((a, b) => a + b, 0) / period;
+    // ATR stored for a date represents information available only after that date closes.
+    atrByDate.set(bars[period].date, atr);
+    for (let i = period + 1; i < bars.length; i++) {
+      atr = ((atr * (period - 1)) + tr[i]) / period;
+      atrByDate.set(bars[i].date, atr);
+    }
   }
   return atrByDate;
 }
@@ -173,6 +235,8 @@ export function backtestQuickFlip(candles, options = {}) {
     openingCountHistogram: {},
     dayStartTimeHistogram: {},
     continuousSessionEnd: CONTINUOUS_SESSION_END,
+    invalidDataDays: 0,
+    structuralBreakDays: 0,
   };
   const openingRangeAtrFractions = [];
   const openingRanges = [];
@@ -182,10 +246,20 @@ export function backtestQuickFlip(candles, options = {}) {
   for (const [symbol, days] of grouped.entries()) {
     const sortedDates = [...days.keys()].sort();
     const atrByDate = computeWilderAtrByDate(days, cfg.atrPeriod);
+    const { qualityByDate } = inspectContinuousSessions(days);
     for (const date of sortedDates) {
       diagnostics.symbolDays += 1;
       const day = days.get(date);
       bump(diagnostics.dayStartTimeHistogram, parts(day[0].timestamp).time);
+      const sessionQuality = qualityByDate.get(date);
+      if (!sessionQuality?.valid) {
+        diagnostics.invalidDataDays += 1;
+        continue;
+      }
+      if (!sessionQuality.tradeEligible) {
+        diagnostics.structuralBreakDays += 1;
+        continue;
+      }
       const atr = priorAtrForDate(sortedDates, atrByDate, date);
       if (!(atr > 0)) continue;
       diagnostics.atrReadyDays += 1;

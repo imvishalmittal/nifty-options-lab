@@ -126,9 +126,21 @@ export function auditQuickFlipData(candles) {
     const rankedIntradayRanges=intradayRanges
       .map(withRangeFraction)
       .sort((a,b)=>b.rangeToMedianClose-a.rangeToMedianClose);
+    const largeDailyRanges=rankedSessionRanges.filter((row)=>row.rangeToMedianClose>=LARGE_DAILY_RANGE_TO_MEDIAN_CLOSE);
     const maxAtrToMedianClose=(atrStats.max != null && medianClose>0) ? atrStats.max/medianClose : null;
-    const qualityValid=maxAtrToMedianClose == null || maxAtrToMedianClose <= MAX_ATR_TO_MEDIAN_CLOSE;
-    if (!qualityValid) invalidSymbols.push({symbol,maxAtrToMedianClose,medianClose,maxAtr:atrStats.max});
+    const atrValid=maxAtrToMedianClose == null || maxAtrToMedianClose <= MAX_ATR_TO_MEDIAN_CLOSE;
+    const qualityValid=atrValid && largeDailyRanges.length===0;
+    if (!qualityValid) invalidSymbols.push({
+      symbol,
+      reasons:[
+        ...(!atrValid?['IMPLAUSIBLE_ATR']:[]),
+        ...(largeDailyRanges.length?['EXTREME_CONTINUOUS_SESSION_RANGE']:[]),
+      ],
+      maxAtrToMedianClose,
+      medianClose,
+      maxAtr:atrStats.max,
+      largestDailyRangeToMedianClose:rankedSessionRanges[0]?.rangeToMedianClose??null,
+    });
     bySymbol[symbol]={
       sessions:dates.length,
       atr:atrStats,
@@ -138,7 +150,7 @@ export function auditQuickFlipData(candles) {
       absoluteOvernightGapPct:stats(absGaps),
       gapsOver20Pct:gaps.filter((g)=>Math.abs(g.gapPct)>=20).sort((a,b)=>Math.abs(b.gapPct)-Math.abs(a.gapPct)),
       topOvernightGaps:gaps.sort((a,b)=>Math.abs(b.gapPct)-Math.abs(a.gapPct)).slice(0,8),
-      largeDailyRanges:rankedSessionRanges.filter((row)=>row.rangeToMedianClose>=LARGE_DAILY_RANGE_TO_MEDIAN_CLOSE),
+      largeDailyRanges,
       topDailyRanges:rankedSessionRanges.slice(0,OUTLIER_LIMIT),
       topIntradayRanges:rankedIntradayRanges.slice(0,OUTLIER_LIMIT),
       malformedCandles:malformedCandles.slice(0,OUTLIER_LIMIT),

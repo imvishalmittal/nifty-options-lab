@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { parseCsv, summarize } from './opening-range-backtest.mjs';
-import { computeWilderAtrByDate } from './quick-flip-backtest.mjs';
+import { computeWilderAtrByDate, inspectContinuousSessions } from './quick-flip-backtest.mjs';
 
 export const SIP_ORB_VARIANTS = Object.freeze([
   { key: 'rvol-1.0', minRelativeVolume: 1.0, evidence: 'US Stocks-in-Play replication threshold' },
@@ -51,24 +51,30 @@ function mean(values) {
 }
 
 export function relativeOpeningVolumeByDate(days, lookback = 14, openingTime = '09:15') {
-  const dates = [...days.keys()].sort();
   const result = new Map();
-  for (let i = lookback; i < dates.length; i++) {
-    const current = openingBar(days.get(dates[i]), openingTime);
-    if (!current || !(current.volume >= 0)) continue;
-    const priorVolumes = [];
-    for (let j = i - lookback; j < i; j++) {
-      const bar = openingBar(days.get(dates[j]), openingTime);
-      if (bar && bar.volume > 0) priorVolumes.push(bar.volume);
+  const { segments, qualityByDate } = inspectContinuousSessions(days);
+  for (const segment of segments) {
+    const dates = segment
+      .map((bar) => bar.date)
+      .filter((date) => qualityByDate.get(date)?.tradeEligible);
+    for (let i = lookback; i < dates.length; i++) {
+      if (!qualityByDate.get(dates[i])?.tradeEligible) continue;
+      const current = openingBar(days.get(dates[i]), openingTime);
+      if (!current || !(current.volume >= 0)) continue;
+      const priorVolumes = [];
+      for (let j = i - lookback; j < i; j++) {
+        const bar = openingBar(days.get(dates[j]), openingTime);
+        if (bar && bar.volume > 0) priorVolumes.push(bar.volume);
+      }
+      if (priorVolumes.length !== lookback) continue;
+      const baseline = mean(priorVolumes);
+      if (!(baseline > 0)) continue;
+      result.set(dates[i], {
+        openingVolume: current.volume,
+        priorMeanOpeningVolume: baseline,
+        relativeVolume: current.volume / baseline,
+      });
     }
-    if (priorVolumes.length !== lookback) continue;
-    const baseline = mean(priorVolumes);
-    if (!(baseline > 0)) continue;
-    result.set(dates[i], {
-      openingVolume: current.volume,
-      priorMeanOpeningVolume: baseline,
-      relativeVolume: current.volume / baseline,
-    });
   }
   return result;
 }
@@ -109,6 +115,8 @@ export function backtestStocksInPlayOrb(candles, options = {}) {
     qualifiedRvolDays: 0,
     directionalOpeningDays: 0,
     breakoutTrades: 0,
+    invalidDataDays: 0,
+    structuralBreakDays: 0,
   };
 
   const grouped = groupBySymbolDay(candles);
@@ -116,9 +124,19 @@ export function backtestStocksInPlayOrb(candles, options = {}) {
     const dates = [...days.keys()].sort();
     const atrByDate = computeWilderAtrByDate(days, cfg.atrPeriod);
     const rvolByDate = relativeOpeningVolumeByDate(days, cfg.rvolLookback, cfg.openingTime);
+    const { qualityByDate } = inspectContinuousSessions(days);
 
     for (const date of dates) {
       diagnostics.symbolDays += 1;
+      const sessionQuality = qualityByDate.get(date);
+      if (!sessionQuality?.valid) {
+        diagnostics.invalidDataDays += 1;
+        continue;
+      }
+      if (!sessionQuality.tradeEligible) {
+        diagnostics.structuralBreakDays += 1;
+        continue;
+      }
       const rvol = rvolByDate.get(date);
       if (!rvol) continue;
       diagnostics.rvolReadyDays += 1;

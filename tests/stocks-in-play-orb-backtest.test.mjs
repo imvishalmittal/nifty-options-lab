@@ -33,6 +33,29 @@ test('relative opening volume uses only the prior 14 opening bars', () => {
   assert.equal(rvol.get(isoDay(14)).relativeVolume, 1.5);
 });
 
+test('relative opening volume warmup resets after a structural price break', () => {
+  const days = new Map();
+  for (let i = 0; i < 15; i++) days.set(isoDay(i), rowsForDay(isoDay(i), { base: 100, firstVolume: 1000 }));
+  days.set(isoDay(15), rowsForDay(isoDay(15), { base: 50, firstVolume: 1500 }));
+  for (let i = 16; i < 30; i++) days.set(isoDay(i), rowsForDay(isoDay(i), { base: 50, firstVolume: 1000 }));
+  days.set(isoDay(30), rowsForDay(isoDay(30), { base: 50, firstVolume: 1500 }));
+  const rvol = relativeOpeningVolumeByDate(days, 14);
+  assert.equal(rvol.has(isoDay(15)), false);
+  assert.equal(rvol.has(isoDay(29)), false);
+  assert.equal(rvol.get(isoDay(30)).relativeVolume, 1.5);
+});
+
+test('Stocks-in-Play skips a corrupt continuous-session candle', () => {
+  const rows = [];
+  for (let i = 0; i < 15; i++) rows.push(...rowsForDay(isoDay(i), { firstVolume: 1000 }));
+  const d = isoDay(15);
+  rows.push(...rowsForDay(d, { firstVolume: 1500, breakout: true }));
+  rows.push(c(`${d}T10:30:00+05:30`, 103, 10300, 102, 10250));
+  const result = backtestStocksInPlayOrb(rows, { minRelativeVolume: 1.2 });
+  assert.equal(result.trades.length, 0);
+  assert.equal(result.diagnostics.invalidDataDays, 1);
+});
+
 test('high-RVOL bullish opening enters only after later high breakout', () => {
   const rows = [];
   for (let i = 0; i < 15; i++) rows.push(...rowsForDay(isoDay(i), { base: 100 + i * 0.2, firstVolume: 1000 }));

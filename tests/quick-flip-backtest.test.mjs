@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { backtestQuickFlip, computeWilderAtrByDate } from '../research/quick-flip-backtest.mjs';
+import { backtestQuickFlip, computeWilderAtrByDate, inspectContinuousSessions } from '../research/quick-flip-backtest.mjs';
 
 const c = (timestamp, open, high, low, close, volume = 1000, symbol = 'TEST') => ({ timestamp, open, high, low, close, volume, symbol });
 
@@ -42,6 +42,36 @@ test('Wilder ATR ignores corrupt pre-open and closing-auction prints', () => {
   const clean = computeWilderAtrByDate(cleanDays, 14);
   const noisy = computeWilderAtrByDate(noisyDays, 14);
   for (const [date, value] of clean.entries()) assert.equal(noisy.get(date), value);
+});
+
+test('Wilder ATR rejects a 100x continuous-session candle and resets warmup', () => {
+  const days = new Map();
+  for (let i = 0; i < 32; i++) days.set(isoDay(i), day(isoDay(i), 100 + i * 0.1, 8));
+  const corruptDate = isoDay(15);
+  days.get(corruptDate).push(c(`${corruptDate}T10:30:00+05:30`, 102, 10200, 101, 10150));
+  const inspected = inspectContinuousSessions(days);
+  assert.equal(inspected.qualityByDate.get(corruptDate).valid, false);
+  assert.ok(inspected.qualityByDate.get(corruptDate).reasons.includes('WITHIN_CANDLE_SCALE_DISLOCATION'));
+  const atr = computeWilderAtrByDate(days, 14);
+  assert.equal(atr.has(corruptDate), false);
+  assert.equal(atr.has(isoDay(29)), false);
+  assert.equal(atr.has(isoDay(30)), true);
+  assert.ok(atr.get(isoDay(30)) < 20);
+});
+
+test('large overnight price discontinuity starts a new ATR segment', () => {
+  const days = new Map();
+  for (let i = 0; i < 16; i++) days.set(isoDay(i), day(isoDay(i), 100, 8));
+  days.set(isoDay(16), day(isoDay(16), 50, 4));
+  for (let i = 17; i < 32; i++) days.set(isoDay(i), day(isoDay(i), 50, 4));
+  const inspected = inspectContinuousSessions(days);
+  assert.equal(inspected.qualityByDate.get(isoDay(16)).valid, true);
+  assert.equal(inspected.qualityByDate.get(isoDay(16)).tradeEligible, false);
+  assert.deepEqual(inspected.qualityByDate.get(isoDay(16)).reasons, ['OVERNIGHT_STRUCTURAL_BREAK']);
+  const atr = computeWilderAtrByDate(days, 14);
+  assert.equal(atr.has(isoDay(16)), false);
+  assert.equal(atr.has(isoDay(30)), true);
+  assert.ok(atr.get(isoDay(30)) < 10);
 });
 
 test('opening range below 25% of prior ATR is rejected', () => {
