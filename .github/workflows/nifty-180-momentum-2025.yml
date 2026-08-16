@@ -8,7 +8,9 @@ on:
       - '.github/workflows/nifty-180-momentum-2025.yml'
       - 'research/nifty-180-momentum-trail.mjs'
       - 'research/groww-backtest-nifty-180-momentum.mjs'
+      - 'research/momentum-result-integrity.mjs'
       - 'tests/nifty-180-momentum-trail.test.mjs'
+      - 'tests/momentum-result-integrity.test.mjs'
   workflow_dispatch:
 
 permissions:
@@ -44,7 +46,7 @@ jobs:
         with:
           node-version: '22'
       - name: Validate momentum engine
-        run: node --test tests/nifty-180-momentum-trail.test.mjs tests/nifty-180-premium-strategy.test.mjs tests/groww-backtest-nifty-180.test.mjs tests/groww-option-costs.test.mjs
+        run: node --test tests/nifty-180-momentum-trail.test.mjs tests/momentum-result-integrity.test.mjs tests/nifty-180-premium-strategy.test.mjs tests/groww-backtest-nifty-180.test.mjs tests/groww-option-costs.test.mjs
       - name: Run full-session actual-contract momentum study
         env:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
@@ -67,3 +69,5 @@ jobs:
           path: outputs/nifty-180-momentum-2025/${{ matrix.period.key }}/
           if-no-files-found: error
           retention-days: 30
+      - name: Require complete research month
+        run: node research/momentum-result-integrity.mjs "outputs/nifty-180-momentum-2025/${{ matrix.period.key }}/result.json"
