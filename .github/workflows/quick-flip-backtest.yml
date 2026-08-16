@@ -1,0 +1,90 @@
+name: Quick Flip Backtest
+
+on:
+  push:
+    branches:
+      - agent/opening-range-backtest
+    paths:
+      - '.github/workflows/quick-flip-backtest.yml'
+      - 'research/quick-flip-backtest.mjs'
+      - 'research/groww-fetch-opening-range.mjs'
+      - 'research/opening-range-backtest.mjs'
+      - 'tests/quick-flip-backtest.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quick-flip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    concurrency:
+      group: groww-backtest-api
+      queue: max
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        period:
+          - key: research-2020-2024
+            start: '2020-01-01'
+            end: '2024-12-31'
+          - key: validation-2025
+            start: '2025-01-01'
+            end: '2025-12-31'
+          - key: recent-2026
+            start: '2026-01-01'
+            end: ''
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Restore shared 15-stock Groww candle snapshot
+        id: candles-cache
+        uses: actions/cache@v4
+        with:
+          path: work/groww/shared/${{ matrix.period.key }}/cash-5m
+          key: groww-cash5m-15-v1-${{ matrix.period.key }}
+
+      - name: Fetch shared Groww 5-minute candles on cache miss
+        if: steps.candles-cache.outputs.cache-hit != 'true'
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          START_DATE: ${{ matrix.period.start }}
+          END_DATE: ${{ matrix.period.end }}
+          PERIOD_KEY: ${{ matrix.period.key }}
+          SYMBOLS: 'RELIANCE,HDFCBANK,ICICIBANK,SBIN,INFY,AXISBANK,KOTAKBANK,BAJFINANCE,BHARTIARTL,ITC,TCS,TATAMOTORS,LT,TATASTEEL,ONGC'
+        run: |
+          out="work/groww/shared/${PERIOD_KEY}/cash-5m"
+          mkdir -p "${out}"
+          args=("--start=${START_DATE}" "--symbols=${SYMBOLS}" "--out=${out}")
+          if [[ -n "${END_DATE}" ]]; then args+=("--end=${END_DATE}"); fi
+          node research/groww-fetch-opening-range.mjs "${args[@]}" > "work/groww/shared/${PERIOD_KEY}/manifest-output.json"
+
+      - name: Run ATR-qualified Quick Flip V1
+        env:
+          PERIOD_KEY: ${{ matrix.period.key }}
+        run: |
+          input="work/groww/shared/${PERIOD_KEY}/cash-5m"
+          output="outputs/quick-flip/${PERIOD_KEY}"
+          mkdir -p "${output}"
+          mapfile -t files < <(find "${input}" -maxdepth 1 -name '*.csv' -type f | sort)
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo 'No candle files were generated' >&2
+            exit 1
+          fi
+          node research/quick-flip-backtest.mjs "${files[@]}" > "${output}/quick-flip.json"
+          node research/strategy-robustness-report.mjs "${output}/quick-flip.json" "${output}/robustness.json" > /dev/null
+          cp "${input}/manifest.json" "${output}/data-manifest.json"
+
+      - name: Upload Quick Flip result
+        uses: actions/upload-artifact@v4
+        with:
+          name: quick-flip-${{ matrix.period.key }}-${{ github.run_id }}
+          path: outputs/quick-flip/${{ matrix.period.key }}/
+          if-no-files-found: error
+          retention-days: 30

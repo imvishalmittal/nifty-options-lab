@@ -1,0 +1,77 @@
+name: Opening Range Holdout
+
+on:
+  push:
+    branches:
+      - agent/opening-range-backtest
+    paths:
+      - '.github/workflows/opening-range-holdout.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  holdout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    concurrency:
+      group: groww-backtest-api
+      queue: max
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        period:
+          - key: research-2020-2024
+            start: '2020-01-01'
+            end: '2024-12-31'
+          - key: validation-2025
+            start: '2025-01-01'
+            end: '2025-12-31'
+          - key: recent-2026
+            start: '2026-01-01'
+            end: ''
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Fetch unseen-basket Groww 5-minute candles
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          START_DATE: ${{ matrix.period.start }}
+          END_DATE: ${{ matrix.period.end }}
+          PERIOD_KEY: ${{ matrix.period.key }}
+          SYMBOLS: 'AXISBANK,KOTAKBANK,BAJFINANCE,BHARTIARTL,ITC,TCS,TATAMOTORS,LT,TATASTEEL,ONGC'
+        run: |
+          out="work/groww/holdout/${PERIOD_KEY}/cash-5m"
+          mkdir -p "${out}"
+          args=("--start=${START_DATE}" "--symbols=${SYMBOLS}" "--out=${out}")
+          if [[ -n "${END_DATE}" ]]; then args+=("--end=${END_DATE}"); fi
+          node research/groww-fetch-opening-range.mjs "${args[@]}" > "work/groww/holdout/${PERIOD_KEY}/manifest-output.json"
+
+      - name: Run frozen opening-range study
+        env:
+          PERIOD_KEY: ${{ matrix.period.key }}
+        run: |
+          input="work/groww/holdout/${PERIOD_KEY}/cash-5m"
+          output="outputs/opening-range-holdout/${PERIOD_KEY}"
+          mkdir -p "${output}"
+          mapfile -t files < <(find "${input}" -maxdepth 1 -name '*.csv' -type f | sort)
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo 'No candle files were generated' >&2
+            exit 1
+          fi
+          node research/opening-range-window-study.mjs "${files[@]}" > "${output}/window-study.json"
+          cp "${input}/manifest.json" "${output}/data-manifest.json"
+
+      - name: Upload holdout result
+        uses: actions/upload-artifact@v4
+        with:
+          name: opening-range-holdout-${{ matrix.period.key }}-${{ github.run_id }}
+          path: outputs/opening-range-holdout/${{ matrix.period.key }}/
+          if-no-files-found: error
+          retention-days: 30
