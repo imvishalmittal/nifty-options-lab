@@ -30,6 +30,13 @@ function normalizeCandles(raw = []) {
     .filter((c) => [c.open, c.high, c.low, c.close].every(Number.isFinite)).sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 }
 
+function completedCandles(candles, currentClock) {
+  return candles.filter((candle) => {
+    const clock = timeOf(candle.timestamp);
+    return clock && clock < currentClock;
+  });
+}
+
 async function throttle() {
   const wait = Math.max(0, spacingMs - (Date.now() - lastRequestAt));
   if (wait) await sleep(wait);
@@ -116,12 +123,13 @@ async function main() {
 
   let spotCandles = [];
   for (let attempt = 0; attempt < 8; attempt++) {
-    spotCandles = await fetchCandles(token, 'CASH', 'NSE-NIFTY', date, '09:15', indiaParts().time);
+    const currentClock = indiaParts().time;
+    spotCandles = completedCandles(await fetchCandles(token, 'CASH', 'NSE-NIFTY', date, '09:15', currentClock), currentClock);
     if (candleAt(spotCandles, '09:25')) break;
     await sleep(30000);
   }
   const spot925 = candleAt(spotCandles, '09:25')?.open;
-  if (!Number.isFinite(spot925)) { writeStatus({ date, status: 'NO_SESSION', reason: 'No 09:25 NIFTY candle' }); return; }
+  if (!Number.isFinite(spot925)) { writeStatus({ date, status: 'NO_SESSION', reason: 'No completed 09:25 NIFTY candle' }); return; }
 
   const year = Number(date.slice(0, 4));
   const expiryPayload = await apiGet(token, '/historical/expiries', { exchange: 'NSE', underlying_symbol: 'NIFTY', year });
@@ -138,19 +146,18 @@ async function main() {
 
   let chosen = null;
   let entryInfo = null;
-  let chosenCandles = null;
   while (indiaParts().time <= PAPER_RULES.signalCutoff) {
     const end = indiaParts().time;
-    const callCandles = await fetchCandles(token, 'FNO', ce.selected.symbol, date, '09:25', end);
-    const putCandles = await fetchCandles(token, 'FNO', pe.selected.symbol, date, '09:25', end);
+    const callCandles = completedCandles(await fetchCandles(token, 'FNO', ce.selected.symbol, date, '09:25', end), end);
+    const putCandles = completedCandles(await fetchCandles(token, 'FNO', pe.selected.symbol, date, '09:25', end), end);
     const side = selectSide(callCandles, putCandles);
-    if (side?.ambiguous) { writeStatus({ date, status: 'AMBIGUOUS', reason: 'CE and PE signalled in same minute' }); return; }
+    if (side?.ambiguous) { writeStatus({ date, status: 'AMBIGUOUS', reason: 'CE and PE signalled in same completed minute' }); return; }
     if (side) {
-      chosen = side.side === 'CE' ? ce.selected : pe.selected;
-      chosenCandles = side.side === 'CE' ? callCandles : putCandles;
-      entryInfo = nextBarEntry(chosenCandles, side.signal);
+      const chosenRows = side.side === 'CE' ? callCandles : putCandles;
+      const selected = side.side === 'CE' ? ce.selected : pe.selected;
+      entryInfo = nextBarEntry(chosenRows, side.signal);
       if (entryInfo?.rejected) { writeStatus({ date, status: 'NO_TRADE', reason: 'Entry outside 160-220 band', entry: entryInfo.entry }); return; }
-      if (entryInfo) { chosen = { ...chosen, side: side.side, signal: side.signal }; break; }
+      if (entryInfo) { chosen = { ...selected, side: side.side, signal: side.signal }; break; }
     }
     await sleep(30000);
   }
@@ -159,12 +166,12 @@ async function main() {
   const lots = lotsAffordable(entryInfo.entry);
   if (lots < 1) { writeStatus({ date, status: 'NO_TRADE', reason: '₹60k capital cannot fund one lot', entry: entryInfo.entry }); return; }
   let position = initialPosition({ entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp });
-  let processed = new Set();
+  const processed = new Set();
   writeStatus({ date, status: 'OPEN', expiry, side: chosen.side, strike: chosen.strike, lots, entry: position.entry, entryTime: position.entryTime, activeStop: position.activeStop });
 
   while (!position.exit) {
     const now = indiaParts().time;
-    const candles = await fetchCandles(token, 'FNO', chosen.symbol, date, timeOf(entryInfo.entryBar.timestamp), now);
+    const candles = completedCandles(await fetchCandles(token, 'FNO', chosen.symbol, date, timeOf(entryInfo.entryBar.timestamp), now), now);
     for (const candle of candles) {
       if (candle.timestamp < entryInfo.entryBar.timestamp || processed.has(candle.timestamp)) continue;
       position = processCompletedBar(position, candle);
@@ -172,7 +179,7 @@ async function main() {
       if (position.exit) break;
     }
     if (position.exit) break;
-    if (now >= PAPER_RULES.sessionExit) {
+    if (now >= '15:30') {
       const last = candles.filter((c) => timeOf(c.timestamp) <= PAPER_RULES.sessionExit).at(-1);
       if (last) position = sessionExit(position, last);
       break;
