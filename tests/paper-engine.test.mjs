@@ -29,15 +29,21 @@ test('same-minute CE and PE signals are ambiguous', () => {
   assert.equal(selectSide(rows, rows).ambiguous, true);
 });
 
-test('trail ratchets only after bar survives the old stop', () => {
+test('20-point trail starts reducing risk before 220 and is causal', () => {
   let position = initialPosition({ entry: 184.15, entryTime: '2026-08-17T09:31:00+05:30' });
-  position = processCompletedBar(position, c('2026-08-17T09:31:00+05:30', 184.15, 224, 170, 221));
+  position = processCompletedBar(position, c('2026-08-17T09:31:00+05:30', 184.15, 200, 170, 198));
   assert.equal(position.exit, null);
-  assert.equal(position.activeStop, 204);
+  assert.equal(position.activeStop, 180);
   assert.equal(position.stopHistory.length, 2);
-  position = processCompletedBar(position, c('2026-08-17T09:32:00+05:30', 205, 230, 202, 210));
-  assert.equal(position.exit.price, 204);
+  position = processCompletedBar(position, c('2026-08-17T09:32:00+05:30', 181, 205, 178, 182));
+  assert.equal(position.exit.price, 180);
   assert.equal(position.exit.result, 'TRAIL_STOP');
+});
+
+test('actual entry reaches gross breakeven stop after a 20-point favorable move', () => {
+  let position = initialPosition({ entry: 184.15, entryTime: '2026-08-17T09:31:00+05:30' });
+  position = processCompletedBar(position, c('2026-08-17T09:31:00+05:30', 184.15, 204.15, 180, 202));
+  assert.ok(Math.abs(position.activeStop - 184.15) < 1e-9);
 });
 
 test('gap below active stop fills at bar open', () => {
