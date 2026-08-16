@@ -7,6 +7,7 @@ type CallType = "CE" | "PE";
 type PnlFilter = "ALL" | "PROFIT" | "LOSS";
 type SortDir = "asc" | "desc";
 type Source = "BACKTEST" | "PAPER";
+type DataSource = "github" | "published" | null;
 
 type PaperTrade = {
   source?: Source;
@@ -40,6 +41,7 @@ type SortKey = "rowNo" | keyof PaperTrade;
 
 const money = new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const num = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 });
+const LIVE_LEDGER_URL = "https://raw.githubusercontent.com/imvishalmittal/nifty-options-lab/main/public/paper/trades.json";
 
 const columns: Array<{ key: SortKey; label: string }> = [
   { key: "rowNo", label: "#" },
@@ -121,19 +123,34 @@ export default function PaperLedger() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [lastUpdated, setLastUpdated] = useState("—");
   const [loadState, setLoadState] = useState<"loading" | "ok" | "error">("loading");
+  const [dataSource, setDataSource] = useState<DataSource>(null);
 
   useEffect(() => {
     let active = true;
     const load = async () => {
-      try {
-        const response = await fetch(`/paper/trades.json?t=${Date.now()}`, { cache: "no-store" });
-        if (!response.ok) throw new Error("trade journal unavailable");
-        const payload = await response.json();
-        const next = (Array.isArray(payload) ? payload : payload.trades ?? []).map(normalizeTrade).filter(Boolean) as PaperTrade[];
-        if (active) { setRows(next); setLastUpdated(new Date().toLocaleString("en-IN")); setLoadState("ok"); }
-      } catch {
-        if (active) setLoadState("error");
+      const sources: Array<{ url: string; source: Exclude<DataSource, null> }> = [
+        { url: `${LIVE_LEDGER_URL}?t=${Date.now()}`, source: "github" },
+        { url: `/paper/trades.json?t=${Date.now()}`, source: "published" },
+      ];
+      for (const candidate of sources) {
+        try {
+          const response = await fetch(candidate.url, { cache: "no-store" });
+          if (!response.ok) continue;
+          const payload = await response.json();
+          const next = (Array.isArray(payload) ? payload : payload.trades ?? []).map(normalizeTrade).filter(Boolean) as PaperTrade[];
+          if (!next.length) continue;
+          if (active) {
+            setRows(next);
+            setLastUpdated(new Date().toLocaleString("en-IN"));
+            setLoadState("ok");
+            setDataSource(candidate.source);
+          }
+          return;
+        } catch {
+          // Try the published-site snapshot if the live GitHub ledger is unreachable.
+        }
       }
+      if (active) { setLoadState("error"); setDataSource(null); }
     };
     load();
     const timer = window.setInterval(load, 60_000);
@@ -167,7 +184,11 @@ export default function PaperLedger() {
 
   const totalPnl = displayed.reduce((sum, row) => sum + row.trade.totalPnl, 0);
   const profits = displayed.filter((row) => row.trade.totalPnl > 0).length;
+  const losses = displayed.filter((row) => row.trade.totalPnl < 0);
   const beReached = displayed.filter((row) => row.trade.breakevenReached === true).length;
+  const lossMfe10 = losses.filter((row) => (row.trade.maxFavorableMove ?? -Infinity) >= 10).length;
+  const lossMfe20 = losses.filter((row) => (row.trade.maxFavorableMove ?? -Infinity) >= 20).length;
+  const lossMfe30 = losses.filter((row) => (row.trade.maxFavorableMove ?? -Infinity) >= 30).length;
 
   function sortBy(key: SortKey) {
     if (key === sortKey) setSortDir((current) => current === "asc" ? "desc" : "asc");
@@ -177,9 +198,9 @@ export default function PaperLedger() {
   return <section className={styles.ledger} id="trade-ledger">
     <div className={styles.heading}>
       <div><p className={styles.eyebrow}>Backtest + live paper journal</p><h2>Trade ledger</h2>
-        <p>Historical V2 rows stay reproducible. V3 paper rows expose stepped-trail behavior, breakeven progress, exit reason, charges, and net outcome.</p></div>
+        <p>Historical V2 rows stay reproducible. Peak/MFE shows how far each trade moved in our favour before its final outcome; V3 paper rows expose stepped-trail behavior and costs.</p></div>
       <div className={styles.status}><span className={loadState === "ok" ? styles.ok : styles.warn} />
-        {loadState === "loading" ? "Loading…" : loadState === "error" ? "Journal unavailable" : `Updated ${lastUpdated}`}</div>
+        {loadState === "loading" ? "Loading…" : loadState === "error" ? "Journal unavailable" : `${dataSource === "github" ? "Live GitHub ledger" : "Published snapshot"} · Updated ${lastUpdated}`}</div>
     </div>
 
     <div className={styles.filters}>
@@ -198,8 +219,11 @@ export default function PaperLedger() {
     <div className={styles.summary}>
       <div><span>Visible trades</span><strong>{displayed.length}</strong></div>
       <div><span>Profitable</span><strong>{profits}</strong></div>
-      <div><span>Breakeven reached</span><strong>{beReached}</strong></div>
-      <div><span>Losing</span><strong>{displayed.length - profits}</strong></div>
+      <div><span>Losing</span><strong>{losses.length}</strong></div>
+      <div><span>BE cushion reached</span><strong>{beReached}</strong></div>
+      <div title="Losing trades whose premium first moved at least 10 points above entry"><span>Losses after +10</span><strong>{lossMfe10}</strong></div>
+      <div title="Losing trades whose premium first moved at least 20 points above entry"><span>Losses after +20</span><strong>{lossMfe20}</strong></div>
+      <div title="Losing trades whose premium first moved at least 30 points above entry"><span>Losses after +30</span><strong>{lossMfe30}</strong></div>
       <div><span>Visible net P/L</span><strong className={totalPnl >= 0 ? styles.profit : styles.loss}>{totalPnl >= 0 ? "+" : "−"}₹{money.format(Math.abs(totalPnl))}</strong></div>
     </div>
 
@@ -219,6 +243,6 @@ export default function PaperLedger() {
       </tr>)}
       {!displayed.length && <tr><td className={styles.empty} colSpan={25}>No trades match the selected filters.</td></tr>}
     </tbody></table></div>
-    <p className={styles.footnote}>Paper mode only. Breakeven means the trailing stop reached the actual entry premium on a completed-bar basis; net P/L may still be negative after charges/slippage. No broker order is placed.</p>
+    <p className={styles.footnote}>Paper mode only. MFE is the maximum premium move above entry before exit. “BE cushion reached” means MFE reached at least the configured 20-point trail gap; net P/L can still be negative after charges/slippage. No broker order is placed.</p>
   </section>;
 }
