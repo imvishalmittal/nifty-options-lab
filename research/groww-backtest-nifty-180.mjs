@@ -283,12 +283,13 @@ function average(values) {
   return usable.length ? usable.reduce((a, b) => a + b, 0) / usable.length : null;
 }
 
-function attachCostScenarios(evaluated, lotSize) {
+export function attachCostScenarios(evaluated, lotSize, tradeDate = null) {
   if (evaluated.status !== 'TRADE' || !(lotSize > 0)) return evaluated;
   const inputs = {
     entryPremium: evaluated.entry,
     exitPremium: evaluated.exit,
     lotSize,
+    tradeDate,
   };
   return {
     ...evaluated,
@@ -388,7 +389,7 @@ export async function backtestNifty180({
       put: putPick.selected,
       callCandles: callPick.dayRows,
       putCandles: putPick.dayRows,
-    }), lotSize);
+    }), lotSize, date);
 
     results.push({
       date,
@@ -421,7 +422,7 @@ export async function backtestNifty180({
       requestSpacingMs,
       oneMinuteChunkDays: SAFE_ONE_MINUTE_CHUNK_DAYS,
       selector: 'cached whole-period contract histories; current-date 09:25 ITM search until ₹180 is bracketed',
-      costSchedule: lotSize ? 'Groww NSE equity-option charges current in 2026; used as current-economics stress, not claimed as historical fee schedule' : null,
+      costSchedule: lotSize ? 'Groww NSE equity-option charges with date-sensitive STT: 0.10% through 2026-03-31 and 0.15% from 2026-04-01' : null,
       slippageStressPointsPerLeg: lotSize ? [0, 0.5, 1.0] : [],
     },
     diagnostics: {

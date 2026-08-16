@@ -10,16 +10,31 @@ export const GROWW_OPTION_RATES_2026 = Object.freeze({
   gstRate: 0.18,
 });
 
+export const GROWW_OPTION_RATES_PRE_APRIL_2026 = Object.freeze({
+  ...GROWW_OPTION_RATES_2026,
+  sttSellRate: 0.0010,            // 0.10% option premium sell through 2026-03-31
+});
+
+export function growwOptionRatesForTradeDate(tradeDate = null) {
+  if (tradeDate == null) return GROWW_OPTION_RATES_2026;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(tradeDate))) throw new Error('tradeDate must be YYYY-MM-DD');
+  return String(tradeDate) < '2026-04-01'
+    ? GROWW_OPTION_RATES_PRE_APRIL_2026
+    : GROWW_OPTION_RATES_2026;
+}
+
 export function calculateLongOptionRoundTripCosts({
   entryPremium,
   exitPremium,
   lotSize,
-  rates = GROWW_OPTION_RATES_2026,
+  tradeDate = null,
+  rates = null,
   slippagePointsPerLeg = 0,
 }) {
   if (!(entryPremium >= 0) || !(exitPremium >= 0)) throw new Error('entryPremium and exitPremium must be non-negative');
   if (!(lotSize > 0)) throw new Error('lotSize must be positive');
   if (!(slippagePointsPerLeg >= 0)) throw new Error('slippagePointsPerLeg must be non-negative');
+  const appliedRates = rates ?? growwOptionRatesForTradeDate(tradeDate);
 
   // For a long option, adverse slippage raises the buy and lowers the sell.
   const effectiveEntry = entryPremium + slippagePointsPerLeg;
@@ -28,14 +43,14 @@ export function calculateLongOptionRoundTripCosts({
   const sellTurnover = effectiveExit * lotSize;
   const totalTurnover = buyTurnover + sellTurnover;
 
-  const brokerage = rates.brokeragePerOrder * 2;
-  const exchange = totalTurnover * rates.exchangeRate;
-  const sebi = totalTurnover * rates.sebiRate;
-  const ipft = totalTurnover * rates.ipftRate;
-  const stampDuty = buyTurnover * rates.stampDutyBuyRate;
-  const stt = sellTurnover * rates.sttSellRate;
+  const brokerage = appliedRates.brokeragePerOrder * 2;
+  const exchange = totalTurnover * appliedRates.exchangeRate;
+  const sebi = totalTurnover * appliedRates.sebiRate;
+  const ipft = totalTurnover * appliedRates.ipftRate;
+  const stampDuty = buyTurnover * appliedRates.stampDutyBuyRate;
+  const stt = sellTurnover * appliedRates.sttSellRate;
   const gstBase = brokerage + exchange + sebi + ipft;
-  const gst = gstBase * rates.gstRate;
+  const gst = gstBase * appliedRates.gstRate;
   const charges = brokerage + exchange + sebi + ipft + stampDuty + stt + gst;
 
   const grossPnl = (effectiveExit - effectiveEntry) * lotSize;
@@ -43,6 +58,8 @@ export function calculateLongOptionRoundTripCosts({
 
   return {
     lotSize,
+    tradeDate,
+    sttSellRate: appliedRates.sttSellRate,
     slippagePointsPerLeg,
     effectiveEntry,
     effectiveExit,

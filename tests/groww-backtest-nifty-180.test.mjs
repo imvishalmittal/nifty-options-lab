@@ -8,6 +8,7 @@ import {
   nearestItmCandidates,
   splitDateRange,
   candlesForDate,
+  attachCostScenarios,
 } from '../research/groww-backtest-nifty-180.mjs';
 
 const contracts = [
@@ -74,4 +75,13 @@ test('cached multi-day history is sliced to the current date and signal window',
   assert.equal(day.length, 2);
   assert.equal(day[0].open, 179);
   assert.equal(day[1].timestamp, '2026-08-10T09:45:00+05:30');
+});
+
+test('attached option costs use the trade date for the 2026 STT change', () => {
+  const trade = { status: 'TRADE', entry: 180, exit: 220, pnlPerUnit: 40 };
+  const march = attachCostScenarios(trade, 65, '2026-03-31');
+  const april = attachCostScenarios(trade, 65, '2026-04-01');
+  assert.equal(march.costs.currentGroww2026.sttSellRate, 0.0010);
+  assert.equal(april.costs.currentGroww2026.sttSellRate, 0.0015);
+  assert.ok(march.costs.currentGroww2026.netPnl > april.costs.currentGroww2026.netPnl);
 });
