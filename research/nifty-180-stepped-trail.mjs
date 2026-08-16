@@ -57,11 +57,12 @@ export function evaluateSteppedMomentumPosition(candles, signal, {
     const t = timeOf(candle.timestamp);
     if (t > rules.sessionExit) break;
 
-    peakHigh = Math.max(peakHigh, candle.high);
-    troughLow = Math.min(troughLow, candle.low);
-
+    // Conservative stop-first convention for 1-minute OHLC bars: if the active
+    // stop is touched in this bar, the trade ends at the stop fill and we do not
+    // credit the bar's later high/low because intrabar ordering is unknowable.
     if (candle.low <= activeStop) {
       const exit = stopFill(candle, activeStop);
+      const realizedTrough = Math.min(troughLow, exit);
       return {
         entry,
         entryTime: entryBar.timestamp,
@@ -71,15 +72,20 @@ export function evaluateSteppedMomentumPosition(candles, signal, {
         trailActivated,
         finalStop: activeStop,
         peakPremium: peakHigh,
-        troughPremium: troughLow,
+        troughPremium: realizedTrough,
         mfePoints: peakHigh - entry,
-        maePoints: entry - troughLow,
+        maePoints: entry - realizedTrough,
         pnlPerUnit: exit - entry,
         trailStepPoints,
         trailGapPoints,
         stopHistory,
       };
     }
+
+    // Only surviving bars contribute their full OHLC excursion and can ratchet
+    // the stop for the following bar.
+    peakHigh = Math.max(peakHigh, candle.high);
+    troughLow = Math.min(troughLow, candle.low);
 
     const proposedStop = steppedTrailStop({
       entry,
