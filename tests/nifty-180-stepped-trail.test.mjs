@@ -46,3 +46,19 @@ test('gap below stepped stop fills at bar open', () => {
   assert.equal(result.finalStop, 214);
   assert.equal(result.exit, 200);
 });
+
+test('exit bar does not inflate peak or adverse excursion after stop is touched', () => {
+  const candles = [
+    c('2026-01-27T09:33:00+05:30', 180, 185, 178, 182),
+    c('2026-01-27T09:34:00+05:30', 191.7, 202.45, 180, 200),
+    c('2026-01-27T09:35:00+05:30', 190, 216.45, 175, 210),
+  ];
+  const result = evaluateSteppedMomentumPosition(candles, candles[0], { trailStepPoints: 10 });
+  assert.equal(result.result, 'TRAIL_STOP');
+  assert.equal(result.exit, 181.7);
+  assert.equal(result.exitTime, '2026-01-27T09:35:00+05:30');
+  assert.equal(result.peakPremium, 202.45);
+  assert.ok(Math.abs(result.mfePoints - 10.75) < 1e-9);
+  assert.equal(result.troughPremium, 180);
+  assert.ok(Math.abs(result.maePoints - 11.7) < 1e-9);
+});
