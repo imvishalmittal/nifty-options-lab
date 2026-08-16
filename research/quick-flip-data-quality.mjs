@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import { parseCsv } from './opening-range-backtest.mjs';
 import { computeWilderAtrByDate } from './quick-flip-backtest.mjs';
 
+const MAX_ATR_TO_MEDIAN_CLOSE = 0.50;
+
 function parts(timestamp) {
   const m = String(timestamp).match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
   if (!m) throw new Error(`Unsupported timestamp: ${timestamp}`);
@@ -45,12 +47,14 @@ export function auditQuickFlipData(candles) {
   const grouped=group(candles);
   const bySymbol={};
   const allGaps=[];
+  const invalidSymbols=[];
   for (const [symbol,days] of grouped) {
     const dates=[...days.keys()].sort();
     const atr=computeWilderAtrByDate(days,14);
     const atrValues=[...atr.values()];
     const gaps=[];
     const monthlyOpeningCoverage={};
+    const continuousCloses=[];
     let prevClose=null;
     for (const date of dates) {
       const rows=regular(days.get(date));
@@ -62,6 +66,7 @@ export function auditQuickFlipData(candles) {
       if (!rows.length) continue;
       const open=rows[0].open;
       const close=rows.at(-1).close;
+      if (Number.isFinite(close) && close > 0) continuousCloses.push(close);
       if (prevClose>0 && open>0) {
         const gap=(open/prevClose)-1;
         gaps.push({date,prevClose,open,gapPct:gap*100});
@@ -70,9 +75,17 @@ export function auditQuickFlipData(candles) {
       prevClose=close;
     }
     const absGaps=gaps.map((g)=>Math.abs(g.gapPct));
+    const atrStats=stats(atrValues);
+    const medianClose=stats(continuousCloses).p50;
+    const maxAtrToMedianClose=(atrStats.max != null && medianClose>0) ? atrStats.max/medianClose : null;
+    const qualityValid=maxAtrToMedianClose == null || maxAtrToMedianClose <= MAX_ATR_TO_MEDIAN_CLOSE;
+    if (!qualityValid) invalidSymbols.push({symbol,maxAtrToMedianClose,medianClose,maxAtr:atrStats.max});
     bySymbol[symbol]={
       sessions:dates.length,
-      atr:stats(atrValues),
+      atr:atrStats,
+      medianContinuousClose:medianClose,
+      maxAtrToMedianClose,
+      qualityValid,
       absoluteOvernightGapPct:stats(absGaps),
       gapsOver20Pct:gaps.filter((g)=>Math.abs(g.gapPct)>=20).sort((a,b)=>Math.abs(b.gapPct)-Math.abs(a.gapPct)),
       topOvernightGaps:gaps.sort((a,b)=>Math.abs(b.gapPct)-Math.abs(a.gapPct)).slice(0,8),
@@ -81,6 +94,11 @@ export function auditQuickFlipData(candles) {
   }
   return {
     continuousSession: { start: '09:15', endExclusive: '15:15' },
+    quality: {
+      valid: invalidSymbols.length===0,
+      maxAtrToMedianCloseThreshold: MAX_ATR_TO_MEDIAN_CLOSE,
+      invalidSymbols: invalidSymbols.sort((a,b)=>b.maxAtrToMedianClose-a.maxAtrToMedianClose),
+    },
     bySymbol,
     largestOvernightGaps: allGaps.sort((a,b)=>Math.abs(b.gapPct)-Math.abs(a.gapPct)).slice(0,30),
   };
