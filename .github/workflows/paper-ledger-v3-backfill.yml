@@ -34,12 +34,13 @@ jobs:
           node-version: '22'
       - name: Download integrity-passed 2025 stepped artifacts
         env:
-          RUN_ID: '31942482047'
+          RUN_ID: '31955251453'
         run: |
           set -euo pipefail
           root=/tmp/nifty-stepped-2025
           mkdir -p "$root"
           artifacts=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts?per_page=100")
+          # October and December failed completeness and remain excluded.
           for month in 01 02 03 04 05 06 07 08 09 11; do
             name="nifty-180-stepped-2025-${month}-${RUN_ID}"
             id=$(echo "$artifacts" | jq -r --arg name "$name" '.artifacts[] | select(.name == $name) | .id' | head -1)
@@ -55,7 +56,7 @@ jobs:
         run: node paper/backfill-stepped-ledger.mjs /tmp/nifty-stepped-2025 public/paper/trades.json
       - name: Download integrity-passed 2026 stepped artifacts
         env:
-          RUN_ID: '31945711135'
+          RUN_ID: '31952574004'
         run: |
           set -euo pipefail
           root=/tmp/nifty-stepped-2026
