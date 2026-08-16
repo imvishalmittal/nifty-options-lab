@@ -9,9 +9,11 @@ on:
       - 'research/nifty-180-premium-strategy.mjs'
       - 'research/groww-backtest-nifty-180.mjs'
       - 'research/groww-option-costs.mjs'
+      - 'research/validate-nifty-180-result.mjs'
       - 'tests/nifty-180-premium-strategy.test.mjs'
       - 'tests/groww-backtest-nifty-180.test.mjs'
       - 'tests/groww-option-costs.test.mjs'
+      - 'tests/validate-nifty-180-result.test.mjs'
   workflow_dispatch:
 
 permissions:
@@ -73,7 +75,7 @@ jobs:
           node-version: '22'
 
       - name: Validate NIFTY 180 engine
-        run: node --test tests/nifty-180-premium-strategy.test.mjs tests/groww-backtest-nifty-180.test.mjs tests/groww-option-costs.test.mjs
+        run: node --test tests/nifty-180-premium-strategy.test.mjs tests/groww-backtest-nifty-180.test.mjs tests/groww-option-costs.test.mjs tests/validate-nifty-180-result.test.mjs
 
       - name: Run actual-contract monthly holdout
         env:
@@ -99,3 +101,6 @@ jobs:
           path: outputs/nifty-180-premium-2025/${{ matrix.period.key }}/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Require complete research month
+        run: node research/validate-nifty-180-result.mjs "outputs/nifty-180-premium-2025/${{ matrix.period.key }}/result.json"
