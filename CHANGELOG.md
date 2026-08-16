@@ -2,6 +2,31 @@
 
 All notable changes will be documented here.
 
+## [0.3.0] - 2026-08-16
+
+### Added
+
+- NIFTY ₹180 Stepped Trail V3 as a separately named research/paper hypothesis;
+- 20-point trailing gap with predeclared 5-point and 10-point peak-step variants;
+- 10-point step as the initial forward-paper candidate;
+- separate V3 stepped-trail engine, historical comparison runner, integrity gate, tests, and 2025 workflow;
+- versioned paper rows so V2 history is not silently rewritten;
+- dashboard columns for strategy, entry/peak/exit premium, max favorable move, trail step/gap, breakeven reached, exit reason, gross P/L, charges, and net P/L;
+- strategy filter on the paper ledger.
+
+### Changed
+
+- risk reduction no longer waits for a fixed ₹220 activation in V3; the stop begins ratcheting after the completed-bar peak earns configured steps from the actual entry;
+- a stop derived from a completed bar remains effective only from the next bar;
+- gross breakeven is defined as active stop >= actual entry premium and is displayed separately from net P/L after charges.
+
+### Preserved
+
+- all Momentum V2 artifacts/ledger rows retain their original V2 mechanics;
+- no broker orders;
+- ₹180 entry family, ₹160 initial stop, no overnight carry, and ₹60,000 forward paper capital;
+- integrity failures remain excluded from accepted research evidence.
+
 ## [0.2.0] - 2026-08-16
 
 ### Added
@@ -16,51 +41,33 @@ All notable changes will be documented here.
 - separate 2025 development and 2026 holdout workflows;
 - weekday continuous Groww-backed paper session with no broker-order capability;
 - `/paper` dashboard route;
-- sortable trade ledger with row numbers and year/month/CE-PE/profit-loss filters;
-- stop-loss adjustment count, entry/exit time, final stop, and net P/L reporting;
-- validated research-artifact backfill into `public/paper/trades.json`;
-- 110 integrity-passed 2025 momentum rows from Jan–Sep and Nov;
-- current-session status journal.
+- sortable trade ledger;
+- validated research-artifact backfill with 110 integrity-passed 2025 rows from Jan–Sep and Nov.
 
 ### Methodology
 
-- stop changes are based only on completed one-minute bars and become effective on the next bar;
-- same-minute CE/PE signals are rejected as ambiguous;
-- invalid/partial/auth-failed/rate-limited/CI-failed/integrity-failed artifacts are not accepted as evidence;
-- October and December 2025 remain excluded because their completeness gates failed;
-- 2026 is treated as holdout evidence for the frozen 20-point paper rule;
-- the known 12-Aug-2025 24500 CE broker trade is a fidelity benchmark, not a tuning target.
+- stop changes use completed one-minute bars and become effective on the next bar;
+- same-minute CE/PE signals are rejected;
+- invalid/partial/auth-failed/rate-limited/CI-failed/integrity-failed artifacts are not accepted;
+- October and December 2025 remain excluded because completeness gates failed;
+- the known 12-Aug-2025 trade is a fidelity benchmark, not a tuning target.
 
 ### Hosting
 
-- repository `main` contains the `/paper` route and current ledger;
-- the existing ChatGPT Sites project remains the intended public host;
-- public hosting can lag GitHub `main` until the Sites project is republished, so source merge and public deployment are treated as separate release states.
-
-### Still excluded
-
-- live broker order placement;
-- automatic real-money execution;
-- strategy threshold changes based on short-term paper outcomes.
+- GitHub source state and public ChatGPT Sites deployment are separate release states.
 
 ## [0.1.0] - 2026-08-13
 
 ### Added
 
 - responsive NIFTY options learning dashboard;
-- 15-minute, 5-minute, and optional option-chain image upload/preview;
-- user-verifiable chart facts;
-- deterministic data-uncertain, no-trade, wait, CALL-ready, and PUT-ready states;
-- one-OTM strike and one-lot capital calculations;
-- ₹5,000 affordability and ₹300 intended-risk gates;
-- option stop, 2R exit, and tracked 3R calculations;
-- expiry-day and one-trade-per-day blocks;
+- screenshot/manual-fact learning flow;
+- deterministic wait/no-trade/ready states;
+- one-OTM strike/risk education;
 - guided sample mode;
-- verified Cloudflare-compatible production artifact;
 - project documentation and GitHub Actions CI.
 
 ### Limitations
 
-- no automated screenshot extraction;
 - no broker connection or automatic execution;
 - V0.1 lot size and strike interval remain static learning configuration.
