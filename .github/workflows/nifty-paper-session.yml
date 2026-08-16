@@ -1,0 +1,42 @@
+name: NIFTY Paper Session
+
+on:
+  schedule:
+    - cron: '50 3 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nifty-paper-session
+  cancel-in-progress: false
+
+jobs:
+  paper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 390
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run deterministic paper session
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_REQUEST_SPACING_MS: '1500'
+        run: node paper/run-session.mjs
+      - name: Persist paper journal
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/paper/trades.json public/paper/session-status.json
+          if git diff --cached --quiet; then
+            echo "No paper journal change"
+          else
+            git commit -m "Update NIFTY paper journal $(date -u +%F)"
+            git push origin HEAD:main
+          fi
