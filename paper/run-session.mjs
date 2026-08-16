@@ -110,15 +110,7 @@ function appendTrade(row) {
   if (fs.existsSync(JOURNAL)) payload = JSON.parse(fs.readFileSync(JOURNAL, 'utf8'));
   payload.trades = Array.isArray(payload.trades) ? payload.trades : [];
   if (!payload.trades.some((trade) => trade.source === 'PAPER' && trade.date === row.date)) payload.trades.push(row);
-  payload.meta = {
-    ...payload.meta,
-    strategy: 'NIFTY ₹180 Stepped Trail V3',
-    capital: PAPER_RULES.capital,
-    trailGapPoints: PAPER_RULES.trailGap,
-    trailStepPoints: PAPER_RULES.trailStep,
-    paperMode: true,
-    lastPaperSession: row.date,
-  };
+  payload.meta = { ...payload.meta, strategy: 'NIFTY ₹180 Momentum V2', capital: PAPER_RULES.capital, trailGapPoints: PAPER_RULES.trailGap, paperMode: true, lastPaperSession: row.date };
   fs.writeFileSync(JOURNAL, JSON.stringify(payload, null, 2));
 }
 
@@ -199,20 +191,12 @@ async function main() {
   if (!position.exit) { writeStatus({ date, status: 'ERROR', reason: 'No executable exit' }); return; }
   const units = lots * PAPER_RULES.lotSize;
   const pnl = optionCosts(position.entry, position.exit.price, units, date);
-  const maxFavorableMove = position.peakHigh - position.entry;
-  const breakevenReached = position.peakHigh >= position.entry + PAPER_RULES.trailGap;
   const row = {
-    source: 'PAPER', strategy: 'NIFTY ₹180 Stepped Trail V3', date, indexStockName: 'NIFTY 50', weeklyExpiry: expiry, lots, callType: chosen.side,
-    strikePrice: chosen.strike,
-    startTarget: Number((position.entry + PAPER_RULES.trailGap).toFixed(2)),
-    startStopLoss: PAPER_RULES.initialStop,
+    source: 'PAPER', date, indexStockName: 'NIFTY 50', weeklyExpiry: expiry, lots, callType: chosen.side,
+    strikePrice: chosen.strike, startTarget: PAPER_RULES.trailActivation, startStopLoss: PAPER_RULES.initialStop,
     endStopLoss: Number(position.activeStop.toFixed(2)), entryTime: timeOf(position.entryTime), exitTime: timeOf(position.exit.time),
     stopLossAdjustments: Math.max(0, position.stopHistory.length - 1), totalPnl: Number(pnl.net.toFixed(2)),
-    entryPremium: Number(position.entry.toFixed(2)), peakPremium: Number(position.peakHigh.toFixed(2)),
-    maxFavorableMove: Number(maxFavorableMove.toFixed(2)), breakevenReached,
-    exitPremium: Number(position.exit.price.toFixed(2)), exitReason: position.exit.result,
-    grossPnl: Number(pnl.gross.toFixed(2)), charges: Number(pnl.charges.toFixed(2)),
-    trailGapPoints: PAPER_RULES.trailGap, trailStepPoints: PAPER_RULES.trailStep,
+    entryPremium: position.entry, exitPremium: position.exit.price, exitReason: position.exit.result,
   };
   appendTrade(row);
   writeStatus({ date, status: 'CLOSED', trade: row, grossPnl: pnl.gross, charges: pnl.charges });
