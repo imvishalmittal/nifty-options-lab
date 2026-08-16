@@ -8,14 +8,16 @@ A conservative NIFTY options research and paper-trading lab built around determi
 
 ## Current system
 
-The repository now contains two distinct paths:
+The repository contains two user-facing paths:
 
 1. **Legacy learning dashboard (V0.1)** at `/` — manual/screenshot-based chart-fact learning UI.
-2. **Momentum paper system (V2)** at `/paper` — historical trade ledger plus forward paper-trading journal. The route is present in `main`; the hosted Sites build may require republishing before the public `/paper` URL reflects the newest code.
+2. **Paper/research dashboard** at `/paper` — historical V2 rows plus forward paper rows and stepped-trail outcome fields.
 
-## Current paper strategy — NIFTY ₹180 Momentum V2
+The hosted Sites build can lag GitHub `main`; source readiness and public deployment are separate states.
 
-The forward paper rule is frozen for observation; it must not be tuned based on tomorrow's outcome or one known historical trade.
+## Forward paper candidate — NIFTY ₹180 Stepped Trail V3
+
+V3 keeps the V2 entry family but changes stop management so risk begins reducing before a fixed ₹220 activation.
 
 | Parameter | Paper rule |
 | --- | --- |
@@ -24,82 +26,77 @@ The forward paper rule is frozen for observation; it must not be tuned based on 
 | Contract source | Actual nearest weekly NIFTY option contracts from Groww historical/current data |
 | Selection reference | ITM CE/PE premium closest to ₹180 at 09:25, using progressive bounded search |
 | Signal window | Completed 1-minute crossing above ₹180 from 09:30 until before 09:45 |
-| Entry | Next completed/executable 1-minute bar open; entry must be > ₹160 and < ₹220 |
+| Entry | Next executable 1-minute bar open; entry must be > ₹160 and < ₹220 |
 | Starting stop | ₹160 |
-| Trail activation | Completed 1-minute bar peak reaches ₹220 |
-| Trail | 20 premium points below completed-bar peak; stop only moves upward and becomes effective from the next bar |
+| Trail gap | 20 premium points |
+| Paper trail step | 10 premium points |
+| Research comparison | 5-point step vs 10-point step, both with the same 20-point gap |
+| Trail update | Based only on completed-bar peak; stop moves in step increments and becomes effective from the next bar |
+| Gross breakeven | Reached when the stepped stop rises to the actual entry premium; charges can still make net P/L slightly negative |
 | Ambiguity | Same-minute CE and PE signal is rejected |
 | Overnight | Never; final intraday fallback is 15:29 |
 | Model capital | ₹60,000 |
 | Position sizing | Whole lots affordable from model capital and date-correct lot size |
 | Execution | Paper only; no broker order placement |
-| Costs | Date-sensitive transaction costs plus explicit slippage stress in research |
 
-Historical results use real historical option candles and contracts but simulated causal execution. They are not actual fills.
+V2 remains preserved as a historical strategy version. Its 110 validated 2025 ledger rows are not rewritten to pretend they used V3 mechanics.
 
 ## Paper dashboard
 
-The `/paper` table includes:
+The `/paper` ledger includes the original trade fields plus V3 diagnostics: strategy version, entry/peak/exit premium, max favorable move, trail step, trail gap, breakeven reached, final stop, exit reason, stop-adjustment count, gross P/L, charges, and net P/L. Missing fields on older V2 rows display as `—` rather than being reconstructed without evidence.
 
-- row number;
-- date;
-- index/stock name;
-- weekly expiry;
-- number of lots;
-- CE/PE call type;
-- strike price;
-- starting target/trail activation;
-- starting stop loss;
-- ending stop loss;
-- trade entry time;
-- trade exit time;
-- stop-loss adjustment count;
-- total net profit/loss.
+Filters include **year, month, CE/PE, strategy, and profit/loss**. Displayed columns are sortable.
 
-Filters: **year, month, CE/PE, profit/loss**. Every displayed column is sortable and rows use alternating shading.
+## Historical evidence
 
-The ledger currently contains **110 integrity-passed 2025 momentum trades** from Jan–Sep and Nov. October and December 2025 are intentionally excluded because their monthly completeness checks failed. A 2026 Jan–Aug holdout is being generated separately and only integrity-passed 20-point rows are eligible for the paper ledger.
+The ledger currently contains **110 integrity-passed V2 trades from 2025 Jan–Sep and Nov**. October and December 2025 remain excluded because their completeness gates failed.
+
+V3 is a separately named hypothesis. A 2025 actual-contract comparison of **5-point versus 10-point trail steps with a 20-point gap** runs through its own integrity-gated workflow. Results from V2 and V3 must not be pooled as if they are the same strategy.
 
 ## Automation
 
-Key active GitHub Actions workflows include:
+Key GitHub Actions workflows include:
 
-- `CI` — lint, build, rendered-site tests, and paper-engine regression tests.
-- `NIFTY 180 Momentum 2025` — monthly development research.
-- `NIFTY 180 Momentum 2026` — holdout validation.
-- `NIFTY Paper Session` — weekday continuous paper session starting around 09:20 IST.
-- `Paper Ledger Backfill` — converts validated research artifacts into the dashboard ledger.
-- Existing opening-range, quick-flip, stocks-in-play, and V1 ₹180 workflows remain as research history/negative controls.
+- `CI` — lint, build, rendered-site tests, and strategy regression tests.
+- `NIFTY Paper Session` — weekday continuous paper session starting at about **09:20 IST**.
+- `NIFTY 180 Stepped Trail 2025` — V3 5-vs-10 step historical comparison.
+- `NIFTY 180 Momentum 2025` / `2026` — preserved V2 development/holdout research.
+- `Paper Ledger Backfill` — converts accepted historical artifacts to dashboard rows.
+- Earlier opening-range, Quick Flip, Stocks-in-Play, and V1 workflows remain research history/negative controls.
 
-Groww-heavy research jobs share a serialized API concurrency group to reduce rate-limit conflicts.
+Groww-heavy research jobs share a serialized API group to reduce rate-limit conflicts.
 
-## Important methodology controls
+## Methodology controls
 
 - No same-bar look-ahead for trailing-stop updates.
-- New stops become effective only after the source 1-minute bar has completed.
+- A new stop derived from a completed one-minute bar is effective only from the following bar.
+- Stops never move lower.
 - Invalid, partial, authentication-failed, rate-limited, CI-failed, or integrity-failed artifacts are not accepted as evidence.
-- 2025 is development evidence for V2; 2026 is treated as holdout evidence.
-- The paper rule is not changed merely because another trail gap matches a known winning trade more closely.
-- Live-money automation is out of scope until historical validation and forward paper evidence are both credible.
+- V3 is explicitly versioned rather than retroactively modifying V2 results.
+- The 5-vs-10 comparison is predeclared; selection should consider the full clean sample, costs, drawdown, and robustness rather than one known trade.
+- Live-money automation remains out of scope until historical and forward paper evidence are credible.
 
 ## Repository map
 
 ```text
 app/
-  page.tsx                 legacy learning dashboard
-  paper/page.tsx           paper dashboard route
-  paper-ledger.tsx         sortable/filterable trade ledger
+  page.tsx                         legacy learning dashboard
+  paper/page.tsx                   paper dashboard route
+  paper-ledger.tsx                 sortable/filterable trade ledger
 paper/
-  paper-engine.mjs         deterministic paper strategy mechanics
-  run-session.mjs          Groww-backed continuous paper session
-  build-ledger.mjs         research-artifact → dashboard ledger conversion
+  paper-engine.mjs                 current forward paper mechanics
+  run-session.mjs                  Groww-backed continuous paper session
+  build-ledger.mjs                 research-artifact → dashboard ledger conversion
 public/paper/
-  trades.json              historical + forward paper trade ledger
-  session-status.json      paper-session status snapshot
-research/                   historical strategy engines/backtests
-.github/workflows/          CI, research, backfill, and paper workflows
-docs/                       current strategy, architecture, safety, roadmap, decisions
-.openai/hosting.json        existing ChatGPT Sites project identity
+  trades.json                      historical + forward paper trade ledger
+  session-status.json              paper-session status snapshot
+research/
+  nifty-180-momentum-trail.mjs     preserved V2 engine
+  nifty-180-stepped-trail.mjs      V3 stepped-trail engine
+  groww-backtest-nifty-180-stepped.mjs
+.github/workflows/                  CI, research, backfill, and paper workflows
+docs/                               strategy, architecture, safety, roadmap, decisions
+.openai/hosting.json                existing ChatGPT Sites project identity
 ```
 
 ## Validation
@@ -108,14 +105,15 @@ docs/                       current strategy, architecture, safety, roadmap, dec
 npm ci
 npm run lint
 npm test
-node --test tests/paper-engine.test.mjs
+node --test tests/paper-engine.test.mjs tests/nifty-180-stepped-trail.test.mjs
 ```
 
-Research workflows also run their strategy-specific tests and monthly integrity gates.
+Research workflows also run monthly integrity gates.
 
 ## Documentation
 
 - [Current strategy specification](docs/STRATEGY_SPEC.md)
+- [Stepped-trail research](docs/STEPPED_TRAIL_RESEARCH.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Safety and limitations](docs/SAFETY_AND_LIMITATIONS.md)
 - [Development](docs/DEVELOPMENT.md)
