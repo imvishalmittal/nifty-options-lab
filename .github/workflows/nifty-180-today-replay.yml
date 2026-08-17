@@ -51,3 +51,5 @@ jobs:
           path: outputs/nifty-180-today-replay/
           if-no-files-found: error
           retention-days: 14
+
+# One-shot production-date replay; no paper ledger writes.
