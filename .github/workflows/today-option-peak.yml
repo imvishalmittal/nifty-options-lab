@@ -1,0 +1,33 @@
+name: Today Option Peak Diagnostic
+on:
+  push:
+    branches: [main]
+    paths: ['research/today-option-peak.mjs']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: groww-backtest-api
+      queue: max
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Run Groww peak diagnostic
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_REQUEST_SPACING_MS: '1500'
+        run: |
+          node scripts/resolve-groww-token.mjs
+          node research/today-option-peak.mjs > peak.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: today-option-peak-${{ github.run_id }}
+          path: peak.json
+          retention-days: 7
