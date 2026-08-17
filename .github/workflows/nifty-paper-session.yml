@@ -2,8 +2,16 @@ name: NIFTY Paper Session
 
 on:
   schedule:
-    - cron: '50 3 * * 1-5'
+    # Native GitHub cron is a secondary fallback. Cloudflare dispatches at
+    # 08:55 and 09:10 IST; this fallback is due at 09:00 IST.
+    - cron: '30 3 * * 1-5'
   workflow_dispatch:
+    inputs:
+      force:
+        description: Force a rerun even when today's paper session is already terminal
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -23,18 +31,29 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Guard completed paper session
+        id: guard
+        env:
+          FORCE: ${{ inputs.force }}
+        run: node paper/session-guard.mjs
+
       - name: Resolve Groww access token
+        if: steps.guard.outputs.run == 'true'
         env:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
           GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
           GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
         run: node scripts/resolve-groww-token.mjs
+
       - name: Run deterministic paper session
+        if: steps.guard.outputs.run == 'true'
         env:
           GROWW_REQUEST_SPACING_MS: '1500'
         run: node paper/run-session.mjs
+
       - name: Persist paper journal
-        if: always()
+        if: always() && steps.guard.outputs.run == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
