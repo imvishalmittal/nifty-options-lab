@@ -1,0 +1,53 @@
+name: NIFTY 180 Today Replay
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/nifty-180-today-replay.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    concurrency:
+      group: groww-backtest-api
+      queue: max
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate momentum engine and integrity checks
+        run: node --test tests/nifty-180-momentum-trail.test.mjs tests/momentum-result-integrity.test.mjs tests/groww-option-costs.test.mjs
+      - name: Resolve Groww access token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+        run: node scripts/resolve-groww-token.mjs
+      - name: Replay 2026-08-17 from Groww 1-minute history
+        env:
+          GROWW_REQUEST_SPACING_MS: '1500'
+        run: |
+          mkdir -p outputs/nifty-180-today-replay
+          node research/groww-backtest-nifty-180-momentum.mjs \
+            --start=2026-08-17 \
+            --end=2026-08-17 \
+            --lot-size=65 \
+            --out=outputs/nifty-180-today-replay/result.json \
+            > outputs/nifty-180-today-replay/stdout.json
+      - name: Require complete replay artifact
+        run: node research/momentum-result-integrity.mjs outputs/nifty-180-today-replay/result.json
+      - name: Upload replay artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nifty-180-today-replay-${{ github.run_id }}
+          path: outputs/nifty-180-today-replay/
+          if-no-files-found: error
+          retention-days: 14
