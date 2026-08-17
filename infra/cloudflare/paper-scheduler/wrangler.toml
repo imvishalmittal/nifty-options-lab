@@ -1,4 +1,4 @@
-name = "nifty-options-lab-paper-scheduler"
+name = "nifty-options-lab"
 main = "src/index.mjs"
 compatibility_date = "2026-08-01"
 
