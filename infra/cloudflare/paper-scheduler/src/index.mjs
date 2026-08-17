@@ -4,11 +4,11 @@ const REF = 'main';
 const WORKFLOW = 'nifty-paper-session.yml';
 const TIME_ZONE = 'Asia/Kolkata';
 
-// Two deliberately spaced Cloudflare attempts. The workflow-level terminal
-// session guard suppresses a later attempt after a valid completed session.
+// Cloudflare is the primary scheduler. A spaced retry protects against a
+// transient dispatch failure without changing the paper trading window.
 const ATTEMPTS = new Map([
-  ['08:55', 'primary'],
-  ['09:10', 'retry'],
+  ['09:20', 'primary'],
+  ['09:23', 'retry'],
 ]);
 
 function localClock(timestamp) {
