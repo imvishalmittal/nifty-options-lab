@@ -1,4 +1,6 @@
 {
-  "status": "NOT_STARTED",
-  "message": "Paper trading begins on the next scheduled market session."
+  "updatedAt": "2026-08-17T04:16:12.170Z",
+  "date": "2026-08-17",
+  "status": "NO_TRADE",
+  "reason": "No valid ₹180 crossing before 09:45"
 }
