@@ -3,8 +3,8 @@ name: NIFTY Paper Session
 on:
   schedule:
     # Native GitHub cron is a secondary fallback. Cloudflare dispatches at
-    # 08:55 and 09:10 IST; this fallback is due at 09:00 IST.
-    - cron: '30 3 * * 1-5'
+    # 09:20 and 09:23 IST; this fallback is due at 09:20 IST.
+    - cron: '50 3 * * 1-5'
   workflow_dispatch:
     inputs:
       force:
