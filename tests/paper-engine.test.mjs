@@ -50,7 +50,7 @@ test('exit bar does not credit unobservable post-stop excursion', () => {
   position = processCompletedBar(position, c('2026-08-17T09:32:00+05:30', 215, 260, 205, 250));
   assert.equal(position.exit.price, 210);
   assert.equal(position.peakHigh, 230);
-  assert.equal(position.troughLow, 184);
+  assert.equal(position.troughLow, 180);
 });
 
 test('gap below active stop fills at bar open', () => {
