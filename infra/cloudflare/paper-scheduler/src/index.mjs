@@ -3,13 +3,14 @@ const REPOSITORY = 'nifty-options-lab';
 const REF = 'main';
 const WORKFLOW = 'nifty-paper-session.yml';
 const TIME_ZONE = 'Asia/Kolkata';
-const SCHEDULER_VERSION = '2026-08-18-0920';
+const SCHEDULER_VERSION = '2026-08-18-0920-0925';
 
 // Cloudflare is the primary scheduler. A spaced retry protects against a
 // transient dispatch failure without changing the paper trading window.
+// The Worker cron runs every five minutes, so attempts must align to :00/:05/etc.
 const ATTEMPTS = new Map([
   ['09:20', 'primary'],
-  ['09:23', 'retry'],
+  ['09:25', 'retry'],
 ]);
 
 function localClock(timestamp) {
