@@ -3,6 +3,7 @@ const REPOSITORY = 'nifty-options-lab';
 const REF = 'main';
 const WORKFLOW = 'nifty-paper-session.yml';
 const TIME_ZONE = 'Asia/Kolkata';
+const SCHEDULER_VERSION = '2026-08-18-0920';
 
 // Cloudflare is the primary scheduler. A spaced retry protects against a
 // transient dispatch failure without changing the paper trading window.
@@ -48,7 +49,7 @@ async function dispatchWorkflow(env, dispatch) {
     const body = await response.text();
     throw new Error(`GitHub dispatch failed for ${dispatch.label}: ${response.status} ${body}`);
   }
-  console.log(`Dispatched ${dispatch.label}`);
+  console.log(`Dispatched ${dispatch.label} [${SCHEDULER_VERSION}]`);
 }
 
 export async function runSchedule(timestamp, env) {
@@ -62,6 +63,6 @@ export default {
     ctx.waitUntil(runSchedule(new Date(controller.scheduledTime), env));
   },
   async fetch() {
-    return Response.json({ service: 'nifty-options-lab-paper-scheduler', status: 'healthy', tokenConfigured: 'redacted' });
+    return Response.json({ service: 'nifty-options-lab-paper-scheduler', status: 'healthy', schedulerVersion: SCHEDULER_VERSION, tokenConfigured: 'redacted' });
   },
 };
