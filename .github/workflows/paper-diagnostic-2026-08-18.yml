@@ -1,0 +1,45 @@
+name: Paper Diagnostic 2026-08-18
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/paper-diagnostic-2026-08-18.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Resolve Groww access token
+        run: node scripts/resolve-groww-token.mjs
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+      - name: Replay selected CE/PE crossing
+        run: node paper/diagnose-crossing.mjs
+        env:
+          GROWW_ACCESS_TOKEN: ${{ env.GROWW_ACCESS_TOKEN }}
+          GROWW_REQUEST_SPACING_MS: 1500
+          DIAGNOSTIC_DATE: '2026-08-18'
+      - name: Persist diagnostic
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/paper/diagnostics/2026-08-18-crossing.json
+          if git diff --cached --quiet; then
+            echo "No diagnostic change"
+          else
+            git commit -m "Add 2026-08-18 premium crossing diagnostic"
+            git push origin HEAD:main
+          fi
