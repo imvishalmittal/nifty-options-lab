@@ -1,0 +1,76 @@
+name: NIFTY 180 Single-Closest Study 2025
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  month:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        period:
+          - { key: '2025-01', start: '2025-01-01', end: '2025-01-31' }
+          - { key: '2025-02', start: '2025-02-01', end: '2025-02-28' }
+          - { key: '2025-03', start: '2025-03-01', end: '2025-03-31' }
+          - { key: '2025-04', start: '2025-04-01', end: '2025-04-30' }
+          - { key: '2025-05', start: '2025-05-01', end: '2025-05-31' }
+          - { key: '2025-06', start: '2025-06-01', end: '2025-06-30' }
+          - { key: '2025-07', start: '2025-07-01', end: '2025-07-31' }
+          - { key: '2025-08', start: '2025-08-01', end: '2025-08-31' }
+          - { key: '2025-09', start: '2025-09-01', end: '2025-09-30' }
+          - { key: '2025-11', start: '2025-11-01', end: '2025-11-30' }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate exact revised rule
+        run: node --test tests/nifty-180-single-closest.test.mjs tests/nifty-180-momentum-trail.test.mjs tests/nifty-180-stepped-trail.test.mjs tests/groww-option-costs.test.mjs tests/groww-backtest-nifty-180.test.mjs
+
+      - name: Run single-closest actual-contract study
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_REQUEST_SPACING_MS: '1500'
+          PERIOD_KEY: ${{ matrix.period.key }}
+          START_DATE: ${{ matrix.period.start }}
+          END_DATE: ${{ matrix.period.end }}
+        run: |
+          mkdir -p "outputs/nifty-180-single-closest-2025/${PERIOD_KEY}"
+          node research/groww-backtest-nifty-180-single-closest.mjs \
+            "--start=${START_DATE}" \
+            "--end=${END_DATE}" \
+            --lot-size=75 \
+            "--out=outputs/nifty-180-single-closest-2025/${PERIOD_KEY}/result.json" \
+            > "outputs/nifty-180-single-closest-2025/${PERIOD_KEY}/stdout.json"
+
+      - name: Require full session ledger and cohort equality
+        env:
+          RESULT: outputs/nifty-180-single-closest-2025/${{ matrix.period.key }}/result.json
+        run: |
+          node --input-type=module - <<'NODE'
+          import fs from 'node:fs';
+          const result = JSON.parse(fs.readFileSync(process.env.RESULT, 'utf8'));
+          const expected = result.selectionSourceDiagnostics.tradingDates;
+          if (result.sessionLedger.length !== expected) throw new Error(`Session ledger ${result.sessionLedger.length} != trading dates ${expected}`);
+          const trades = result.sessionStatusCounts.TRADE ?? 0;
+          for (const key of ['V2', 'V3_5', 'V3_10']) {
+            if (result.variants[key].summary.trades !== trades) throw new Error(`${key} trades ${result.variants[key].summary.trades} != session trades ${trades}`);
+          }
+          if (result.sessionStatusCounts.AMBIGUOUS) throw new Error('Single-contract rule must never emit AMBIGUOUS');
+          console.log(JSON.stringify({ period: result.period, statusCounts: result.sessionStatusCounts, trades }, null, 2));
+          NODE
+
+      - name: Upload monthly result
+        uses: actions/upload-artifact@v4
+        with:
+          name: nifty-180-single-closest-${{ matrix.period.key }}-${{ github.run_id }}
+          path: outputs/nifty-180-single-closest-2025/${{ matrix.period.key }}/
+          if-no-files-found: error
+          retention-days: 30
