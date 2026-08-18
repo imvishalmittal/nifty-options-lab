@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import {
   PAPER_RULES, PAPER_VARIANTS, chooseClosestPremium, initialPosition, itmContracts, lotsAffordable,
-  nearestExpiry, nextBarEntry, premiumBracket, processCompletedBar, selectSide, sessionExit, timeOf,
+  nearestExpiry, nextBarEntry, premiumBracket, processCompletedBar, sessionExit, timeOf,
 } from './paper-engine.mjs';
+import { chooseSingleClosest, firstCompletedCloseAbove } from '../research/nifty-180-single-closest.mjs';
 
 const BASE_URL = 'https://api.groww.in/v1';
 const JOURNAL = 'public/paper/trades.json';
@@ -83,17 +84,28 @@ async function main() {
   const year = Number(date.slice(0, 4)); const expiryPayload = await apiGet(token, '/historical/expiries', { exchange: 'NSE', underlying_symbol: 'NIFTY', year }); const expiry = nearestExpiry(expiryPayload.expiries ?? [], date); if (!expiry) { writeStatus({ date, status: 'DATA_MISSING', reason: 'No weekly expiry' }); return; }
   const contractPayload = await apiGet(token, '/historical/contracts', { exchange: 'NSE', underlying_symbol: 'NIFTY', expiry_date: expiry }); const contracts = contractPayload.contracts ?? [];
   const ce = await selectContract(token, date, itmContracts(contracts, spot925, 'CE')); const pe = await selectContract(token, date, itmContracts(contracts, spot925, 'PE'));
-  const selectionAudit = { spot925, expiry, referencePremium: PAPER_RULES.referencePremium, ce, pe };
-  if (!ce.selected || !pe.selected || !ce.bracketed || !pe.bracketed) { writeStatus({ date, status: 'DATA_BOUNDARY', reason: 'Could not bracket ₹180 on both CE and PE candidate ladders', selectionAudit }); return; }
-  writeStatus({ date, status: 'WAITING_SIGNAL', selectionAudit, call: ce.selected, put: pe.selected });
+  if (!ce.selected || !pe.selected || !ce.bracketed || !pe.bracketed) {
+    const selectionAudit = { spot925, expiry, referencePremium: PAPER_RULES.referencePremium, ce, pe };
+    writeStatus({ date, status: 'DATA_BOUNDARY', reason: 'Could not bracket ₹180 on both CE and PE candidate ladders', selectionAudit }); return;
+  }
+  const selected = chooseSingleClosest(ce.selected, pe.selected);
+  const selectionAudit = { spot925, expiry, referencePremium: PAPER_RULES.referencePremium, ce, pe, selected };
+  if (!selected) { writeStatus({ date, status: 'DATA_MISSING', reason: 'No valid single closest contract', selectionAudit }); return; }
+  writeStatus({ date, status: 'WAITING_SIGNAL', selectionAudit, selected });
   let chosen = null, entryInfo = null;
   while (indiaParts().time <= PAPER_RULES.signalCutoff) {
-    const end = indiaParts().time; const callCandles = completedCandles(await fetchCandles(token, 'FNO', ce.selected.symbol, date, '09:25', end), end); const putCandles = completedCandles(await fetchCandles(token, 'FNO', pe.selected.symbol, date, '09:25', end), end);
-    const side = selectSide(callCandles, putCandles); if (side?.ambiguous) { writeStatus({ date, status: 'AMBIGUOUS', reason: 'CE and PE signalled in same completed minute', selectionAudit }); return; }
-    if (side) { const chosenRows = side.side === 'CE' ? callCandles : putCandles; const selected = side.side === 'CE' ? ce.selected : pe.selected; entryInfo = nextBarEntry(chosenRows, side.signal); if (entryInfo?.rejected) { writeStatus({ date, status: 'NO_TRADE', reason: 'Entry outside 160-220 band', entry: entryInfo.entry, selectionAudit }); return; } if (entryInfo) { chosen = { ...selected, side: side.side, signal: side.signal }; break; } }
+    const end = indiaParts().time;
+    const selectedCandles = completedCandles(await fetchCandles(token, 'FNO', selected.symbol, date, '09:25', end), end);
+    const signal = firstCompletedCloseAbove(selectedCandles);
+    if (signal) {
+      entryInfo = nextBarEntry(selectedCandles, signal);
+      if (entryInfo?.rejected) { writeStatus({ date, status: 'NO_TRADE', reason: 'Entry outside 160-220 band', entry: entryInfo.entry, signalTime: signal.timestamp, signalClose: signal.close, selectionAudit }); return; }
+      if (entryInfo) { chosen = { ...selected, side: selected.optionType, signal }; break; }
+    }
+    if (end >= PAPER_RULES.signalCutoff) break;
     await sleep(30000);
   }
-  if (!entryInfo || !chosen) { writeStatus({ date, status: 'NO_TRADE', reason: 'No valid ₹180 crossing before 09:45', selectionAudit }); return; }
+  if (!entryInfo || !chosen) { writeStatus({ date, status: 'NO_TRADE', reason: 'No valid completed close above ₹180 with executable next-bar entry before 09:45', selectionAudit }); return; }
   const lots = lotsAffordable(entryInfo.entry); if (lots < 1) { writeStatus({ date, status: 'NO_TRADE', reason: '₹60k capital cannot fund one lot', entry: entryInfo.entry, selectionAudit }); return; }
   const positions = Object.fromEntries(PAPER_VARIANTS.map((variant) => [variant.id, initialPosition({ entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, variant })])); const processed = new Set();
   writeStatus({ date, status: 'OPEN', selectionAudit, side: chosen.side, strike: chosen.strike, lots, entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, variants: Object.fromEntries(Object.entries(positions).map(([id, position]) => [id, positionStatus(position)])) });
