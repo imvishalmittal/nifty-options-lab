@@ -9,6 +9,14 @@ on:
       - 'research/nifty-180-premium-strategy.mjs'
       - 'research/groww-backtest-nifty-180-first-close.mjs'
       - 'tests/nifty-180-first-close-research.test.mjs'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/nifty-180-first-close-2026.yml'
+      - 'research/nifty-180-premium-strategy.mjs'
+      - 'research/groww-backtest-nifty-180-first-close.mjs'
+      - 'tests/nifty-180-first-close-research.test.mjs'
 
 permissions:
   contents: read
