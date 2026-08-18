@@ -1,6 +1,7 @@
 {
-  "updatedAt": "2026-08-18T04:16:31.540Z",
+  "updatedAt": "2026-08-18T09:25:00.000Z",
   "date": "2026-08-18",
-  "status": "NO_TRADE",
-  "reason": "No valid ₹180 crossing before 09:45"
+  "status": "DATA_BOUNDARY",
+  "reason": "18-Aug replay found CE bracketed ₹180 but PE candidate ladder did not; prior NO_TRADE classification was not auditable",
+  "diagnostic": "public/paper/diagnostics/2026-08-18-crossing.json"
 }

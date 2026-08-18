@@ -31,6 +31,16 @@ export function chooseClosestPremium(rows, reference = PAPER_RULES.referencePrem
   if (!usable.length) return null;
   return [...usable].sort((a, b) => Math.abs(a.premium - reference) - Math.abs(b.premium - reference) || b.premium - a.premium)[0];
 }
+export function premiumBracket(rows, reference = PAPER_RULES.referencePremium) {
+  const usable = rows.filter((row) => Number.isFinite(row.premium));
+  const below = usable.filter((row) => row.premium <= reference);
+  const above = usable.filter((row) => row.premium >= reference);
+  return {
+    bracketed: below.length > 0 && above.length > 0,
+    below: below.length ? [...below].sort((a, b) => b.premium - a.premium)[0] : null,
+    above: above.length ? [...above].sort((a, b) => a.premium - b.premium)[0] : null,
+  };
+}
 export function firstSignal(candles, rules = PAPER_RULES) {
   for (let i = 1; i < candles.length; i++) {
     const previous = candles[i - 1], current = candles[i], t = timeOf(current.timestamp);

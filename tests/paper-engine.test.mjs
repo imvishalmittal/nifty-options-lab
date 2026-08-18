@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PAPER_RULES, PAPER_VARIANTS, firstSignal, initialPosition, lotsAffordable, nextBarEntry, processCompletedBar, selectSide } from '../paper/paper-engine.mjs';
+import { PAPER_RULES, PAPER_VARIANTS, firstSignal, initialPosition, lotsAffordable, nextBarEntry, premiumBracket, processCompletedBar, selectSide } from '../paper/paper-engine.mjs';
 
 const c = (timestamp, open, high, low, close) => ({ timestamp, open, high, low, close });
 const variant = (id) => PAPER_VARIANTS.find((row) => row.id === id);
@@ -13,6 +13,18 @@ test('paper observation variants are exactly V2, V3-5 and V3-10', () => {
   assert.deepEqual(PAPER_VARIANTS.map((row) => row.id), ['V2', 'V3_5', 'V3_10']);
   assert.equal(variant('V3_5').trailStep, 5);
   assert.equal(variant('V3_10').trailStep, 10);
+});
+
+test('premium reference is bracketed only with observations on both sides', () => {
+  const valid = premiumBracket([{ premium: 148 }, { premium: 244.5 }]);
+  assert.equal(valid.bracketed, true);
+  assert.equal(valid.below.premium, 148);
+  assert.equal(valid.above.premium, 244.5);
+
+  const onlyAbove = premiumBracket([{ premium: 506.3 }]);
+  assert.equal(onlyAbove.bracketed, false);
+  assert.equal(onlyAbove.below, null);
+  assert.equal(onlyAbove.above.premium, 506.3);
 });
 
 test('signal requires completed crossing after 09:30', () => {
