@@ -42,18 +42,30 @@ export function premiumBracket(rows, reference = PAPER_RULES.referencePremium) {
   };
 }
 export function firstSignal(candles, rules = PAPER_RULES) {
-  for (let i = 1; i < candles.length; i++) {
-    const previous = candles[i - 1], current = candles[i], t = timeOf(current.timestamp);
+  for (const current of candles) {
+    const t = timeOf(current.timestamp);
     if (!t || t < rules.signalStart || t >= rules.signalCutoff) continue;
-    if (previous.close <= rules.referencePremium && current.close > rules.referencePremium) return current;
+    if (current.close > rules.referencePremium) return current;
   }
   return null;
 }
+function selectionPremium(candles) {
+  return candles.find((candle) => timeOf(candle.timestamp) === '09:25')?.open ?? null;
+}
 export function selectSide(callCandles, putCandles, rules = PAPER_RULES) {
-  const callSignal = firstSignal(callCandles, rules), putSignal = firstSignal(putCandles, rules);
-  if (!callSignal && !putSignal) return null;
-  if (callSignal && putSignal && callSignal.timestamp === putSignal.timestamp) return { ambiguous: true };
-  return !putSignal || (callSignal && callSignal.timestamp < putSignal.timestamp) ? { side: 'CE', signal: callSignal } : { side: 'PE', signal: putSignal };
+  const candidates = [
+    { side: 'CE', candles: callCandles, premium: selectionPremium(callCandles) },
+    { side: 'PE', candles: putCandles, premium: selectionPremium(putCandles) },
+  ].filter((row) => Number.isFinite(row.premium));
+  if (!candidates.length) return null;
+  const selected = [...candidates].sort((a, b) => {
+    const distance = Math.abs(a.premium - rules.referencePremium) - Math.abs(b.premium - rules.referencePremium);
+    if (distance !== 0) return distance;
+    if (a.premium !== b.premium) return b.premium - a.premium;
+    return a.side.localeCompare(b.side);
+  })[0];
+  const signal = firstSignal(selected.candles, rules);
+  return signal ? { side: selected.side, signal } : null;
 }
 export function nextBarEntry(candles, signal, rules = PAPER_RULES) {
   const index = candles.findIndex((bar) => bar.timestamp === signal.timestamp);
