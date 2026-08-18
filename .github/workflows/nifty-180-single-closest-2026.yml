@@ -2,6 +2,14 @@ name: NIFTY 180 Single-Closest Study 2026
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - research/single-closest-first-close
+    paths:
+      - '.github/workflows/nifty-180-single-closest-2026.yml'
+      - 'research/nifty-180-single-closest.mjs'
+      - 'research/groww-backtest-nifty-180-single-closest.mjs'
+      - 'tests/nifty-180-single-closest.test.mjs'
 
 permissions:
   contents: read
