@@ -2,9 +2,9 @@ name: NIFTY 180 Single-Closest Study 2026
 
 on:
   workflow_dispatch:
-  push:
+  pull_request:
     branches:
-      - research/single-closest-first-close
+      - main
     paths:
       - '.github/workflows/nifty-180-single-closest-2026.yml'
       - 'research/nifty-180-single-closest.mjs'
@@ -41,7 +41,7 @@ jobs:
       - name: Run single-closest actual-contract study
         env:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
-          GROWW_REQUEST_SPACING_MS: '1500'
+          GROWW_REQUEST_SPACING_MS: '3000'
           PERIOD_KEY: ${{ matrix.period.key }}
           START_DATE: ${{ matrix.period.start }}
           END_DATE: ${{ matrix.period.end }}
