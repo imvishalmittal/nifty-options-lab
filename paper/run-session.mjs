@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import {
   PAPER_RULES, PAPER_VARIANTS, chooseClosestPremium, initialPosition, itmContracts, lotsAffordable,
-  nearestExpiry, nextBarEntry, processCompletedBar, selectSide, sessionExit, timeOf,
+  nearestExpiry, nextBarEntry, premiumBracket, processCompletedBar, selectSide, sessionExit, timeOf,
 } from './paper-engine.mjs';
 
 const BASE_URL = 'https://api.groww.in/v1';
@@ -38,14 +38,15 @@ async function fetchCandles(token, segment, symbol, date, startClock, endClock) 
 async function waitUntil(clock) { while (indiaParts().time < clock) await sleep(15000); }
 function candleAt(candles, clock) { return candles.find((c) => timeOf(c.timestamp) === clock) ?? null; }
 async function selectContract(token, date, candidates) {
-  const rows = []; let bracketed = false;
+  const rows = [];
   for (const candidate of candidates) {
     const candles = await fetchCandles(token, 'FNO', candidate.symbol, date, '09:25', '09:29');
     const premium = candleAt(candles, '09:25')?.open ?? null;
     rows.push({ ...candidate, premium });
-    if (Number.isFinite(premium) && premium >= PAPER_RULES.referencePremium) { bracketed = true; break; }
+    if (premiumBracket(rows).bracketed) break;
   }
-  return { selected: chooseClosestPremium(rows), bracketed, fetched: rows.length };
+  const bracket = premiumBracket(rows);
+  return { selected: bracket.bracketed ? chooseClosestPremium(rows) : null, ...bracket, fetched: rows.length, candidatesChecked: rows };
 }
 function optionCosts(entry, exit, units, tradeDate) {
   const sttRate = tradeDate < '2026-04-01' ? 0.001 : 0.0015;
@@ -82,27 +83,28 @@ async function main() {
   const year = Number(date.slice(0, 4)); const expiryPayload = await apiGet(token, '/historical/expiries', { exchange: 'NSE', underlying_symbol: 'NIFTY', year }); const expiry = nearestExpiry(expiryPayload.expiries ?? [], date); if (!expiry) { writeStatus({ date, status: 'DATA_MISSING', reason: 'No weekly expiry' }); return; }
   const contractPayload = await apiGet(token, '/historical/contracts', { exchange: 'NSE', underlying_symbol: 'NIFTY', expiry_date: expiry }); const contracts = contractPayload.contracts ?? [];
   const ce = await selectContract(token, date, itmContracts(contracts, spot925, 'CE')); const pe = await selectContract(token, date, itmContracts(contracts, spot925, 'PE'));
-  if (!ce.selected || !pe.selected || !ce.bracketed || !pe.bracketed) { writeStatus({ date, status: 'DATA_BOUNDARY', spot925, expiry, ce, pe }); return; }
-  writeStatus({ date, status: 'WAITING_SIGNAL', spot925, expiry, call: ce.selected, put: pe.selected });
+  const selectionAudit = { spot925, expiry, referencePremium: PAPER_RULES.referencePremium, ce, pe };
+  if (!ce.selected || !pe.selected || !ce.bracketed || !pe.bracketed) { writeStatus({ date, status: 'DATA_BOUNDARY', reason: 'Could not bracket ₹180 on both CE and PE candidate ladders', selectionAudit }); return; }
+  writeStatus({ date, status: 'WAITING_SIGNAL', selectionAudit, call: ce.selected, put: pe.selected });
   let chosen = null, entryInfo = null;
   while (indiaParts().time <= PAPER_RULES.signalCutoff) {
     const end = indiaParts().time; const callCandles = completedCandles(await fetchCandles(token, 'FNO', ce.selected.symbol, date, '09:25', end), end); const putCandles = completedCandles(await fetchCandles(token, 'FNO', pe.selected.symbol, date, '09:25', end), end);
-    const side = selectSide(callCandles, putCandles); if (side?.ambiguous) { writeStatus({ date, status: 'AMBIGUOUS', reason: 'CE and PE signalled in same completed minute' }); return; }
-    if (side) { const chosenRows = side.side === 'CE' ? callCandles : putCandles; const selected = side.side === 'CE' ? ce.selected : pe.selected; entryInfo = nextBarEntry(chosenRows, side.signal); if (entryInfo?.rejected) { writeStatus({ date, status: 'NO_TRADE', reason: 'Entry outside 160-220 band', entry: entryInfo.entry }); return; } if (entryInfo) { chosen = { ...selected, side: side.side, signal: side.signal }; break; } }
+    const side = selectSide(callCandles, putCandles); if (side?.ambiguous) { writeStatus({ date, status: 'AMBIGUOUS', reason: 'CE and PE signalled in same completed minute', selectionAudit }); return; }
+    if (side) { const chosenRows = side.side === 'CE' ? callCandles : putCandles; const selected = side.side === 'CE' ? ce.selected : pe.selected; entryInfo = nextBarEntry(chosenRows, side.signal); if (entryInfo?.rejected) { writeStatus({ date, status: 'NO_TRADE', reason: 'Entry outside 160-220 band', entry: entryInfo.entry, selectionAudit }); return; } if (entryInfo) { chosen = { ...selected, side: side.side, signal: side.signal }; break; } }
     await sleep(30000);
   }
-  if (!entryInfo || !chosen) { writeStatus({ date, status: 'NO_TRADE', reason: 'No valid ₹180 crossing before 09:45' }); return; }
-  const lots = lotsAffordable(entryInfo.entry); if (lots < 1) { writeStatus({ date, status: 'NO_TRADE', reason: '₹60k capital cannot fund one lot', entry: entryInfo.entry }); return; }
+  if (!entryInfo || !chosen) { writeStatus({ date, status: 'NO_TRADE', reason: 'No valid ₹180 crossing before 09:45', selectionAudit }); return; }
+  const lots = lotsAffordable(entryInfo.entry); if (lots < 1) { writeStatus({ date, status: 'NO_TRADE', reason: '₹60k capital cannot fund one lot', entry: entryInfo.entry, selectionAudit }); return; }
   const positions = Object.fromEntries(PAPER_VARIANTS.map((variant) => [variant.id, initialPosition({ entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, variant })])); const processed = new Set();
-  writeStatus({ date, status: 'OPEN', expiry, side: chosen.side, strike: chosen.strike, lots, entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, variants: Object.fromEntries(Object.entries(positions).map(([id, position]) => [id, positionStatus(position)])) });
+  writeStatus({ date, status: 'OPEN', selectionAudit, side: chosen.side, strike: chosen.strike, lots, entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, variants: Object.fromEntries(Object.entries(positions).map(([id, position]) => [id, positionStatus(position)])) });
   while (Object.values(positions).some((position) => !position.exit)) {
     const now = indiaParts().time; const candles = completedCandles(await fetchCandles(token, 'FNO', chosen.symbol, date, timeOf(entryInfo.entryBar.timestamp), now), now);
     for (const candle of candles) { if (candle.timestamp < entryInfo.entryBar.timestamp || processed.has(candle.timestamp)) continue; for (const id of Object.keys(positions)) positions[id] = processCompletedBar(positions[id], candle); processed.add(candle.timestamp); }
     if (Object.values(positions).every((position) => position.exit)) break;
     if (now >= '15:30') { const last = candles.filter((c) => timeOf(c.timestamp) <= PAPER_RULES.sessionExit).at(-1); if (last) for (const id of Object.keys(positions)) positions[id] = sessionExit(positions[id], last); break; }
-    writeStatus({ date, status: 'OPEN', expiry, side: chosen.side, strike: chosen.strike, lots, entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, variants: Object.fromEntries(Object.entries(positions).map(([id, position]) => [id, positionStatus(position)])) }); await sleep(30000);
+    writeStatus({ date, status: 'OPEN', selectionAudit, side: chosen.side, strike: chosen.strike, lots, entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, variants: Object.fromEntries(Object.entries(positions).map(([id, position]) => [id, positionStatus(position)])) }); await sleep(30000);
   }
-  if (Object.values(positions).some((position) => !position.exit)) { writeStatus({ date, status: 'ERROR', reason: 'At least one strategy has no executable exit' }); return; }
-  const rows = PAPER_VARIANTS.map((variant) => buildRow({ position: positions[variant.id], date, expiry, chosen, lots })); appendTrades(rows); writeStatus({ date, status: 'CLOSED', trades: rows }); console.log(JSON.stringify(rows, null, 2));
+  if (Object.values(positions).some((position) => !position.exit)) { writeStatus({ date, status: 'ERROR', reason: 'At least one strategy has no executable exit', selectionAudit }); return; }
+  const rows = PAPER_VARIANTS.map((variant) => buildRow({ position: positions[variant.id], date, expiry, chosen, lots })); appendTrades(rows); writeStatus({ date, status: 'CLOSED', selectionAudit, trades: rows }); console.log(JSON.stringify(rows, null, 2));
 }
 main().catch((error) => { console.error(error.stack || error.message); writeStatus({ status: 'FAILED', reason: error.message }); process.exitCode = 1; });
