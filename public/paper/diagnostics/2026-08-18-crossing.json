@@ -1,0 +1,454 @@
+{
+  "date": "2026-08-18",
+  "rules": {
+    "referencePremium": 180,
+    "signalStart": "09:30",
+    "signalCutoff": "09:45"
+  },
+  "spot925": 24246.25,
+  "expiry": "2026-08-18",
+  "ce": {
+    "selection": {
+      "selected": {
+        "symbol": "NSE-NIFTY-18Aug26-24100-CE",
+        "expiryCode": "18Aug26",
+        "strike": 24100,
+        "optionType": "CE",
+        "premium": 148
+      },
+      "bracketed": true,
+      "candidatesChecked": [
+        {
+          "symbol": "NSE-NIFTY-18Aug26-24150-CE",
+          "expiryCode": "18Aug26",
+          "strike": 24150,
+          "optionType": "CE",
+          "premium": 103.85
+        },
+        {
+          "symbol": "NSE-NIFTY-18Aug26-24100-CE",
+          "expiryCode": "18Aug26",
+          "strike": 24100,
+          "optionType": "CE",
+          "premium": 148
+        },
+        {
+          "symbol": "NSE-NIFTY-18Aug26-24000-CE",
+          "expiryCode": "18Aug26",
+          "strike": 24000,
+          "optionType": "CE",
+          "premium": 244.5
+        }
+      ]
+    },
+    "rows": [
+      {
+        "time": "09:25",
+        "open": 148,
+        "high": 152.65,
+        "low": 144.6,
+        "close": 152.65,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:26",
+        "open": 153.05,
+        "high": 169.5,
+        "low": 152.65,
+        "close": 169.5,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:27",
+        "open": 169.55,
+        "high": 174,
+        "low": 161.85,
+        "close": 162.05,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:28",
+        "open": 162.9,
+        "high": 162.9,
+        "low": 152.05,
+        "close": 153,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:29",
+        "open": 152.15,
+        "high": 155.65,
+        "low": 149.2,
+        "close": 149.6,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:30",
+        "open": 149,
+        "high": 149,
+        "low": 137.7,
+        "close": 137.7,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:31",
+        "open": 137.65,
+        "high": 142.8,
+        "low": 133.55,
+        "close": 133.6,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:32",
+        "open": 133.1,
+        "high": 136.6,
+        "low": 132.75,
+        "close": 135.65,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:33",
+        "open": 135.3,
+        "high": 137.45,
+        "low": 134.2,
+        "close": 136.6,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:34",
+        "open": 136.95,
+        "high": 143.7,
+        "low": 136.9,
+        "close": 141.1,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:35",
+        "open": 140.4,
+        "high": 143.35,
+        "low": 137.65,
+        "close": 142.6,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:36",
+        "open": 143.55,
+        "high": 154.5,
+        "low": 143.25,
+        "close": 151.05,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:37",
+        "open": 151.2,
+        "high": 152.4,
+        "low": 146.65,
+        "close": 150.3,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:38",
+        "open": 151.5,
+        "high": 151.5,
+        "low": 141.45,
+        "close": 141.65,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:39",
+        "open": 142.45,
+        "high": 152.85,
+        "low": 142.45,
+        "close": 151.35,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:40",
+        "open": 152.1,
+        "high": 152.95,
+        "low": 146.35,
+        "close": 147.3,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:41",
+        "open": 147,
+        "high": 151.5,
+        "low": 145.15,
+        "close": 148.9,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:42",
+        "open": 148.25,
+        "high": 148.55,
+        "low": 140.15,
+        "close": 142.95,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:43",
+        "open": 143.3,
+        "high": 143.7,
+        "low": 137.8,
+        "close": 141,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:44",
+        "open": 140.45,
+        "high": 141.8,
+        "low": 132.55,
+        "close": 134.3,
+        "crossedByClose": false,
+        "touched180": false
+      },
+      {
+        "time": "09:45",
+        "open": 133.85,
+        "high": 134.1,
+        "low": 127.3,
+        "close": 132.2,
+        "crossedByClose": false,
+        "touched180": false
+      }
+    ],
+    "firstValidSignal": null,
+    "maxHigh": 174,
+    "maxClose": 169.5
+  },
+  "pe": {
+    "selection": {
+      "selected": {
+        "symbol": "NSE-NIFTY-18Aug26-24750-PE",
+        "expiryCode": "18Aug26",
+        "strike": 24750,
+        "optionType": "PE",
+        "premium": 506.3
+      },
+      "bracketed": true,
+      "candidatesChecked": [
+        {
+          "symbol": "NSE-NIFTY-18Aug26-24750-PE",
+          "expiryCode": "18Aug26",
+          "strike": 24750,
+          "optionType": "PE",
+          "premium": 506.3
+        }
+      ]
+    },
+    "rows": [
+      {
+        "time": "09:25",
+        "open": 506.3,
+        "high": 510.3,
+        "low": 506,
+        "close": 506,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:26",
+        "open": 502.1,
+        "high": 502.1,
+        "low": 483.85,
+        "close": 483.85,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:27",
+        "open": 481.7,
+        "high": 489.9,
+        "low": 481.7,
+        "close": 489.25,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:28",
+        "open": 491.85,
+        "high": 502.6,
+        "low": 491.85,
+        "close": 502.55,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:29",
+        "open": 502.2,
+        "high": 504.15,
+        "low": 500.9,
+        "close": 504.15,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:30",
+        "open": 516.95,
+        "high": 519.2,
+        "low": 513.2,
+        "close": 519.2,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:31",
+        "open": 518,
+        "high": 522,
+        "low": 514.8,
+        "close": 522,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:32",
+        "open": 524.1,
+        "high": 524.1,
+        "low": 519.5,
+        "close": 523.9,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:33",
+        "open": 522.7,
+        "high": 523.35,
+        "low": 520.15,
+        "close": 521.7,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:34",
+        "open": 513.9,
+        "high": 515.75,
+        "low": 513.6,
+        "close": 514.15,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:35",
+        "open": 514.25,
+        "high": 519.35,
+        "low": 514.25,
+        "close": 515.4,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:36",
+        "open": 508.85,
+        "high": 511.6,
+        "low": 501.8,
+        "close": 501.95,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:37",
+        "open": 508.5,
+        "high": 509.7,
+        "low": 505.05,
+        "close": 506.95,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:38",
+        "open": 505.35,
+        "high": 514.1,
+        "low": 505.35,
+        "close": 513.35,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:39",
+        "open": 513.8,
+        "high": 513.95,
+        "low": 506.35,
+        "close": 506.35,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:40",
+        "open": 504.35,
+        "high": 507.75,
+        "low": 503,
+        "close": 507.6,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:41",
+        "open": 508.65,
+        "high": 509.1,
+        "low": 505.85,
+        "close": 506.95,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:42",
+        "open": 507.8,
+        "high": 515,
+        "low": 507.8,
+        "close": 515,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:43",
+        "open": 513.45,
+        "high": 517.5,
+        "low": 512.15,
+        "close": 515,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:44",
+        "open": 516.55,
+        "high": 517.55,
+        "low": 516.55,
+        "close": 517.55,
+        "crossedByClose": false,
+        "touched180": true
+      },
+      {
+        "time": "09:45",
+        "open": 523.1,
+        "high": 530,
+        "low": 523.1,
+        "close": 530,
+        "crossedByClose": false,
+        "touched180": true
+      }
+    ],
+    "firstValidSignal": null,
+    "maxHigh": 530,
+    "maxClose": 530
+  }
+}
