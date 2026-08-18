@@ -27,8 +27,8 @@ test('premium reference is bracketed only with observations on both sides', () =
   assert.equal(onlyAbove.above.premium, 506.3);
 });
 
-test('signal requires completed crossing after 09:30', () => {
-  const candles = [c('2026-08-17T09:29:00+05:30', 179, 181, 178, 179), c('2026-08-17T09:30:00+05:30', 179, 184, 178, 182)];
+test('signal is the first completed close above 180 after 09:30', () => {
+  const candles = [c('2026-08-17T09:25:00+05:30', 184, 186, 183, 184), c('2026-08-17T09:30:00+05:30', 185, 188, 184, 186)];
   assert.equal(firstSignal(candles)?.timestamp, '2026-08-17T09:30:00+05:30');
 });
 
@@ -39,9 +39,12 @@ test('entry is next bar open and must remain inside 160-220 band', () => {
   assert.equal(entry.entryBar.timestamp, '2026-08-17T09:31:00+05:30');
 });
 
-test('same-minute CE and PE signals are ambiguous', () => {
-  const rows = [c('2026-08-17T09:29:00+05:30', 178, 180, 177, 179), c('2026-08-17T09:30:00+05:30', 179, 185, 178, 182)];
-  assert.equal(selectSide(rows, rows).ambiguous, true);
+test('only the 09:25 contract closest to 180 is eligible to signal', () => {
+  const callRows = [c('2026-08-17T09:25:00+05:30', 176, 177, 175, 176), c('2026-08-17T09:30:00+05:30', 178, 180, 177, 179), c('2026-08-17T09:31:00+05:30', 181, 183, 180, 182)];
+  const putRows = [c('2026-08-17T09:25:00+05:30', 190, 191, 189, 190), c('2026-08-17T09:30:00+05:30', 195, 196, 194, 195), c('2026-08-17T09:31:00+05:30', 196, 197, 195, 196)];
+  const selected = selectSide(callRows, putRows);
+  assert.equal(selected.side, 'CE');
+  assert.equal(selected.signal.timestamp, '2026-08-17T09:31:00+05:30');
 });
 
 test('one shared candle stream produces independent V2/V3 stops', () => {
