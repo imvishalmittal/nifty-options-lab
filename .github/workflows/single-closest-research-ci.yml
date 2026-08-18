@@ -1,0 +1,28 @@
+name: Single-Closest Research CI
+
+on:
+  push:
+    branches:
+      - research/single-closest-first-close
+    paths:
+      - '.github/workflows/single-closest-research-ci.yml'
+      - 'research/nifty-180-single-closest.mjs'
+      - 'research/groww-backtest-nifty-180-single-closest.mjs'
+      - 'tests/nifty-180-single-closest.test.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: node --test tests/nifty-180-single-closest.test.mjs tests/nifty-180-momentum-trail.test.mjs tests/nifty-180-stepped-trail.test.mjs tests/groww-backtest-nifty-180.test.mjs tests/groww-option-costs.test.mjs
