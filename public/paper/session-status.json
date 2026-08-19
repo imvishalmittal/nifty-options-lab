@@ -1,7 +1,21 @@
 {
-  "updatedAt": "2026-08-18T09:25:00.000Z",
-  "date": "2026-08-18",
-  "status": "DATA_BOUNDARY",
-  "reason": "18-Aug replay found CE bracketed ₹180 but PE candidate ladder did not; prior NO_TRADE classification was not auditable",
-  "diagnostic": "public/paper/diagnostics/2026-08-18-crossing.json"
+  "updatedAt": "2026-08-19T03:25:13.591Z",
+  "date": "2026-08-19",
+  "status": "STARTING",
+  "strategies": [
+    "V2",
+    "V3_5",
+    "V3_10"
+  ],
+  "rules": {
+    "referencePremium": 180,
+    "initialStop": 160,
+    "trailActivation": 220,
+    "trailGap": 20,
+    "signalStart": "09:30",
+    "signalCutoff": "09:45",
+    "sessionExit": "15:29",
+    "capital": 60000,
+    "lotSize": 65
+  }
 }

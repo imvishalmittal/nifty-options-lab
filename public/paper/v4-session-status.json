@@ -1,5 +1,17 @@
 {
-  "date": null,
-  "status": "NOT_STARTED",
-  "strategy": "V4"
+  "updatedAt": "2026-08-19T03:25:13.591Z",
+  "date": "2026-08-19",
+  "status": "STARTING",
+  "strategy": "V4",
+  "rules": {
+    "referencePremium": 180,
+    "initialStop": 160,
+    "trailActivation": 220,
+    "trailGap": 20,
+    "signalStart": "09:30",
+    "signalCutoff": "09:45",
+    "sessionExit": "15:29",
+    "capital": 60000,
+    "lotSize": 65
+  }
 }
