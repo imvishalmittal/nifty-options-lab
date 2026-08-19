@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { shouldRunPaperSession } from '../paper/session-guard.mjs';
+import { shouldRunPaperSession, shouldRunPaperSuite } from '../paper/session-guard.mjs';
 
 const date = '2026-08-17';
 
@@ -22,4 +22,15 @@ test('old-session status never blocks today', () => {
 
 test('explicit manual force bypasses terminal-session guard', () => {
   assert.equal(shouldRunPaperSession({ date, status: 'NO_TRADE' }, date, true).run, true);
+});
+
+test('paper suite retries when V4 is missing even if base is terminal', () => {
+  const result = shouldRunPaperSuite({ date, status: 'CLOSED' }, null, date);
+  assert.equal(result.run, true);
+  assert.match(result.reason, /V4/);
+});
+
+test('paper suite stops only when both base and V4 are terminal', () => {
+  const result = shouldRunPaperSuite({ date, status: 'NO_TRADE' }, { date, status: 'CLOSED' }, date);
+  assert.equal(result.run, false);
 });
