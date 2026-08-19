@@ -3,7 +3,7 @@ name: NIFTY Paper Session
 on:
   schedule:
     # Native GitHub cron is a secondary fallback. Cloudflare dispatches at
-    # 09:20 and 09:23 IST; this fallback is due at 09:20 IST.
+    # 09:20 and 09:25 IST; this fallback is due at 09:20 IST.
     - cron: '50 3 * * 1-5'
   workflow_dispatch:
     inputs:
@@ -36,6 +36,7 @@ jobs:
         id: guard
         env:
           FORCE: ${{ inputs.force }}
+          V4_STATUS_PATH: public/paper/v4-session-status.json
         run: node paper/session-guard.mjs
 
       - name: Resolve Groww access token
@@ -46,18 +47,41 @@ jobs:
           GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
         run: node scripts/resolve-groww-token.mjs
 
-      - name: Run deterministic paper session
+      - name: Run base and V4 paper sessions
         if: steps.guard.outputs.run == 'true'
         env:
           GROWW_REQUEST_SPACING_MS: '1500'
-        run: node paper/run-session.mjs
+        run: |
+          set +e
+          node paper/run-session.mjs > /tmp/base-paper.log 2>&1 &
+          base_pid=$!
+          node paper/run-v4-session.mjs > /tmp/v4-paper.log 2>&1 &
+          v4_pid=$!
+
+          wait "$base_pid"
+          base_rc=$?
+          wait "$v4_pid"
+          v4_rc=$?
+          set -e
+
+          echo "===== Base paper session ====="
+          cat /tmp/base-paper.log
+          echo "===== V4 paper session ====="
+          cat /tmp/v4-paper.log
+
+          node paper/merge-v4-ledger.mjs
+
+          if [ "$base_rc" -ne 0 ] || [ "$v4_rc" -ne 0 ]; then
+            echo "Paper runner failure: base=$base_rc v4=$v4_rc"
+            exit 1
+          fi
 
       - name: Persist paper journal
         if: always() && steps.guard.outputs.run == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/paper/trades.json public/paper/session-status.json
+          git add public/paper/trades.json public/paper/session-status.json public/paper/v4-trades.json public/paper/v4-session-status.json
           if git diff --cached --quiet; then
             echo "No paper journal change"
           else
