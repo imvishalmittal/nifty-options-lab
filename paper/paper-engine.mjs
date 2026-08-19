@@ -22,9 +22,31 @@ export function parseOption(symbol) {
   return match ? { symbol, expiryCode: match[1], strike: Number(match[2]), optionType: match[3] } : null;
 }
 export function nearestExpiry(expiries, date) { return [...expiries].filter((value) => value >= date).sort()[0] ?? null; }
+function gcd(a, b) { let x = Math.abs(Math.round(a)); let y = Math.abs(Math.round(b)); while (y) [x, y] = [y, x % y]; return x; }
+function inferredStrikeStep(parsed) {
+  const strikes = [...new Set(parsed.map((row) => row.strike).filter(Number.isFinite))].sort((a, b) => a - b);
+  const diffs = [];
+  for (let i = 1; i < strikes.length; i += 1) { const diff = strikes[i] - strikes[i - 1]; if (diff > 0 && diff <= 500) diffs.push(diff); }
+  const step = diffs.reduce((value, diff) => value ? gcd(value, diff) : diff, 0);
+  return step >= 25 && step <= 100 ? step : 50;
+}
+function syntheticItm(expiryCode, spot, optionType, step, max) {
+  const epsilon = 1e-9;
+  const first = optionType === 'CE' ? Math.floor((spot - epsilon) / step) * step : Math.ceil((spot + epsilon) / step) * step;
+  return Array.from({ length: max }, (_, index) => {
+    const strike = optionType === 'CE' ? first - index * step : first + index * step;
+    return { symbol: `NSE-NIFTY-${expiryCode}-${strike}-${optionType}`, expiryCode, strike, optionType };
+  });
+}
 export function itmContracts(contracts, spot, optionType, max = 8) {
-  return contracts.map(parseOption).filter(Boolean).filter((contract) => contract.optionType === optionType && (optionType === 'CE' ? contract.strike < spot : contract.strike > spot))
-    .sort((a, b) => optionType === 'CE' ? b.strike - a.strike : a.strike - b.strike).slice(0, max);
+  const parsed = contracts.map(parseOption).filter(Boolean);
+  const eligible = parsed.filter((contract) => contract.optionType === optionType && (optionType === 'CE' ? contract.strike < spot : contract.strike > spot))
+    .sort((a, b) => optionType === 'CE' ? b.strike - a.strike : a.strike - b.strike);
+  const step = inferredStrikeStep(parsed);
+  const nearestGap = eligible.length ? Math.abs(eligible[0].strike - spot) : Infinity;
+  if (eligible.length && nearestGap <= step * 2) return eligible.slice(0, max);
+  const expiryCode = parsed[0]?.expiryCode;
+  return expiryCode ? syntheticItm(expiryCode, spot, optionType, step, max) : eligible.slice(0, max);
 }
 export function chooseClosestPremium(rows, reference = PAPER_RULES.referencePremium) {
   const usable = rows.filter((row) => Number.isFinite(row.premium));
