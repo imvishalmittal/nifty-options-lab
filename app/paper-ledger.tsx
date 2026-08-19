@@ -7,8 +7,9 @@ type CallType = "CE" | "PE";
 type PnlFilter = "ALL" | "PROFIT" | "LOSS";
 type SortDir = "asc" | "desc";
 type Source = "BACKTEST" | "PAPER";
-type StrategyMode = "V2" | "V3";
+type StrategyMode = "V2" | "V3" | "V4";
 type DataSource = "proxy" | "published" | null;
+type SessionThread = "BASE" | "V4";
 
 type PaperTrade = {
   source?: Source; strategy?: string; strategyVersion?: string; date: string; indexStockName: string; weeklyExpiry: string;
@@ -17,12 +18,22 @@ type PaperTrade = {
   maxFavorableMove?: number; trailStepPoints?: number; trailGapPoints?: number; breakevenReached?: boolean; exitPremium?: number;
   exitReason?: string; grossPnl?: number; charges?: number;
 };
+
+type SessionContract = { symbol: string; strike?: number; optionType?: CallType; premium?: number };
+type PaperSession = {
+  date: string; thread: SessionThread; strategyVersions: string[]; status: string; reason?: string | null; updatedAt?: string | null;
+  spot925?: number | null; expiry?: string | null; referencePremium?: number | null; ce?: SessionContract | null; pe?: SessionContract | null;
+  side?: CallType | null; strike?: number | null; entry?: number | null; entryTime?: string | null; signalSource?: string | null;
+  tradeCount: number; totalPnl?: number | null;
+};
+
 type SortKey = "rowNo" | keyof PaperTrade;
 
 const money = new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const num = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 });
 const V2 = "NIFTY ₹180 Momentum V2";
 const V3 = "NIFTY ₹180 Stepped Trail V3";
+const V4 = "NIFTY ₹180 NIFTY-Confirmed Fail-Fast V4";
 
 const columns: Array<{ key: SortKey; label: string }> = [
   { key: "rowNo", label: "#" }, { key: "date", label: "Date" }, { key: "indexStockName", label: "Index / Stock" },
@@ -55,16 +66,60 @@ function normalizeTrade(value: unknown): PaperTrade | null {
     exitPremium: optionalNumber(row.exitPremium), exitReason: row.exitReason ? String(row.exitReason) : undefined, grossPnl: optionalNumber(row.grossPnl), charges: optionalNumber(row.charges),
   };
 }
+function normalizeContract(value: unknown): SessionContract | null {
+  if (!value || typeof value !== "object") return null;
+  const row = value as Partial<SessionContract>;
+  if (!row.symbol) return null;
+  const optionType = row.optionType === "CE" || row.optionType === "PE" ? row.optionType : undefined;
+  return { symbol: String(row.symbol), strike: optionalNumber(row.strike), optionType, premium: optionalNumber(row.premium) };
+}
+function normalizeSession(value: unknown): PaperSession | null {
+  if (!value || typeof value !== "object") return null;
+  const row = value as Partial<PaperSession>;
+  if (!row.date || (row.thread !== "BASE" && row.thread !== "V4") || !row.status) return null;
+  const side = row.side === "CE" || row.side === "PE" ? row.side : null;
+  return {
+    date: String(row.date), thread: row.thread, strategyVersions: Array.isArray(row.strategyVersions) ? row.strategyVersions.map(String) : [],
+    status: String(row.status), reason: row.reason ? String(row.reason) : null, updatedAt: row.updatedAt ? String(row.updatedAt) : null,
+    spot925: optionalNumber(row.spot925) ?? null, expiry: row.expiry ? String(row.expiry) : null, referencePremium: optionalNumber(row.referencePremium) ?? null,
+    ce: normalizeContract(row.ce), pe: normalizeContract(row.pe), side, strike: optionalNumber(row.strike) ?? null, entry: optionalNumber(row.entry) ?? null,
+    entryTime: row.entryTime ? String(row.entryTime) : null, signalSource: row.signalSource ? String(row.signalSource) : null,
+    tradeCount: Number.isFinite(Number(row.tradeCount)) ? Number(row.tradeCount) : 0, totalPnl: optionalNumber(row.totalPnl) ?? null,
+  };
+}
 function compareValues(a: unknown, b: unknown) {
   if (typeof a === "boolean" && typeof b === "boolean") return Number(a) - Number(b);
   if (typeof a === "number" && typeof b === "number") return a - b;
   return String(a ?? "").localeCompare(String(b ?? ""), "en", { numeric: true });
 }
-const premium = (value?: number) => value === undefined ? "—" : `₹${num.format(value)}`;
-const pnl = (value?: number) => value === undefined ? "—" : `${value >= 0 ? "+" : "−"}₹${money.format(Math.abs(value))}`;
+const premium = (value?: number | null) => value === undefined || value === null ? "—" : `₹${num.format(value)}`;
+const pnl = (value?: number | null) => value === undefined || value === null ? "—" : `${value >= 0 ? "+" : "−"}₹${money.format(Math.abs(value))}`;
+const strategyName = (mode: StrategyMode) => mode === "V2" ? V2 : mode === "V3" ? V3 : V4;
+const threadFor = (mode: StrategyMode): SessionThread => mode === "V4" ? "V4" : "BASE";
+
+function rankedContracts(session: PaperSession) {
+  const reference = session.referencePremium ?? 180;
+  return [session.ce, session.pe].filter((row): row is SessionContract => Boolean(row && row.premium !== undefined)).sort((a, b) => {
+    const distance = Math.abs((a.premium ?? Infinity) - reference) - Math.abs((b.premium ?? Infinity) - reference);
+    if (distance !== 0) return distance;
+    if ((a.premium ?? 0) !== (b.premium ?? 0)) return (b.premium ?? 0) - (a.premium ?? 0);
+    return String(a.optionType ?? "").localeCompare(String(b.optionType ?? ""));
+  });
+}
+function contractLabel(row?: SessionContract | null) {
+  if (!row) return "—";
+  return `${row.strike === undefined ? "?" : num.format(row.strike)} ${row.optionType ?? ""} @ ${premium(row.premium)}`;
+}
+function statusTone(status: string) {
+  if (status === "CLOSED") return styles.sessionGood;
+  if (["OPEN", "WAITING_SIGNAL", "STARTING"].includes(status)) return styles.sessionLive;
+  if (status === "NO_TRADE") return styles.sessionNeutral;
+  return styles.sessionWarn;
+}
 
 export default function PaperLedger() {
   const [rows, setRows] = useState<PaperTrade[]>([]);
+  const [sessions, setSessions] = useState<PaperSession[]>([]);
   const [year, setYear] = useState("ALL"); const [month, setMonth] = useState("ALL");
   const [callType, setCallType] = useState<"ALL" | CallType>("ALL"); const [strategyMode, setStrategyMode] = useState<StrategyMode>("V2");
   const [trailStep, setTrailStep] = useState("5"); const [pnlFilter, setPnlFilter] = useState<PnlFilter>("ALL");
@@ -74,29 +129,44 @@ export default function PaperLedger() {
 
   useEffect(() => {
     let active = true;
-    const load = async () => {
-      for (const candidate of [{ url: `/api/paper-trades?t=${Date.now()}`, source: "proxy" as const }, { url: `/paper/trades.json?t=${Date.now()}`, source: "published" as const }]) {
-        try {
-          const response = await fetch(candidate.url, { cache: "no-store" }); if (!response.ok) continue;
-          const payload = await response.json();
-          const next = (Array.isArray(payload) ? payload : payload.trades ?? []).map(normalizeTrade).filter(Boolean) as PaperTrade[];
-          if (!next.length) continue;
-          if (active) { setRows(next); setLastUpdated(new Date().toLocaleString("en-IN")); setLoadState("ok"); setDataSource(candidate.source); }
-          return;
-        } catch { /* try published snapshot */ }
+    const applyPayload = (payload: unknown, source: Exclude<DataSource, null>) => {
+      const object = payload && typeof payload === "object" ? payload as { trades?: unknown[]; sessions?: unknown[] } : {};
+      const nextRows = (Array.isArray(object.trades) ? object.trades : []).map(normalizeTrade).filter(Boolean) as PaperTrade[];
+      const nextSessions = (Array.isArray(object.sessions) ? object.sessions : []).map(normalizeSession).filter(Boolean) as PaperSession[];
+      if (!nextRows.length && !nextSessions.length) return false;
+      if (active) {
+        setRows(nextRows); setSessions(nextSessions); setLastUpdated(new Date().toLocaleString("en-IN")); setLoadState("ok"); setDataSource(source);
       }
+      return true;
+    };
+    const load = async () => {
+      try {
+        const response = await fetch(`/api/paper-trades?t=${Date.now()}`, { cache: "no-store" });
+        if (response.ok && applyPayload(await response.json(), "proxy")) return;
+      } catch { /* use published files */ }
+      try {
+        const [ledgerResponse, sessionsResponse] = await Promise.all([
+          fetch(`/paper/trades.json?t=${Date.now()}`, { cache: "no-store" }),
+          fetch(`/paper/sessions.json?t=${Date.now()}`, { cache: "no-store" }),
+        ]);
+        if (!ledgerResponse.ok) throw new Error("published ledger unavailable");
+        const ledger = await ledgerResponse.json();
+        const sessionJournal = sessionsResponse.ok ? await sessionsResponse.json() : { sessions: [] };
+        if (applyPayload({ trades: ledger.trades ?? ledger, sessions: sessionJournal.sessions ?? [] }, "published")) return;
+      } catch { /* surface unavailable state */ }
       if (active) { setLoadState("error"); setDataSource(null); }
     };
     load(); const timer = window.setInterval(load, 60_000); return () => { active = false; window.clearInterval(timer); };
   }, []);
 
-  const years = useMemo(() => Array.from(new Set(rows.map((r) => r.date.slice(0, 4)))).sort().reverse(), [rows]);
-  const months = useMemo(() => Array.from(new Set(rows.filter((r) => year === "ALL" || r.date.startsWith(`${year}-`)).map((r) => r.date.slice(0, 7)))).sort().reverse(), [rows, year]);
+  const allDates = useMemo(() => [...rows.map((r) => r.date), ...sessions.map((s) => s.date)], [rows, sessions]);
+  const years = useMemo(() => Array.from(new Set(allDates.map((date) => date.slice(0, 4)))).sort().reverse(), [allDates]);
+  const months = useMemo(() => Array.from(new Set(allDates.filter((date) => year === "ALL" || date.startsWith(`${year}-`)).map((date) => date.slice(0, 7)))).sort().reverse(), [allDates, year]);
   const trailSteps = useMemo(() => Array.from(new Set(rows.filter((r) => r.strategy === V3).map((r) => r.trailStepPoints).filter((v): v is number => v !== undefined))).sort((a,b) => a-b), [rows]);
   const effectiveTrailStep = trailSteps.includes(Number(trailStep)) ? Number(trailStep) : (trailSteps[0] ?? 5);
 
   const displayed = useMemo(() => {
-    const wantedStrategy = strategyMode === "V2" ? V2 : V3;
+    const wantedStrategy = strategyName(strategyMode);
     const base = rows.map((trade, index) => ({ trade, originalRow: index + 1 })).filter(({ trade }) => {
       if (trade.strategy !== wantedStrategy) return false;
       if (strategyMode === "V3" && trade.trailStepPoints !== effectiveTrailStep) return false;
@@ -111,18 +181,28 @@ export default function PaperLedger() {
     return base;
   }, [rows, year, month, callType, strategyMode, effectiveTrailStep, pnlFilter, sortKey, sortDir]);
 
+  const latestSession = useMemo(() => sessions.filter((session) => {
+    if (session.thread !== threadFor(strategyMode)) return false;
+    if (year !== "ALL" && !session.date.startsWith(`${year}-`)) return false;
+    if (month !== "ALL" && !session.date.startsWith(month)) return false;
+    return true;
+  }).sort((a, b) => b.date.localeCompare(a.date) || String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")))[0] ?? null, [sessions, strategyMode, year, month]);
+
   const totalPnl = displayed.reduce((s,r) => s + r.trade.totalPnl, 0); const profits = displayed.filter((r) => r.trade.totalPnl > 0).length;
   const losses = displayed.filter((r) => r.trade.totalPnl < 0); const beReached = displayed.filter((r) => r.trade.breakevenReached === true).length;
   const lossMfe10 = losses.filter((r) => (r.trade.maxFavorableMove ?? -Infinity) >= 10).length; const lossMfe20 = losses.filter((r) => (r.trade.maxFavorableMove ?? -Infinity) >= 20).length; const lossMfe30 = losses.filter((r) => (r.trade.maxFavorableMove ?? -Infinity) >= 30).length;
   function sortBy(key: SortKey) { if (key === sortKey) setSortDir((d) => d === "asc" ? "desc" : "asc"); else { setSortKey(key); setSortDir(key === "date" ? "desc" : "asc"); } }
 
+  const ranked = latestSession ? rankedContracts(latestSession) : [];
+  const primary = ranked[0] ?? null; const backup = ranked[1] ?? null;
+
   return <section className={styles.ledger} id="trade-ledger">
     <div className={styles.heading}><div><p className={styles.eyebrow}>Backtest + live paper journal</p><h2>Trade ledger</h2>
-      <p>Select V2 or V3. V3 then applies the selected stepped-stop rule to the same research trade cohort, so exit, stop adjustments and P/L reflect that rule only.</p></div>
-      <div className={styles.status}><span className={loadState === "ok" ? styles.ok : styles.warn} />{loadState === "loading" ? "Loading…" : loadState === "error" ? "Journal unavailable" : `${dataSource === "proxy" ? "Live GitHub ledger" : "Published snapshot"} · Updated ${lastUpdated}`}</div></div>
+      <p>Compare V2, V3 and V4. Session outcomes are journalled even when no trade is taken, so NO_TRADE and data-boundary days remain visible.</p></div>
+      <div className={styles.status}><span className={loadState === "ok" ? styles.ok : styles.warn} />{loadState === "loading" ? "Loading…" : loadState === "error" ? "Journal unavailable" : `${dataSource === "proxy" ? "Live GitHub journal" : "Published snapshot"} · Updated ${lastUpdated}`}</div></div>
 
     <div className={styles.filters}>
-      <label><span>Strategy</span><select value={strategyMode} onChange={(e) => setStrategyMode(e.target.value as StrategyMode)}><option value="V2">V2 · Momentum trail</option><option value="V3">V3 · Stepped trail</option></select></label>
+      <label><span>Strategy</span><select value={strategyMode} onChange={(e) => setStrategyMode(e.target.value as StrategyMode)}><option value="V2">V2 · Momentum trail</option><option value="V3">V3 · Stepped trail</option><option value="V4">V4 · NIFTY-confirmed fail-fast</option></select></label>
       {strategyMode === "V3" && <label><span>Stepped points</span><select value={String(effectiveTrailStep)} onChange={(e) => setTrailStep(e.target.value)}>{trailSteps.map((v) => <option key={v} value={String(v)}>{num.format(v)} pts</option>)}</select></label>}
       <label><span>Year</span><select value={year} onChange={(e) => { setYear(e.target.value); setMonth("ALL"); }}><option value="ALL">All years</option>{years.map((v) => <option key={v}>{v}</option>)}</select></label>
       <label><span>Month</span><select value={month} onChange={(e) => setMonth(e.target.value)}><option value="ALL">All months</option>{months.map((v) => <option key={v} value={v}>{new Date(`${v}-01T00:00:00`).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</option>)}</select></label>
@@ -130,12 +210,25 @@ export default function PaperLedger() {
       <label><span>Profit / Loss</span><select value={pnlFilter} onChange={(e) => setPnlFilter(e.target.value as PnlFilter)}><option value="ALL">All trades</option><option value="PROFIT">Profit only</option><option value="LOSS">Loss only</option></select></label>
     </div>
 
+    {latestSession ? <div className={styles.sessionCard}>
+      <div className={styles.sessionHeader}><div><span>Latest journalled session</span><strong>{latestSession.date} · {strategyMode === "V4" ? "V4" : strategyMode === "V3" ? `V3-${effectiveTrailStep}` : "V2"}</strong></div><span className={`${styles.sessionBadge} ${statusTone(latestSession.status)}`}>{latestSession.status}</span></div>
+      <div className={styles.sessionGrid}>
+        <div><span>Weekly expiry</span><strong>{latestSession.expiry ?? "—"}</strong></div>
+        <div><span>NIFTY 09:25</span><strong>{latestSession.spot925 === null || latestSession.spot925 === undefined ? "—" : num.format(latestSession.spot925)}</strong></div>
+        {strategyMode === "V4" ? <><div><span>Primary</span><strong>{contractLabel(primary)}</strong></div><div><span>Backup</span><strong>{contractLabel(backup)}</strong></div></> : <div><span>Monitored contract</span><strong>{contractLabel(primary)}</strong></div>}
+        <div><span>Trade count</span><strong>{latestSession.tradeCount}</strong></div>
+        <div><span>Session P/L</span><strong className={(latestSession.totalPnl ?? 0) >= 0 ? styles.profit : styles.loss}>{pnl(latestSession.totalPnl)}</strong></div>
+        {latestSession.signalSource && <div><span>Signal source</span><strong>{latestSession.signalSource}</strong></div>}
+      </div>
+      {latestSession.reason && <p className={styles.sessionReason}><strong>Reason:</strong> {latestSession.reason}</p>}
+    </div> : <div className={styles.sessionCard}><p className={styles.sessionReason}>No session journal row is available for this strategy and date filter yet.</p></div>}
+
     <div className={styles.summary}><div><span>Visible trades</span><strong>{displayed.length}</strong></div><div><span>Profitable</span><strong>{profits}</strong></div><div><span>Losing</span><strong>{losses.length}</strong></div><div><span>BE cushion reached</span><strong>{beReached}</strong></div><div><span>Losses after +10</span><strong>{lossMfe10}</strong></div><div><span>Losses after +20</span><strong>{lossMfe20}</strong></div><div><span>Losses after +30</span><strong>{lossMfe30}</strong></div><div><span>Visible net P/L</span><strong className={totalPnl >= 0 ? styles.profit : styles.loss}>{pnl(totalPnl)}</strong></div></div>
 
     <div className={styles.tableWrap}><table><thead><tr>{columns.map((c) => <th key={c.key}><button type="button" onClick={() => sortBy(c.key)}>{c.label}<span>{sortKey === c.key ? (sortDir === "asc" ? "▲" : "▼") : "↕"}</span></button></th>)}</tr></thead><tbody>
       {displayed.map(({ trade, originalRow }, i) => <tr key={`${trade.date}-${trade.callType}-${trade.strikePrice}-${trade.strategy}-${trade.trailStepPoints ?? 0}-${originalRow}`}><td>{i+1}</td><td>{trade.date}</td><td>{trade.indexStockName}</td><td>{trade.weeklyExpiry}</td><td>{trade.lots}</td><td><span className={`${styles.optionBadge} ${trade.callType === "CE" ? styles.ce : styles.pe}`}>{trade.callType}</span></td><td>{num.format(trade.strikePrice)}</td><td>{premium(trade.entryPremium)}</td><td>{premium(trade.peakPremium)}</td><td>{premium(trade.maxFavorableMove)}</td><td>{trade.trailStepPoints === undefined ? "—" : `${num.format(trade.trailStepPoints)} pts`}</td><td>{trade.trailGapPoints === undefined ? "—" : `${num.format(trade.trailGapPoints)} pts`}</td><td>{trade.breakevenReached === undefined ? "—" : trade.breakevenReached ? "Yes" : "No"}</td><td>₹{num.format(trade.startTarget)}</td><td>₹{num.format(trade.startStopLoss)}</td><td>₹{num.format(trade.endStopLoss)}</td><td>{trade.entryTime || "—"}</td><td>{trade.exitTime || "—"}</td><td>{premium(trade.exitPremium)}</td><td>{trade.exitReason || "—"}</td><td>{trade.stopLossAdjustments}</td><td className={(trade.grossPnl ?? 0) >= 0 ? styles.profit : styles.loss}>{pnl(trade.grossPnl)}</td><td>{trade.charges === undefined ? "—" : `₹${money.format(trade.charges)}`}</td><td className={trade.totalPnl >= 0 ? styles.profit : styles.loss}>{pnl(trade.totalPnl)}</td></tr>)}
-      {!displayed.length && <tr><td className={styles.empty} colSpan={24}>No validated trades are available for this strategy/step selection.</td></tr>}
+      {!displayed.length && <tr><td className={styles.empty} colSpan={24}>No validated trades are available for this strategy/step selection. Check the session card above for NO_TRADE or data-quality outcomes.</td></tr>}
     </tbody></table></div>
-    <p className={styles.footnote}>Paper/research mode only. V2 preserves the original historical exits. V3 uses the selected stepped-stop backtest outcome for the same validated entry cohort. No broker order is placed.</p>
+    <p className={styles.footnote}>Paper/research mode only. V2 uses the continuous trail, V3 applies the selected stepped trail, and V4 is the independently confirmed fail-fast paper thread. Session outcomes are retained even when no trade is placed. No broker order is placed.</p>
   </section>;
 }
