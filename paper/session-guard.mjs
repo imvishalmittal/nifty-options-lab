@@ -19,6 +19,15 @@ export function shouldRunPaperSession(status, date = indiaDate(), force = false)
   return { run: false, reason: `today already completed with ${status.status}` };
 }
 
+export function shouldRunPaperSuite(baseStatus, v4Status, date = indiaDate(), force = false) {
+  if (force) return { run: true, reason: 'forced manual run' };
+  const base = shouldRunPaperSession(baseStatus, date, false);
+  const v4 = shouldRunPaperSession(v4Status, date, false);
+  if (base.run) return { run: true, reason: `base paper session: ${base.reason}` };
+  if (v4.run) return { run: true, reason: `V4 paper session: ${v4.reason}` };
+  return { run: false, reason: `base and V4 already terminal for ${date}` };
+}
+
 function readStatus(path) {
   if (!fs.existsSync(path)) return null;
   try {
@@ -30,8 +39,9 @@ function readStatus(path) {
 
 function main() {
   const statusPath = process.env.PAPER_STATUS_PATH || 'public/paper/session-status.json';
+  const v4StatusPath = process.env.V4_STATUS_PATH || 'public/paper/v4-session-status.json';
   const force = String(process.env.FORCE || '').toLowerCase() === 'true';
-  const result = shouldRunPaperSession(readStatus(statusPath), indiaDate(), force);
+  const result = shouldRunPaperSuite(readStatus(statusPath), readStatus(v4StatusPath), indiaDate(), force);
   const output = process.env.GITHUB_OUTPUT;
   if (output) {
     fs.appendFileSync(output, `run=${result.run}\nreason=${result.reason}\n`);
