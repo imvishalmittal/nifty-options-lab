@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "paperMode": true,
+    "threads": [
+      "BASE",
+      "V4"
+    ],
+    "updatedAt": "2026-08-19T04:16:17.993Z"
+  },
+  "sessions": [
+    {
+      "date": "2026-08-19",
+      "thread": "BASE",
+      "strategyVersions": [
+        "V2",
+        "V3-5",
+        "V3-10"
+      ],
+      "status": "NO_TRADE",
+      "reason": "No valid ₹180 crossing before 09:45",
+      "updatedAt": "2026-08-19T04:16:04.179Z",
+      "spot925": 24108.6,
+      "expiry": "2026-08-25",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-25Aug26-24050-CE",
+        "strike": 24050,
+        "optionType": "CE",
+        "premium": 179.4
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-25Aug26-24250-PE",
+        "strike": 24250,
+        "optionType": "PE",
+        "premium": 187.6
+      },
+      "side": null,
+      "strike": null,
+      "entry": null,
+      "entryTime": null,
+      "signalSource": null,
+      "tradeCount": 0,
+      "totalPnl": null
+    },
+    {
+      "date": "2026-08-19",
+      "thread": "V4",
+      "strategyVersions": [
+        "V4"
+      ],
+      "status": "NO_TRADE",
+      "reason": "No V4 option signal with matching NIFTY confirmation before 09:45",
+      "updatedAt": "2026-08-19T04:16:17.993Z",
+      "spot925": 24108.6,
+      "expiry": "2026-08-25",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-25Aug26-24050-CE",
+        "strike": 24050,
+        "optionType": "CE",
+        "premium": 179.4
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-25Aug26-24250-PE",
+        "strike": 24250,
+        "optionType": "PE",
+        "premium": 187.6
+      },
+      "side": null,
+      "strike": null,
+      "entry": null,
+      "entryTime": null,
+      "signalSource": null,
+      "tradeCount": 0,
+      "totalPnl": null
+    }
+  ]
+}
