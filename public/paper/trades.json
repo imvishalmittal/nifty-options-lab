@@ -12,7 +12,13 @@
     "backfillV32025Rows": 220,
     "backfillV32025UpdatedAt": "2026-08-16T16:17:55.611Z",
     "backfillV32026Rows": 120,
-    "backfillV32026UpdatedAt": "2026-08-16T16:17:57.208Z"
+    "backfillV32026UpdatedAt": "2026-08-16T16:17:57.208Z",
+    "paperStrategies": [
+      "V2",
+      "V3-5",
+      "V3-10",
+      "V4"
+    ]
   },
   "trades": [
     {

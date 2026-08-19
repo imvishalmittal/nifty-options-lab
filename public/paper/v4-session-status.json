@@ -1,17 +1,113 @@
 {
-  "updatedAt": "2026-08-19T03:25:13.591Z",
+  "updatedAt": "2026-08-19T03:57:35.550Z",
   "date": "2026-08-19",
-  "status": "STARTING",
-  "strategy": "V4",
-  "rules": {
+  "status": "DATA_BOUNDARY",
+  "reason": "Could not bracket ₹180 on both CE and PE candidate ladders",
+  "selectionAudit": {
+    "spot925": 24108.6,
+    "expiry": "2026-08-25",
     "referencePremium": 180,
-    "initialStop": 160,
-    "trailActivation": 220,
-    "trailGap": 20,
-    "signalStart": "09:30",
-    "signalCutoff": "09:45",
-    "sessionExit": "15:29",
-    "capital": 60000,
-    "lotSize": 65
+    "ce": {
+      "selected": null,
+      "bracketed": false,
+      "below": null,
+      "above": null,
+      "fetched": 4,
+      "candidatesChecked": [
+        {
+          "symbol": "NSE-NIFTY-25Aug26-21800-CE",
+          "expiryCode": "25Aug26",
+          "strike": 21800,
+          "optionType": "CE",
+          "premium": null
+        },
+        {
+          "symbol": "NSE-NIFTY-25Aug26-21700-CE",
+          "expiryCode": "25Aug26",
+          "strike": 21700,
+          "optionType": "CE",
+          "premium": null
+        },
+        {
+          "symbol": "NSE-NIFTY-25Aug26-21250-CE",
+          "expiryCode": "25Aug26",
+          "strike": 21250,
+          "optionType": "CE",
+          "premium": null
+        },
+        {
+          "symbol": "NSE-NIFTY-25Aug26-21200-CE",
+          "expiryCode": "25Aug26",
+          "strike": 21200,
+          "optionType": "CE",
+          "premium": null
+        }
+      ]
+    },
+    "pe": {
+      "selected": null,
+      "bracketed": false,
+      "below": null,
+      "above": null,
+      "fetched": 8,
+      "candidatesChecked": [
+        {
+          "symbol": "NSE-NIFTY-25Aug26-25600-PE",
+          "expiryCode": "25Aug26",
+          "strike": 25600,
+          "optionType": "PE",
+          "premium": null
+        },
+        {
+          "symbol": "NSE-NIFTY-25Aug26-25650-PE",
+          "expiryCode": "25Aug26",
+          "strike": 25650,
+          "optionType": "PE",
+          "premium": null
+        },
+        {
+          "symbol": "NSE-NIFTY-25Aug26-25900-PE",
+          "expiryCode": "25Aug26",
+          "strike": 25900,
+          "optionType": "PE",
+          "premium": null
+        },
+        {
+          "symbol": "NSE-NIFTY-25Aug26-26100-PE",
+          "expiryCode": "25Aug26",
+          "strike": 26100,
+          "optionType": "PE",
+          "premium": null
+        },
+        {
+          "symbol": "NSE-NIFTY-25Aug26-26250-PE",
+          "expiryCode": "25Aug26",
+          "strike": 26250,
+          "optionType": "PE",
+          "premium": null
+        },
+        {
+          "symbol": "NSE-NIFTY-25Aug26-26350-PE",
+          "expiryCode": "25Aug26",
+          "strike": 26350,
+          "optionType": "PE",
+          "premium": null
+        },
+        {
+          "symbol": "NSE-NIFTY-25Aug26-26400-PE",
+          "expiryCode": "25Aug26",
+          "strike": 26400,
+          "optionType": "PE",
+          "premium": null
+        },
+        {
+          "symbol": "NSE-NIFTY-25Aug26-26500-PE",
+          "expiryCode": "25Aug26",
+          "strike": 26500,
+          "optionType": "PE",
+          "premium": null
+        }
+      ]
+    }
   }
 }
