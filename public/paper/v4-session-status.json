@@ -1,7 +1,8 @@
 {
-  "updatedAt": "2026-08-19T04:10:03.169Z",
+  "updatedAt": "2026-08-19T04:16:17.993Z",
   "date": "2026-08-19",
-  "status": "WAITING_SIGNAL",
+  "status": "NO_TRADE",
+  "reason": "No V4 option signal with matching NIFTY confirmation before 09:45",
   "selectionAudit": {
     "spot925": 24108.6,
     "expiry": "2026-08-25",

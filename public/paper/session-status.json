@@ -1,7 +1,8 @@
 {
-  "updatedAt": "2026-08-19T04:10:02.326Z",
+  "updatedAt": "2026-08-19T04:16:04.179Z",
   "date": "2026-08-19",
-  "status": "WAITING_SIGNAL",
+  "status": "NO_TRADE",
+  "reason": "No valid ₹180 crossing before 09:45",
   "selectionAudit": {
     "spot925": 24108.6,
     "expiry": "2026-08-25",
@@ -102,19 +103,5 @@
         }
       ]
     }
-  },
-  "call": {
-    "symbol": "NSE-NIFTY-25Aug26-24050-CE",
-    "expiryCode": "25Aug26",
-    "strike": 24050,
-    "optionType": "CE",
-    "premium": 179.4
-  },
-  "put": {
-    "symbol": "NSE-NIFTY-25Aug26-24250-PE",
-    "expiryCode": "25Aug26",
-    "strike": 24250,
-    "optionType": "PE",
-    "premium": 187.6
   }
 }
