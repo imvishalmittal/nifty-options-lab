@@ -65,7 +65,7 @@ test('V4 backup requires a fresh 180 cross and matching PE NIFTY confirmation', 
 
 test('V4 fail-fast close below 180 exits at next bar open before trailing is active', () => {
   let position = initialV4Position({ entry: 188, entryTime: t('09:32') });
-  position = processV4CompletedBar(position, candle('09:32', 188, 191, 181, 182));
+  position = processV4CompletedBar(position, candle('09:32', 188, 191, 177, 178));
   assert.equal(position.exit, null);
   assert.equal(position.pendingFailFastFrom, t('09:32'));
   position = processV4CompletedBar(position, candle('09:33', 179, 181, 175, 177));
