@@ -1,4 +1,4 @@
-import { PAPER_RULES, initialPosition, nextBarEntry, timeOf } from './paper-engine.mjs';
+import { PAPER_RULES, initialPosition, nextBarEntry, processCompletedBar, timeOf } from './paper-engine.mjs';
 
 export const V4_VARIANT = Object.freeze({
   id: 'V4',
@@ -6,6 +6,16 @@ export const V4_VARIANT = Object.freeze({
   strategyVersion: 'V4',
   kind: 'v2',
 });
+
+export const V5_VARIANT = Object.freeze({
+  id: 'V5',
+  strategy: 'NIFTY ₹180 NIFTY-Confirmed Stepped Trail V5',
+  strategyVersion: 'V5',
+  kind: 'v3',
+  trailStep: 10,
+});
+
+export const CONFIRMED_VARIANTS = Object.freeze([V4_VARIANT, V5_VARIANT]);
 
 function selectionDistance(row, reference = PAPER_RULES.referencePremium) {
   return Math.abs(Number(row?.premium) - reference);
@@ -95,8 +105,8 @@ export function classifyV4Entry(input, rules = PAPER_RULES) {
   return { ...candidate, status: 'ENTRY', entry: entry.entry, entryBar: entry.entryBar };
 }
 
-export function initialV4Position({ entry, entryTime, rules = PAPER_RULES }) {
-  return { ...initialPosition({ entry, entryTime, variant: V4_VARIANT, rules }), pendingFailFastFrom: null };
+export function initialV4Position({ entry, entryTime, variant = V4_VARIANT, rules = PAPER_RULES }) {
+  return { ...initialPosition({ entry, entryTime, variant, rules }), pendingFailFastFrom: null };
 }
 
 function stopFill(candle, stop) {
@@ -104,6 +114,7 @@ function stopFill(candle, stop) {
 }
 
 export function processV4CompletedBar(position, candle, rules = PAPER_RULES) {
+  if (position.variant.id !== 'V4') return processCompletedBar(position, candle, rules);
   if (position.exit || candle.timestamp === position.lastProcessed) return position;
   const next = { ...position, stopHistory: [...position.stopHistory], lastProcessed: candle.timestamp };
 
