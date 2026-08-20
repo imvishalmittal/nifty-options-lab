@@ -5,7 +5,7 @@
       "BASE",
       "V4"
     ],
-    "updatedAt": "2026-08-19T04:16:17.993Z"
+    "updatedAt": "2026-08-20T07:31:07.412Z"
   },
   "sessions": [
     {
@@ -73,6 +73,72 @@
       "signalSource": null,
       "tradeCount": 0,
       "totalPnl": null
+    },
+    {
+      "date": "2026-08-20",
+      "thread": "BASE",
+      "strategyVersions": [
+        "V2",
+        "V3-5",
+        "V3-10"
+      ],
+      "status": "CLOSED",
+      "reason": null,
+      "updatedAt": "2026-08-20T07:31:07.412Z",
+      "spot925": 24185.55,
+      "expiry": "2026-08-25",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-25Aug26-24100-CE",
+        "strike": 24100,
+        "optionType": "CE",
+        "premium": 192.7
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-25Aug26-24400-PE",
+        "strike": 24400,
+        "optionType": "PE",
+        "premium": 196.8
+      },
+      "side": "CE",
+      "strike": 24100,
+      "entry": 194,
+      "entryTime": "09:31",
+      "signalSource": null,
+      "tradeCount": 3,
+      "totalPnl": 47494.28
+    },
+    {
+      "date": "2026-08-20",
+      "thread": "V4",
+      "strategyVersions": [
+        "V4"
+      ],
+      "status": "CLOSED",
+      "reason": null,
+      "updatedAt": "2026-08-20T07:25:01.777Z",
+      "spot925": 24185.55,
+      "expiry": "2026-08-25",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-25Aug26-24100-CE",
+        "strike": 24100,
+        "optionType": "CE",
+        "premium": 192.7
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-25Aug26-24400-PE",
+        "strike": 24400,
+        "optionType": "PE",
+        "premium": 196.8
+      },
+      "side": "CE",
+      "strike": 24100,
+      "entry": 203.35,
+      "entryTime": "09:36",
+      "signalSource": "PRIMARY",
+      "tradeCount": 1,
+      "totalPnl": 14255.69
     }
   ]
 }

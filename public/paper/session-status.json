@@ -1,107 +1,198 @@
 {
-  "updatedAt": "2026-08-19T04:16:04.179Z",
-  "date": "2026-08-19",
-  "status": "NO_TRADE",
-  "reason": "No valid ₹180 crossing before 09:45",
+  "updatedAt": "2026-08-20T07:31:07.412Z",
+  "date": "2026-08-20",
+  "status": "CLOSED",
   "selectionAudit": {
-    "spot925": 24108.6,
+    "spot925": 24185.55,
     "expiry": "2026-08-25",
     "referencePremium": 180,
     "ce": {
       "selected": {
-        "symbol": "NSE-NIFTY-25Aug26-24050-CE",
+        "symbol": "NSE-NIFTY-25Aug26-24100-CE",
         "expiryCode": "25Aug26",
-        "strike": 24050,
+        "strike": 24100,
         "optionType": "CE",
-        "premium": 179.4
+        "premium": 192.7
       },
       "bracketed": true,
       "below": {
-        "symbol": "NSE-NIFTY-25Aug26-24050-CE",
+        "symbol": "NSE-NIFTY-25Aug26-24150-CE",
         "expiryCode": "25Aug26",
-        "strike": 24050,
+        "strike": 24150,
         "optionType": "CE",
-        "premium": 179.4
+        "premium": 157.75
       },
       "above": {
-        "symbol": "NSE-NIFTY-25Aug26-24000-CE",
+        "symbol": "NSE-NIFTY-25Aug26-24100-CE",
         "expiryCode": "25Aug26",
-        "strike": 24000,
+        "strike": 24100,
         "optionType": "CE",
-        "premium": 212.7
+        "premium": 192.7
       },
-      "fetched": 3,
+      "fetched": 2,
       "candidatesChecked": [
+        {
+          "symbol": "NSE-NIFTY-25Aug26-24150-CE",
+          "expiryCode": "25Aug26",
+          "strike": 24150,
+          "optionType": "CE",
+          "premium": 157.75
+        },
         {
           "symbol": "NSE-NIFTY-25Aug26-24100-CE",
           "expiryCode": "25Aug26",
           "strike": 24100,
           "optionType": "CE",
-          "premium": 149.75
-        },
-        {
-          "symbol": "NSE-NIFTY-25Aug26-24050-CE",
-          "expiryCode": "25Aug26",
-          "strike": 24050,
-          "optionType": "CE",
-          "premium": 179.4
-        },
-        {
-          "symbol": "NSE-NIFTY-25Aug26-24000-CE",
-          "expiryCode": "25Aug26",
-          "strike": 24000,
-          "optionType": "CE",
-          "premium": 212.7
+          "premium": 192.7
         }
       ]
     },
     "pe": {
       "selected": {
-        "symbol": "NSE-NIFTY-25Aug26-24250-PE",
+        "symbol": "NSE-NIFTY-25Aug26-24400-PE",
         "expiryCode": "25Aug26",
-        "strike": 24250,
+        "strike": 24400,
         "optionType": "PE",
-        "premium": 187.6
+        "premium": 196.8
       },
       "bracketed": true,
       "below": {
-        "symbol": "NSE-NIFTY-25Aug26-24200-PE",
+        "symbol": "NSE-NIFTY-25Aug26-24350-PE",
         "expiryCode": "25Aug26",
-        "strike": 24200,
+        "strike": 24350,
         "optionType": "PE",
-        "premium": 157.5
+        "premium": 161.8
       },
       "above": {
-        "symbol": "NSE-NIFTY-25Aug26-24250-PE",
+        "symbol": "NSE-NIFTY-25Aug26-24400-PE",
         "expiryCode": "25Aug26",
-        "strike": 24250,
+        "strike": 24400,
         "optionType": "PE",
-        "premium": 187.6
+        "premium": 196.8
       },
-      "fetched": 3,
+      "fetched": 5,
       "candidatesChecked": [
-        {
-          "symbol": "NSE-NIFTY-25Aug26-24150-PE",
-          "expiryCode": "25Aug26",
-          "strike": 24150,
-          "optionType": "PE",
-          "premium": 130.75
-        },
         {
           "symbol": "NSE-NIFTY-25Aug26-24200-PE",
           "expiryCode": "25Aug26",
           "strike": 24200,
           "optionType": "PE",
-          "premium": 157.5
+          "premium": 80.95
         },
         {
           "symbol": "NSE-NIFTY-25Aug26-24250-PE",
           "expiryCode": "25Aug26",
           "strike": 24250,
           "optionType": "PE",
-          "premium": 187.6
+          "premium": 103.85
+        },
+        {
+          "symbol": "NSE-NIFTY-25Aug26-24300-PE",
+          "expiryCode": "25Aug26",
+          "strike": 24300,
+          "optionType": "PE",
+          "premium": 130.85
+        },
+        {
+          "symbol": "NSE-NIFTY-25Aug26-24350-PE",
+          "expiryCode": "25Aug26",
+          "strike": 24350,
+          "optionType": "PE",
+          "premium": 161.8
+        },
+        {
+          "symbol": "NSE-NIFTY-25Aug26-24400-PE",
+          "expiryCode": "25Aug26",
+          "strike": 24400,
+          "optionType": "PE",
+          "premium": 196.8
         }
       ]
     }
-  }
+  },
+  "trades": [
+    {
+      "source": "PAPER",
+      "strategy": "NIFTY ₹180 Momentum V2",
+      "strategyVersion": "V2",
+      "date": "2026-08-20",
+      "indexStockName": "NIFTY 50",
+      "weeklyExpiry": "2026-08-25",
+      "lots": 4,
+      "callType": "CE",
+      "strikePrice": 24100,
+      "startTarget": 220,
+      "startStopLoss": 160,
+      "endStopLoss": 258.95,
+      "entryTime": "09:31",
+      "exitTime": "12:54",
+      "stopLossAdjustments": 13,
+      "totalPnl": 16687.78,
+      "entryPremium": 194,
+      "peakPremium": 278.95,
+      "maxFavorableMove": 84.95,
+      "breakevenReached": true,
+      "trailGapPoints": 20,
+      "exitPremium": 258.95,
+      "exitReason": "TRAIL_STOP",
+      "grossPnl": 16887,
+      "charges": 199.22
+    },
+    {
+      "source": "PAPER",
+      "strategy": "NIFTY ₹180 Stepped Trail V3",
+      "strategyVersion": "V3",
+      "date": "2026-08-20",
+      "indexStockName": "NIFTY 50",
+      "weeklyExpiry": "2026-08-25",
+      "lots": 4,
+      "callType": "CE",
+      "strikePrice": 24100,
+      "startTarget": 214,
+      "startStopLoss": 160,
+      "endStopLoss": 254,
+      "entryTime": "09:31",
+      "exitTime": "13:00",
+      "stopLossAdjustments": 13,
+      "totalPnl": 15403.25,
+      "entryPremium": 194,
+      "peakPremium": 278.95,
+      "maxFavorableMove": 84.95,
+      "breakevenReached": true,
+      "trailGapPoints": 20,
+      "exitPremium": 254,
+      "exitReason": "TRAIL_STOP",
+      "grossPnl": 15600,
+      "charges": 196.75,
+      "trailStepPoints": 5
+    },
+    {
+      "source": "PAPER",
+      "strategy": "NIFTY ₹180 Stepped Trail V3",
+      "strategyVersion": "V3",
+      "date": "2026-08-20",
+      "indexStockName": "NIFTY 50",
+      "weeklyExpiry": "2026-08-25",
+      "lots": 4,
+      "callType": "CE",
+      "strikePrice": 24100,
+      "startTarget": 214,
+      "startStopLoss": 160,
+      "endStopLoss": 254,
+      "entryTime": "09:31",
+      "exitTime": "13:00",
+      "stopLossAdjustments": 7,
+      "totalPnl": 15403.25,
+      "entryPremium": 194,
+      "peakPremium": 278.95,
+      "maxFavorableMove": 84.95,
+      "breakevenReached": true,
+      "trailGapPoints": 20,
+      "exitPremium": 254,
+      "exitReason": "TRAIL_STOP",
+      "grossPnl": 15600,
+      "charges": 196.75,
+      "trailStepPoints": 10
+    }
+  ]
 }
