@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyV4Entry, choosePrimaryBackup, initialV4Position, niftyReferenceRange, processV4CompletedBar } from '../paper/v4-engine.mjs';
+import { classifyV4Entry, choosePrimaryBackup, initialV4Position, niftyReferenceRange, processV4CompletedBar, V5_VARIANT } from '../paper/v4-engine.mjs';
 
 const t = (clock) => `2026-08-19T${clock}:00+05:30`;
 const candle = (clock, open, high, low, close) => ({ timestamp: t(clock), open, high, low, close, volume: 1 });
@@ -80,4 +80,15 @@ test('V4 fail-fast is disabled after V2 trailing protection activates', () => {
   assert.equal(position.trailActivated, true);
   position = processV4CompletedBar(position, candle('09:33', 221, 222, 202, 179));
   assert.equal(position.pendingFailFastFrom, null);
+});
+
+test('V5 reuses the confirmed entry cohort but applies V3-10 without fail-fast', () => {
+  let position = initialV4Position({ entry: 188, entryTime: t('09:32'), variant: V5_VARIANT });
+  position = processV4CompletedBar(position, candle('09:32', 188, 198, 177, 178));
+  assert.equal(position.exit, null);
+  assert.equal(position.pendingFailFastFrom, null);
+  assert.equal(position.activeStop, 178);
+  position = processV4CompletedBar(position, candle('09:33', 179, 210, 177, 205));
+  assert.equal(position.exit.price, 178);
+  assert.equal(position.exit.result, 'TRAIL_STOP');
 });
