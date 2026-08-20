@@ -18,7 +18,11 @@ export function compactPaperSession(status, thread) {
   const audit = status.selectionAudit && typeof status.selectionAudit === 'object' ? status.selectionAudit : {};
   const trades = Array.isArray(status.trades) ? status.trades : status.trade ? [status.trade] : [];
   const totalPnl = trades.reduce((sum, row) => sum + (Number.isFinite(Number(row?.totalPnl)) ? Number(row.totalPnl) : 0), 0);
-  const strategyVersions = thread === 'V4' ? ['V4'] : ['V2', 'V3-5', 'V3-10'];
+  const strategyVersions = thread === 'V4' ? ['V4', 'V5'] : ['V2', 'V3-5', 'V3-10', 'V6', 'V7', 'V8'];
+  const strategyOutcomes = Object.fromEntries(trades.map((row) => {
+    const version = row?.strategyVersion === 'V3' ? `V3-${row?.trailStepPoints}` : String(row?.strategyVersion ?? 'UNKNOWN');
+    return [version, { tradeCount: 1, totalPnl: Number.isFinite(Number(row?.totalPnl)) ? Number(Number(row.totalPnl).toFixed(2)) : null }];
+  }));
 
   return {
     date: String(status.date),
@@ -39,6 +43,7 @@ export function compactPaperSession(status, thread) {
     signalSource: status.signalSource ? String(status.signalSource) : trades[0]?.signalSource ? String(trades[0].signalSource) : null,
     tradeCount: trades.length,
     totalPnl: trades.length ? Number(totalPnl.toFixed(2)) : null,
+    strategyOutcomes,
   };
 }
 
