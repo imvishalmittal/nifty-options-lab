@@ -65,3 +65,23 @@
 ## ADR-014: Hosting and source are separate release states
 
 **Decision:** Do not claim public `/paper` is current merely because GitHub `main` is current. Verify the Sites deployment separately.
+
+## ADR-015: Freeze an eight-variant forward suite
+
+**Decision:** Run V2, V3-5, V3-10, V4, V5, V6, V7, and V8 as alternative paper simulations for the observation window. Do not add their P/L.
+
+## ADR-016: Isolate V4 entry and exit effects with V5
+
+**Decision:** V5 shares V4's NIFTY-confirmed entry but uses V3-10 exit mechanics without fail-fast.
+
+## ADR-017: Keep simple risk benchmarks
+
+**Decision:** V6 provides a conservative fixed-2R benchmark, while V8 caps initial premium risk at 20 points without loosening the original ₹160 stop. V6 resolves same-bar stop/target ambiguity as a stop.
+
+## ADR-018: Make time failure causal
+
+**Decision:** V7 may arm only after 15 completed position bars with MFE below 10 and close at/below entry; execution occurs at the following bar open.
+
+## ADR-019: Reuse market-data streams
+
+**Decision:** V5 runs on V4's candles and V6–V8 run on the base candles. Strategy expansion must not multiply Groww requests.

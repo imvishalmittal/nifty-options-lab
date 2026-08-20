@@ -28,6 +28,10 @@ Implemented on the current research/paper path:
 - dashboard fields for entry/peak/exit premium, MFE, step/gap, breakeven, exit reason, gross P/L, charges, and net P/L;
 - dedicated 2025 comparison workflow and integrity gate.
 
+### Forward V4–V8 suite
+
+Implemented as a frozen paper comparison: NIFTY-confirmed fail-fast V4, confirmed-entry V3-10 V5, fixed 2R V6, 15-bar failure-exit V7, and maximum-20-point initial-risk V8. All reuse the existing two candle streams and remain paper-only.
+
 ## Immediate priorities
 
 ### 1. Finish V3 historical comparison
@@ -43,6 +47,9 @@ Implemented on the current research/paper path:
 - record no-trade/data-failure outcomes as well as completed paper trades;
 - verify Groww authentication, contract discovery, signal timing, stop steps, charges, and end-of-day persistence;
 - keep the rule stable long enough to measure forward behavior.
+- run V2–V8 unchanged for roughly three months or at least 30 completed signal sessions;
+- report per-variant expectancy, drawdown, losing streak, profit factor, costs, and temporal concentration;
+- never sum alternative variant outcomes as account P/L.
 
 ### 3. Public dashboard publishing
 

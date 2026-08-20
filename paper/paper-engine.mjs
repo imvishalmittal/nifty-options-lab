@@ -14,6 +14,9 @@ export const PAPER_VARIANTS = Object.freeze([
   Object.freeze({ id: 'V2', strategy: 'NIFTY ₹180 Momentum V2', strategyVersion: 'V2', kind: 'v2' }),
   Object.freeze({ id: 'V3_5', strategy: 'NIFTY ₹180 Stepped Trail V3', strategyVersion: 'V3', kind: 'v3', trailStep: 5 }),
   Object.freeze({ id: 'V3_10', strategy: 'NIFTY ₹180 Stepped Trail V3', strategyVersion: 'V3', kind: 'v3', trailStep: 10 }),
+  Object.freeze({ id: 'V6', strategy: 'NIFTY ₹180 Fixed 2R V6', strategyVersion: 'V6', kind: 'fixed_target', targetMultiple: 2 }),
+  Object.freeze({ id: 'V7', strategy: 'NIFTY ₹180 15-Minute Failure Exit V7', strategyVersion: 'V7', kind: 'v3_time', trailStep: 10, failureBars: 15, minFavorableMove: 10 }),
+  Object.freeze({ id: 'V8', strategy: 'NIFTY ₹180 Capped-Risk Stepped Trail V8', strategyVersion: 'V8', kind: 'v3', trailStep: 10, initialRiskPoints: 20 }),
 ]);
 
 export function timeOf(timestamp) { return String(timestamp).match(/T(\d{2}:\d{2})/)?.[1] ?? null; }
@@ -101,32 +104,58 @@ export function nextBarEntry(candles, signal, rules = PAPER_RULES) {
 export function lotsAffordable(entryPremium, rules = PAPER_RULES) { return entryPremium > 0 ? Math.floor(rules.capital / (entryPremium * rules.lotSize)) : 0; }
 export function initialPosition({ entry, entryTime, variant, rules = PAPER_RULES }) {
   if (!variant) throw new Error('paper variant is required');
-  return { variant, entry, entryTime, activeStop: rules.initialStop, peakHigh: entry, troughLow: entry, trailActivated: false, stopHistory: [{ effectiveFrom: entryTime, stop: rules.initialStop, reason: 'initial' }], lastProcessed: null, exit: null };
+  const initialStop = Number((variant.initialRiskPoints ? Math.max(rules.initialStop, entry - variant.initialRiskPoints) : rules.initialStop).toFixed(2));
+  const targetPremium = variant.kind === 'fixed_target' ? Number((entry + variant.targetMultiple * (entry - initialStop)).toFixed(2)) : null;
+  return {
+    variant, entry, entryTime, initialStop, activeStop: initialStop, targetPremium,
+    peakHigh: entry, troughLow: entry, trailActivated: false,
+    stopHistory: [{ effectiveFrom: entryTime, stop: initialStop, reason: 'initial' }],
+    barsProcessed: 0, pendingTimeExitFrom: null, lastProcessed: null, exit: null,
+  };
 }
 export function proposedStop(position, variant, rules = PAPER_RULES) {
-  if (variant.kind === 'v2') return position.peakHigh < rules.trailActivation ? rules.initialStop : Math.max(rules.initialStop, position.peakHigh - rules.trailGap);
-  if (variant.kind === 'v3') {
+  const floor = position.initialStop ?? rules.initialStop;
+  if (variant.kind === 'v2') return position.peakHigh < rules.trailActivation ? floor : Math.max(floor, position.peakHigh - rules.trailGap);
+  if (variant.kind === 'v3' || variant.kind === 'v3_time') {
     const steps = Math.floor((Math.max(0, position.peakHigh - position.entry) + 1e-9) / variant.trailStep);
-    return steps < 1 ? rules.initialStop : Math.max(rules.initialStop, position.entry + steps * variant.trailStep - rules.trailGap);
+    return steps < 1 ? floor : Math.max(floor, position.entry + steps * variant.trailStep - rules.trailGap);
   }
+  if (variant.kind === 'fixed_target') return floor;
   throw new Error(`Unknown paper variant: ${variant?.kind}`);
 }
 export function processCompletedBar(position, candle, rules = PAPER_RULES) {
   if (position.exit || candle.timestamp === position.lastProcessed) return position;
   const next = { ...position, stopHistory: [...position.stopHistory], lastProcessed: candle.timestamp };
+  if (next.pendingTimeExitFrom) {
+    next.troughLow = Math.min(next.troughLow, candle.open);
+    next.pendingTimeExitFrom = null;
+    next.exit = { price: candle.open, time: candle.timestamp, result: 'TIME_FAILURE_EXIT' };
+    return next;
+  }
   if (candle.low <= next.activeStop) {
     const fill = candle.open <= next.activeStop ? candle.open : next.activeStop;
     next.troughLow = Math.min(next.troughLow, fill);
     next.exit = { price: fill, time: candle.timestamp, result: next.trailActivated ? 'TRAIL_STOP' : 'INITIAL_STOP' };
     return next;
   }
+  if (next.variant.kind === 'fixed_target' && candle.high >= next.targetPremium) {
+    next.peakHigh = Math.max(next.peakHigh, next.targetPremium);
+    next.troughLow = Math.min(next.troughLow, candle.open);
+    next.exit = { price: next.targetPremium, time: candle.timestamp, result: 'FIXED_TARGET' };
+    return next;
+  }
   next.peakHigh = Math.max(next.peakHigh, candle.high);
   next.troughLow = Math.min(next.troughLow, candle.low);
+  next.barsProcessed += 1;
   const proposed = proposedStop(next, next.variant, rules);
   if (proposed > next.activeStop) {
     next.trailActivated = true;
     next.activeStop = proposed;
-    next.stopHistory.push({ effectiveFrom: null, stop: proposed, reason: next.variant.kind === 'v3' ? 'stepped-trailing' : 'continuous-trailing', sourceBar: candle.timestamp, sourcePeak: next.peakHigh, trailStep: next.variant.trailStep ?? null });
+    next.stopHistory.push({ effectiveFrom: null, stop: proposed, reason: next.variant.kind === 'v2' ? 'continuous-trailing' : 'stepped-trailing', sourceBar: candle.timestamp, sourcePeak: next.peakHigh, trailStep: next.variant.trailStep ?? null });
+  }
+  if (next.variant.kind === 'v3_time' && next.barsProcessed >= next.variant.failureBars
+      && next.peakHigh - next.entry < next.variant.minFavorableMove && candle.close <= next.entry) {
+    next.pendingTimeExitFrom = candle.timestamp;
   }
   return next;
 }

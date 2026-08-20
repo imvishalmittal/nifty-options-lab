@@ -2,6 +2,23 @@
 
 All notable changes will be documented here.
 
+## [0.4.0] - 2026-08-20
+
+### Added
+
+- V5 NIFTY-confirmed V3-10 trail to isolate V4 entry confirmation from fail-fast exits;
+- V6 conservative fixed-2R benchmark;
+- V7 causal 15-completed-bar failure exit;
+- V8 maximum-20-point initial-risk stepped trail, never looser than the original ₹160 stop;
+- per-variant session outcomes so alternative simulations are not presented as additive account profit;
+- regression tests for same-bar stop precedence, next-bar failure exits, fixed-risk initialization, and V5 cohort reuse.
+
+### Preserved
+
+- existing V2, V3-5, V3-10, and V4 definitions;
+- completed-bar/next-bar causality, ₹60,000 model capital, transaction costs, and no overnight carry;
+- paper-only execution with no broker orders and no additional Groww candle streams.
+
 ## [0.3.0] - 2026-08-16
 
 ### Added

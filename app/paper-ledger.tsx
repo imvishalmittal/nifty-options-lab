@@ -7,7 +7,7 @@ type CallType = "CE" | "PE";
 type PnlFilter = "ALL" | "PROFIT" | "LOSS";
 type SortDir = "asc" | "desc";
 type Source = "BACKTEST" | "PAPER";
-type StrategyMode = "V2" | "V3" | "V4";
+type StrategyMode = "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8";
 type DataSource = "proxy" | "published" | null;
 type SessionThread = "BASE" | "V4";
 
@@ -24,7 +24,7 @@ type PaperSession = {
   date: string; thread: SessionThread; strategyVersions: string[]; status: string; reason?: string | null; updatedAt?: string | null;
   spot925?: number | null; expiry?: string | null; referencePremium?: number | null; ce?: SessionContract | null; pe?: SessionContract | null;
   side?: CallType | null; strike?: number | null; entry?: number | null; entryTime?: string | null; signalSource?: string | null;
-  tradeCount: number; totalPnl?: number | null;
+  tradeCount: number; totalPnl?: number | null; strategyOutcomes?: Record<string, { tradeCount: number; totalPnl: number | null }>;
 };
 
 type SortKey = "rowNo" | keyof PaperTrade;
@@ -34,6 +34,11 @@ const num = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 });
 const V2 = "NIFTY ₹180 Momentum V2";
 const V3 = "NIFTY ₹180 Stepped Trail V3";
 const V4 = "NIFTY ₹180 NIFTY-Confirmed Fail-Fast V4";
+const V5 = "NIFTY ₹180 NIFTY-Confirmed Stepped Trail V5";
+const V6 = "NIFTY ₹180 Fixed 2R V6";
+const V7 = "NIFTY ₹180 15-Minute Failure Exit V7";
+const V8 = "NIFTY ₹180 Capped-Risk Stepped Trail V8";
+const strategyNames: Record<StrategyMode, string> = { V2, V3, V4, V5, V6, V7, V8 };
 
 const columns: Array<{ key: SortKey; label: string }> = [
   { key: "rowNo", label: "#" }, { key: "date", label: "Date" }, { key: "indexStockName", label: "Index / Stock" },
@@ -78,13 +83,17 @@ function normalizeSession(value: unknown): PaperSession | null {
   const row = value as Partial<PaperSession>;
   if (!row.date || (row.thread !== "BASE" && row.thread !== "V4") || !row.status) return null;
   const side = row.side === "CE" || row.side === "PE" ? row.side : null;
+  const strategyOutcomes = row.strategyOutcomes && typeof row.strategyOutcomes === "object" ? Object.fromEntries(Object.entries(row.strategyOutcomes).map(([key, value]) => {
+    const outcome = value && typeof value === "object" ? value as { tradeCount?: unknown; totalPnl?: unknown } : {};
+    return [key, { tradeCount: Number.isFinite(Number(outcome.tradeCount)) ? Number(outcome.tradeCount) : 0, totalPnl: optionalNumber(outcome.totalPnl) ?? null }];
+  })) : undefined;
   return {
     date: String(row.date), thread: row.thread, strategyVersions: Array.isArray(row.strategyVersions) ? row.strategyVersions.map(String) : [],
     status: String(row.status), reason: row.reason ? String(row.reason) : null, updatedAt: row.updatedAt ? String(row.updatedAt) : null,
     spot925: optionalNumber(row.spot925) ?? null, expiry: row.expiry ? String(row.expiry) : null, referencePremium: optionalNumber(row.referencePremium) ?? null,
     ce: normalizeContract(row.ce), pe: normalizeContract(row.pe), side, strike: optionalNumber(row.strike) ?? null, entry: optionalNumber(row.entry) ?? null,
     entryTime: row.entryTime ? String(row.entryTime) : null, signalSource: row.signalSource ? String(row.signalSource) : null,
-    tradeCount: Number.isFinite(Number(row.tradeCount)) ? Number(row.tradeCount) : 0, totalPnl: optionalNumber(row.totalPnl) ?? null,
+    tradeCount: Number.isFinite(Number(row.tradeCount)) ? Number(row.tradeCount) : 0, totalPnl: optionalNumber(row.totalPnl) ?? null, strategyOutcomes,
   };
 }
 function compareValues(a: unknown, b: unknown) {
@@ -94,8 +103,8 @@ function compareValues(a: unknown, b: unknown) {
 }
 const premium = (value?: number | null) => value === undefined || value === null ? "—" : `₹${num.format(value)}`;
 const pnl = (value?: number | null) => value === undefined || value === null ? "—" : `${value >= 0 ? "+" : "−"}₹${money.format(Math.abs(value))}`;
-const strategyName = (mode: StrategyMode) => mode === "V2" ? V2 : mode === "V3" ? V3 : V4;
-const threadFor = (mode: StrategyMode): SessionThread => mode === "V4" ? "V4" : "BASE";
+const strategyName = (mode: StrategyMode) => strategyNames[mode];
+const threadFor = (mode: StrategyMode): SessionThread => mode === "V4" || mode === "V5" ? "V4" : "BASE";
 
 function rankedContracts(session: PaperSession) {
   const reference = session.referencePremium ?? 180;
@@ -195,14 +204,19 @@ export default function PaperLedger() {
 
   const ranked = latestSession ? rankedContracts(latestSession) : [];
   const primary = ranked[0] ?? null; const backup = ranked[1] ?? null;
+  const outcomeKey = strategyMode === "V3" ? `V3-${effectiveTrailStep}` : strategyMode;
+  const selectedOutcome = latestSession?.strategyOutcomes?.[outcomeKey];
+  const selectedSessionTrade = latestSession ? rows.find((trade) => trade.date === latestSession.date && trade.strategy === strategyName(strategyMode)
+    && (strategyMode !== "V3" || trade.trailStepPoints === effectiveTrailStep)) : null;
+  const resolvedOutcome = selectedOutcome ?? (selectedSessionTrade ? { tradeCount: 1, totalPnl: selectedSessionTrade.totalPnl } : undefined);
 
   return <section className={styles.ledger} id="trade-ledger">
     <div className={styles.heading}><div><p className={styles.eyebrow}>Backtest + live paper journal</p><h2>Trade ledger</h2>
-      <p>Compare V2, V3 and V4. Session outcomes are journalled even when no trade is taken, so NO_TRADE and data-boundary days remain visible.</p></div>
+      <p>Compare all eight predeclared paper variants. Session outcomes are journalled even when no trade is taken, so NO_TRADE and data-boundary days remain visible.</p></div>
       <div className={styles.status}><span className={loadState === "ok" ? styles.ok : styles.warn} />{loadState === "loading" ? "Loading…" : loadState === "error" ? "Journal unavailable" : `${dataSource === "proxy" ? "Live GitHub journal" : "Published snapshot"} · Updated ${lastUpdated}`}</div></div>
 
     <div className={styles.filters}>
-      <label><span>Strategy</span><select value={strategyMode} onChange={(e) => setStrategyMode(e.target.value as StrategyMode)}><option value="V2">V2 · Momentum trail</option><option value="V3">V3 · Stepped trail</option><option value="V4">V4 · NIFTY-confirmed fail-fast</option></select></label>
+      <label><span>Strategy</span><select value={strategyMode} onChange={(e) => setStrategyMode(e.target.value as StrategyMode)}><option value="V2">V2 · Momentum trail</option><option value="V3">V3 · Stepped trail</option><option value="V4">V4 · NIFTY-confirmed fail-fast</option><option value="V5">V5 · Confirmed + stepped</option><option value="V6">V6 · Fixed 2R</option><option value="V7">V7 · 15-minute failure exit</option><option value="V8">V8 · Capped-risk stepped trail</option></select></label>
       {strategyMode === "V3" && <label><span>Stepped points</span><select value={String(effectiveTrailStep)} onChange={(e) => setTrailStep(e.target.value)}>{trailSteps.map((v) => <option key={v} value={String(v)}>{num.format(v)} pts</option>)}</select></label>}
       <label><span>Year</span><select value={year} onChange={(e) => { setYear(e.target.value); setMonth("ALL"); }}><option value="ALL">All years</option>{years.map((v) => <option key={v}>{v}</option>)}</select></label>
       <label><span>Month</span><select value={month} onChange={(e) => setMonth(e.target.value)}><option value="ALL">All months</option>{months.map((v) => <option key={v} value={v}>{new Date(`${v}-01T00:00:00`).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</option>)}</select></label>
@@ -211,13 +225,13 @@ export default function PaperLedger() {
     </div>
 
     {latestSession ? <div className={styles.sessionCard}>
-      <div className={styles.sessionHeader}><div><span>Latest journalled session</span><strong>{latestSession.date} · {strategyMode === "V4" ? "V4" : strategyMode === "V3" ? `V3-${effectiveTrailStep}` : "V2"}</strong></div><span className={`${styles.sessionBadge} ${statusTone(latestSession.status)}`}>{latestSession.status}</span></div>
+      <div className={styles.sessionHeader}><div><span>Latest journalled session</span><strong>{latestSession.date} · {strategyMode === "V3" ? `V3-${effectiveTrailStep}` : strategyMode}</strong></div><span className={`${styles.sessionBadge} ${statusTone(latestSession.status)}`}>{latestSession.status}</span></div>
       <div className={styles.sessionGrid}>
         <div><span>Weekly expiry</span><strong>{latestSession.expiry ?? "—"}</strong></div>
         <div><span>NIFTY 09:25</span><strong>{latestSession.spot925 === null || latestSession.spot925 === undefined ? "—" : num.format(latestSession.spot925)}</strong></div>
-        {strategyMode === "V4" ? <><div><span>Primary</span><strong>{contractLabel(primary)}</strong></div><div><span>Backup</span><strong>{contractLabel(backup)}</strong></div></> : <div><span>Monitored contract</span><strong>{contractLabel(primary)}</strong></div>}
-        <div><span>Trade count</span><strong>{latestSession.tradeCount}</strong></div>
-        <div><span>Session P/L</span><strong className={(latestSession.totalPnl ?? 0) >= 0 ? styles.profit : styles.loss}>{pnl(latestSession.totalPnl)}</strong></div>
+        {strategyMode === "V4" || strategyMode === "V5" ? <><div><span>Primary</span><strong>{contractLabel(primary)}</strong></div><div><span>Backup</span><strong>{contractLabel(backup)}</strong></div></> : <div><span>Monitored contract</span><strong>{contractLabel(primary)}</strong></div>}
+        <div><span>Trade count</span><strong>{resolvedOutcome?.tradeCount ?? 0}</strong></div>
+        <div><span>Variant P/L</span><strong className={(resolvedOutcome?.totalPnl ?? 0) >= 0 ? styles.profit : styles.loss}>{pnl(resolvedOutcome?.totalPnl ?? null)}</strong></div>
         {latestSession.signalSource && <div><span>Signal source</span><strong>{latestSession.signalSource}</strong></div>}
       </div>
       {latestSession.reason && <p className={styles.sessionReason}><strong>Reason:</strong> {latestSession.reason}</p>}
@@ -229,6 +243,6 @@ export default function PaperLedger() {
       {displayed.map(({ trade, originalRow }, i) => <tr key={`${trade.date}-${trade.callType}-${trade.strikePrice}-${trade.strategy}-${trade.trailStepPoints ?? 0}-${originalRow}`}><td>{i+1}</td><td>{trade.date}</td><td>{trade.indexStockName}</td><td>{trade.weeklyExpiry}</td><td>{trade.lots}</td><td><span className={`${styles.optionBadge} ${trade.callType === "CE" ? styles.ce : styles.pe}`}>{trade.callType}</span></td><td>{num.format(trade.strikePrice)}</td><td>{premium(trade.entryPremium)}</td><td>{premium(trade.peakPremium)}</td><td>{premium(trade.maxFavorableMove)}</td><td>{trade.trailStepPoints === undefined ? "—" : `${num.format(trade.trailStepPoints)} pts`}</td><td>{trade.trailGapPoints === undefined ? "—" : `${num.format(trade.trailGapPoints)} pts`}</td><td>{trade.breakevenReached === undefined ? "—" : trade.breakevenReached ? "Yes" : "No"}</td><td>₹{num.format(trade.startTarget)}</td><td>₹{num.format(trade.startStopLoss)}</td><td>₹{num.format(trade.endStopLoss)}</td><td>{trade.entryTime || "—"}</td><td>{trade.exitTime || "—"}</td><td>{premium(trade.exitPremium)}</td><td>{trade.exitReason || "—"}</td><td>{trade.stopLossAdjustments}</td><td className={(trade.grossPnl ?? 0) >= 0 ? styles.profit : styles.loss}>{pnl(trade.grossPnl)}</td><td>{trade.charges === undefined ? "—" : `₹${money.format(trade.charges)}`}</td><td className={trade.totalPnl >= 0 ? styles.profit : styles.loss}>{pnl(trade.totalPnl)}</td></tr>)}
       {!displayed.length && <tr><td className={styles.empty} colSpan={24}>No validated trades are available for this strategy/step selection. Check the session card above for NO_TRADE or data-quality outcomes.</td></tr>}
     </tbody></table></div>
-    <p className={styles.footnote}>Paper/research mode only. V2 uses the continuous trail, V3 applies the selected stepped trail, and V4 is the independently confirmed fail-fast paper thread. Session outcomes are retained even when no trade is placed. No broker order is placed.</p>
+    <p className={styles.footnote}>Paper/research mode only. V2–V8 are alternative simulations, never additive account profit. Session outcomes are retained even when no trade is placed. No broker order is placed.</p>
   </section>;
 }

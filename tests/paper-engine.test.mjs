@@ -9,10 +9,44 @@ function position(id, entry = 184.15, entryTime = '2026-08-17T09:31:00+05:30') {
   return initialPosition({ entry, entryTime, variant: variant(id) });
 }
 
-test('paper observation variants are exactly V2, V3-5 and V3-10', () => {
-  assert.deepEqual(PAPER_VARIANTS.map((row) => row.id), ['V2', 'V3_5', 'V3_10']);
+test('base paper observation variants are the six predeclared alternatives', () => {
+  assert.deepEqual(PAPER_VARIANTS.map((row) => row.id), ['V2', 'V3_5', 'V3_10', 'V6', 'V7', 'V8']);
   assert.equal(variant('V3_5').trailStep, 5);
   assert.equal(variant('V3_10').trailStep, 10);
+});
+
+test('V6 uses a conservative fixed 2R target and checks stop first', () => {
+  let p = position('V6', 190);
+  assert.equal(p.initialStop, 160);
+  assert.equal(p.targetPremium, 250);
+  p = processCompletedBar(p, c('2026-08-17T09:31:00+05:30', 190, 255, 158, 240));
+  assert.equal(p.exit.result, 'INITIAL_STOP');
+  assert.equal(p.exit.price, 160);
+
+  p = position('V6', 190);
+  p = processCompletedBar(p, c('2026-08-17T09:31:00+05:30', 190, 252, 180, 250));
+  assert.equal(p.exit.result, 'FIXED_TARGET');
+  assert.equal(p.exit.price, 250);
+});
+
+test('V7 schedules a causal failure exit after 15 unproductive completed bars', () => {
+  let p = position('V7', 190);
+  for (let minute = 31; minute <= 45; minute += 1) {
+    p = processCompletedBar(p, c(`2026-08-17T09:${minute}:00+05:30`, 190, 198, 175, 189));
+  }
+  assert.equal(p.exit, null);
+  assert.equal(p.pendingTimeExitFrom, '2026-08-17T09:45:00+05:30');
+  p = processCompletedBar(p, c('2026-08-17T09:46:00+05:30', 188, 192, 180, 190));
+  assert.equal(p.exit.result, 'TIME_FAILURE_EXIT');
+  assert.equal(p.exit.price, 188);
+});
+
+test('V8 uses entry-minus-20 initial risk with the V3-10 trail', () => {
+  let p = position('V8', 184.15);
+  assert.equal(p.initialStop, 164.15);
+  p = processCompletedBar(p, c('2026-08-17T09:31:00+05:30', 184.15, 204.15, 170, 200));
+  assert.equal(p.activeStop, 184.15);
+  assert.equal(position('V8', 165).initialStop, 160);
 });
 
 test('premium reference is bracketed only with observations on both sides', () => {

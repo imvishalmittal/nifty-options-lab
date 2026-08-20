@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document keeps strategy versions explicit so historical results and forward paper trades remain auditable. The original learning dashboard is V0.1, the completed historical momentum-trail research is V2, and the current stepped-trail paper/research candidate is **NIFTY ₹180 Stepped Trail V3**.
+This document keeps strategy versions explicit so historical results and forward paper trades remain auditable. The original learning dashboard is V0.1, V2/V3 preserve the historical entry family, and V4–V8 are frozen forward-paper hypotheses.
 
 No strategy version places broker orders.
 
@@ -98,6 +98,16 @@ If the following bar opens below the active stop, modeled exit is at that open; 
 
 There is no overnight carry. If no stop exits the position, use the final available completed bar through 15:29 as the session exit fallback.
 
+## V4–V8 forward hypotheses
+
+- **V4 — NIFTY-confirmed fail-fast:** require the selected option direction to agree with a completed NIFTY break of the 09:25–09:29 range. Before the ₹220 V2 trail activates, a completed option close below ₹180 schedules an exit at the next bar open.
+- **V5 — confirmed stepped trail:** reuse the exact V4 confirmed entry, but remove fail-fast and apply the V3 10-point step / 20-point gap exit. This isolates entry confirmation from V4 exit behavior.
+- **V6 — fixed 2R:** reuse the base entry, keep the ₹160 stop, and set target to `entry + 2 × (entry − 160)`. If stop and target occur in one candle, count the stop first.
+- **V7 — 15-bar failure exit:** reuse the base entry and V3-10 trail. After 15 completed position bars, if MFE remains below 10 points and the option closes at or below entry, schedule exit at the next bar open.
+- **V8 — capped-risk stepped trail:** reuse the base entry and V3-10 trail, but initialize the stop at `max(₹160, entry − 20)`, so the variant never loosens the original ₹160 stop.
+
+Every stop, target, and failure decision uses completed candles. A decision derived from a candle becomes executable no earlier than the next bar unless it is a stop/target that existed before that candle.
+
 ## Position sizing
 
 Forward paper capital is ₹60,000.
@@ -121,6 +131,8 @@ Paper/ledger P&L uses modeled option transaction charges with date-sensitive STT
 - Prefer the variant only after reviewing complete clean evidence, costs, drawdown, losing streaks, temporal consistency, and sensitivity; do not choose from one known winner.
 - Integrity-failed periods remain excluded.
 - Forward paper observations must be tagged with their strategy version.
+- V2–V8 are alternative shadow outcomes; never add their P/L as one-account profit.
+- Freeze all eight variants for the observation window. Regime fields such as day, entry time, expiry day, EMA alignment, and ADX are diagnostics rather than new filters during this run.
 
 ## Prohibited behavior
 

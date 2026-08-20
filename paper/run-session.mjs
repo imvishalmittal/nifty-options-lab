@@ -63,15 +63,19 @@ function appendTrades(rows) {
   payload.trades = Array.isArray(payload.trades) ? payload.trades : [];
   const existing = new Set(payload.trades.map(paperKey));
   for (const row of rows) { const key = paperKey(row); if (!existing.has(key)) { payload.trades.push(row); existing.add(key); } }
-  payload.meta = { ...payload.meta, capital: PAPER_RULES.capital, trailGapPoints: PAPER_RULES.trailGap, paperMode: true, paperStrategies: ['V2', 'V3-5', 'V3-10'], lastPaperSession: rows[0]?.date ?? payload.meta.lastPaperSession };
+  payload.meta = { ...payload.meta, capital: PAPER_RULES.capital, trailGapPoints: PAPER_RULES.trailGap, paperMode: true, paperStrategies: ['V2', 'V3-5', 'V3-10', 'V6', 'V7', 'V8'], lastPaperSession: rows[0]?.date ?? payload.meta.lastPaperSession };
   fs.writeFileSync(JOURNAL, JSON.stringify(payload, null, 2));
 }
-function positionStatus(position) { return { activeStop: Number(position.activeStop.toFixed(2)), peakPremium: Number(position.peakHigh.toFixed(2)), stopLossAdjustments: Math.max(0, position.stopHistory.length - 1), exit: position.exit }; }
+function positionStatus(position) { return { activeStop: Number(position.activeStop.toFixed(2)), targetPremium: position.targetPremium, peakPremium: Number(position.peakHigh.toFixed(2)), barsProcessed: position.barsProcessed, pendingTimeExitFrom: position.pendingTimeExitFrom, stopLossAdjustments: Math.max(0, position.stopHistory.length - 1), exit: position.exit }; }
 function buildRow({ position, date, expiry, chosen, lots }) {
   if (!position.exit) throw new Error(`${position.variant.id} has no executable exit`);
   const units = lots * PAPER_RULES.lotSize; const pnl = optionCosts(position.entry, position.exit.price, units, date); const mfe = position.peakHigh - position.entry; const variant = position.variant;
-  const row = { source: 'PAPER', strategy: variant.strategy, strategyVersion: variant.strategyVersion, date, indexStockName: 'NIFTY 50', weeklyExpiry: expiry, lots, callType: chosen.side, strikePrice: chosen.strike, startTarget: variant.kind === 'v2' ? PAPER_RULES.trailActivation : Number((position.entry + PAPER_RULES.trailGap).toFixed(2)), startStopLoss: PAPER_RULES.initialStop, endStopLoss: Number(position.activeStop.toFixed(2)), entryTime: timeOf(position.entryTime), exitTime: timeOf(position.exit.time), stopLossAdjustments: Math.max(0, position.stopHistory.length - 1), totalPnl: Number(pnl.net.toFixed(2)), entryPremium: position.entry, peakPremium: Number(position.peakHigh.toFixed(2)), maxFavorableMove: Number(mfe.toFixed(2)), breakevenReached: mfe >= PAPER_RULES.trailGap, trailGapPoints: PAPER_RULES.trailGap, exitPremium: position.exit.price, exitReason: position.exit.result, grossPnl: Number(pnl.gross.toFixed(2)), charges: Number(pnl.charges.toFixed(2)) };
-  if (variant.kind === 'v3') row.trailStepPoints = variant.trailStep;
+  const startTarget = variant.kind === 'fixed_target' ? position.targetPremium : variant.kind === 'v2' ? PAPER_RULES.trailActivation : Number((position.entry + PAPER_RULES.trailGap).toFixed(2));
+  const row = { source: 'PAPER', strategy: variant.strategy, strategyVersion: variant.strategyVersion, date, indexStockName: 'NIFTY 50', weeklyExpiry: expiry, lots, callType: chosen.side, strikePrice: chosen.strike, startTarget, startStopLoss: position.initialStop, endStopLoss: Number(position.activeStop.toFixed(2)), entryTime: timeOf(position.entryTime), exitTime: timeOf(position.exit.time), stopLossAdjustments: Math.max(0, position.stopHistory.length - 1), totalPnl: Number(pnl.net.toFixed(2)), entryPremium: position.entry, peakPremium: Number(position.peakHigh.toFixed(2)), maxFavorableMove: Number(mfe.toFixed(2)), breakevenReached: mfe >= PAPER_RULES.trailGap, trailGapPoints: PAPER_RULES.trailGap, exitPremium: position.exit.price, exitReason: position.exit.result, grossPnl: Number(pnl.gross.toFixed(2)), charges: Number(pnl.charges.toFixed(2)) };
+  if (variant.kind === 'v3' || variant.kind === 'v3_time') row.trailStepPoints = variant.trailStep;
+  if (variant.targetMultiple) row.targetMultiple = variant.targetMultiple;
+  if (variant.failureBars) { row.failureBars = variant.failureBars; row.minimumFavorableMove = variant.minFavorableMove; }
+  if (variant.initialRiskPoints) row.initialRiskPoints = variant.initialRiskPoints;
   return row;
 }
 async function main() {

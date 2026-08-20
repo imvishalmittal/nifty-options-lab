@@ -15,7 +15,7 @@ The repository contains two user-facing paths:
 
 The hosted Sites build can lag GitHub `main`; source readiness and public deployment are separate states.
 
-## Forward paper candidate — NIFTY ₹180 Stepped Trail V3
+## Forward paper suite — V2 through V8
 
 V3 keeps the V2 entry family but changes stop management so risk begins reducing before a fixed ₹220 activation.
 
@@ -41,6 +41,21 @@ V3 keeps the V2 entry family but changes stop management so risk begins reducing
 
 V2 remains preserved as a historical strategy version. Its 110 validated 2025 ledger rows are not rewritten to pretend they used V3 mechanics.
 
+The forward session now runs eight mutually exclusive shadow outcomes from two shared entry cohorts:
+
+| Variant | Frozen forward hypothesis |
+| --- | --- |
+| V2 | Original ₹220-activated continuous 20-point trail |
+| V3-5 | 5-point stepped trail with a 20-point gap |
+| V3-10 | 10-point stepped trail with a 20-point gap |
+| V4 | NIFTY-confirmed entry, fail-fast below ₹180, then V2 trail |
+| V5 | Same NIFTY-confirmed entry as V4, with V3-10 exit mechanics |
+| V6 | Same base entry, ₹160 stop, fixed conservative 2R target |
+| V7 | Same base entry and V3-10 trail, plus a causal 15-bar failure exit |
+| V8 | Same base entry and V3-10 trail, with initial stop at the higher of ₹160 or entry minus 20 points |
+
+These are alternative simulations of the same opportunities. Their P/L must never be added together as one account result. V5 adds no market-data requests because it shares the V4 candle stream; V6–V8 share the base candle stream.
+
 ## Paper dashboard
 
 The `/paper` ledger includes the original trade fields plus V3 diagnostics: strategy version, entry/peak/exit premium, max favorable move, trail step, trail gap, breakeven reached, final stop, exit reason, stop-adjustment count, gross P/L, charges, and net P/L. Missing fields on older V2 rows display as `—` rather than being reconstructed without evidence.
@@ -58,7 +73,7 @@ V3 is a separately named hypothesis. A 2025 actual-contract comparison of **5-po
 Key GitHub Actions workflows include:
 
 - `CI` — lint, build, rendered-site tests, and strategy regression tests.
-- `NIFTY Paper Session` — weekday continuous paper session starting at about **09:20 IST**.
+- `NIFTY Paper Session` — weekday continuous paper suite starting at about **09:20 IST**, producing V2–V8 shadow outcomes.
 - `NIFTY 180 Stepped Trail 2025` — V3 5-vs-10 step historical comparison.
 - `NIFTY 180 Momentum 2025` / `2026` — preserved V2 development/holdout research.
 - `Paper Ledger Backfill` — converts accepted historical artifacts to dashboard rows.

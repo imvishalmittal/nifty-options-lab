@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import {
   PAPER_RULES, chooseClosestPremium, itmContracts, lotsAffordable, nearestExpiry, premiumBracket, sessionExit, timeOf,
 } from './paper-engine.mjs';
-import { classifyV4Entry, initialV4Position, processV4CompletedBar, V4_VARIANT } from './v4-engine.mjs';
+import { classifyV4Entry, CONFIRMED_VARIANTS, initialV4Position, processV4CompletedBar } from './v4-engine.mjs';
 
 const BASE_URL = 'https://api.groww.in/v1';
 const JOURNAL = 'public/paper/v4-trades.json';
@@ -58,22 +58,23 @@ function optionCosts(entry, exit, units, tradeDate) {
 }
 function writeStatus(value) { fs.mkdirSync('public/paper', { recursive: true }); fs.writeFileSync(STATUS, JSON.stringify({ updatedAt: new Date().toISOString(), ...value }, null, 2)); }
 function tradeKey(row) { return `${row.source}|${row.date}|${row.strategy}`; }
-function appendTrade(row) {
+function appendTrades(rows) {
   let payload = { meta: {}, trades: [] };
   if (fs.existsSync(JOURNAL)) payload = JSON.parse(fs.readFileSync(JOURNAL, 'utf8'));
   payload.trades = Array.isArray(payload.trades) ? payload.trades : [];
   const existing = new Set(payload.trades.map(tradeKey));
-  if (!existing.has(tradeKey(row))) payload.trades.push(row);
-  payload.meta = { ...payload.meta, paperMode: true, paperStrategy: 'V4', lastPaperSession: row.date };
+  for (const row of rows) if (!existing.has(tradeKey(row))) { payload.trades.push(row); existing.add(tradeKey(row)); }
+  payload.meta = { ...payload.meta, paperMode: true, paperStrategies: ['V4', 'V5'], lastPaperSession: rows[0]?.date ?? payload.meta.lastPaperSession };
   fs.writeFileSync(JOURNAL, JSON.stringify(payload, null, 2));
 }
 function positionStatus(position) { return { activeStop: Number(position.activeStop.toFixed(2)), peakPremium: Number(position.peakHigh.toFixed(2)), stopLossAdjustments: Math.max(0, position.stopHistory.length - 1), pendingFailFastFrom: position.pendingFailFastFrom, exit: position.exit }; }
 function buildRow({ position, date, expiry, chosen, lots, signalInfo }) {
-  if (!position.exit) throw new Error('V4 has no executable exit');
+  if (!position.exit) throw new Error(`${position.variant.id} has no executable exit`);
   const units = lots * PAPER_RULES.lotSize; const pnl = optionCosts(position.entry, position.exit.price, units, date); const mfe = position.peakHigh - position.entry;
-  return {
-    source: 'PAPER', strategy: V4_VARIANT.strategy, strategyVersion: 'V4', date, indexStockName: 'NIFTY 50', weeklyExpiry: expiry, lots,
-    callType: chosen.side, strikePrice: chosen.strike, startTarget: PAPER_RULES.trailActivation, startStopLoss: PAPER_RULES.initialStop,
+  const variant = position.variant;
+  const row = {
+    source: 'PAPER', strategy: variant.strategy, strategyVersion: variant.strategyVersion, date, indexStockName: 'NIFTY 50', weeklyExpiry: expiry, lots,
+    callType: chosen.side, strikePrice: chosen.strike, startTarget: variant.id === 'V4' ? PAPER_RULES.trailActivation : Number((position.entry + PAPER_RULES.trailGap).toFixed(2)), startStopLoss: position.initialStop,
     endStopLoss: Number(position.activeStop.toFixed(2)), entryTime: timeOf(position.entryTime), exitTime: timeOf(position.exit.time),
     stopLossAdjustments: Math.max(0, position.stopHistory.length - 1), totalPnl: Number(pnl.net.toFixed(2)), entryPremium: position.entry,
     peakPremium: Number(position.peakHigh.toFixed(2)), maxFavorableMove: Number(mfe.toFixed(2)), breakevenReached: mfe >= PAPER_RULES.trailGap,
@@ -82,11 +83,13 @@ function buildRow({ position, date, expiry, chosen, lots, signalInfo }) {
     niftySignalTime: timeOf(signalInfo.niftySignal?.timestamp), niftySignalClose: signalInfo.niftySignal?.close ?? null,
     primarySymbol: signalInfo.primary?.symbol ?? null, backupSymbol: signalInfo.backup?.symbol ?? null,
   };
+  if (variant.trailStep) row.trailStepPoints = variant.trailStep;
+  return row;
 }
 
 async function main() {
   const token = process.env.GROWW_ACCESS_TOKEN; if (!token) throw new Error('GROWW_ACCESS_TOKEN is required');
-  const { date } = indiaParts(); writeStatus({ date, status: 'STARTING', strategy: 'V4', rules: PAPER_RULES }); await waitUntil('09:27');
+  const { date } = indiaParts(); writeStatus({ date, status: 'STARTING', strategies: CONFIRMED_VARIANTS.map((variant) => variant.id), rules: PAPER_RULES }); await waitUntil('09:27');
 
   let spotCandles = [];
   for (let attempt = 0; attempt < 8; attempt += 1) {
@@ -131,34 +134,34 @@ async function main() {
 
   const lots = lotsAffordable(entryInfo.entry);
   if (lots < 1) { writeStatus({ date, status: 'NO_TRADE', reason: '₹60k capital cannot fund one lot', entry: entryInfo.entry, selectionAudit }); return; }
-  let position = initialV4Position({ entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp });
+  const positions = Object.fromEntries(CONFIRMED_VARIANTS.map((variant) => [variant.id, initialV4Position({ entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, variant })]));
   const processed = new Set();
-  writeStatus({ date, status: 'OPEN', selectionAudit, signalSource: signalInfo.source, niftyRange: signalInfo.niftyRange, niftySignal: signalInfo.niftySignal, side: chosen.side, strike: chosen.strike, lots, entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, position: positionStatus(position) });
+  writeStatus({ date, status: 'OPEN', selectionAudit, signalSource: signalInfo.source, niftyRange: signalInfo.niftyRange, niftySignal: signalInfo.niftySignal, side: chosen.side, strike: chosen.strike, lots, entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, variants: Object.fromEntries(Object.entries(positions).map(([id, position]) => [id, positionStatus(position)])) });
 
-  while (!position.exit) {
+  while (Object.values(positions).some((position) => !position.exit)) {
     const now = indiaParts().time;
     const candles = completedCandles(await fetchCandles(token, 'FNO', chosen.symbol, date, timeOf(entryInfo.entryBar.timestamp), now), now);
     for (const candle of candles) {
       if (candle.timestamp < entryInfo.entryBar.timestamp || processed.has(candle.timestamp)) continue;
-      position = processV4CompletedBar(position, candle);
+      for (const id of Object.keys(positions)) positions[id] = processV4CompletedBar(positions[id], candle);
       processed.add(candle.timestamp);
-      if (position.exit) break;
+      if (Object.values(positions).every((position) => position.exit)) break;
     }
-    if (position.exit) break;
+    if (Object.values(positions).every((position) => position.exit)) break;
     if (now >= '15:30') {
       const last = candles.filter((candle) => timeOf(candle.timestamp) <= PAPER_RULES.sessionExit).at(-1);
-      if (last) position = sessionExit(position, last);
+      if (last) for (const id of Object.keys(positions)) positions[id] = sessionExit(positions[id], last);
       break;
     }
-    writeStatus({ date, status: 'OPEN', selectionAudit, signalSource: signalInfo.source, niftyRange: signalInfo.niftyRange, niftySignal: signalInfo.niftySignal, side: chosen.side, strike: chosen.strike, lots, entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, position: positionStatus(position) });
+    writeStatus({ date, status: 'OPEN', selectionAudit, signalSource: signalInfo.source, niftyRange: signalInfo.niftyRange, niftySignal: signalInfo.niftySignal, side: chosen.side, strike: chosen.strike, lots, entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, variants: Object.fromEntries(Object.entries(positions).map(([id, position]) => [id, positionStatus(position)])) });
     await sleep(30000);
   }
 
-  if (!position.exit) { writeStatus({ date, status: 'ERROR', reason: 'V4 has no executable exit', selectionAudit }); return; }
-  const row = buildRow({ position, date, expiry, chosen, lots, signalInfo });
-  appendTrade(row);
-  writeStatus({ date, status: 'CLOSED', selectionAudit, trade: row });
-  console.log(JSON.stringify(row, null, 2));
+  if (Object.values(positions).some((position) => !position.exit)) { writeStatus({ date, status: 'ERROR', reason: 'At least one confirmed strategy has no executable exit', selectionAudit }); return; }
+  const rows = CONFIRMED_VARIANTS.map((variant) => buildRow({ position: positions[variant.id], date, expiry, chosen, lots, signalInfo }));
+  appendTrades(rows);
+  writeStatus({ date, status: 'CLOSED', selectionAudit, trades: rows });
+  console.log(JSON.stringify(rows, null, 2));
 }
 
 main().catch((error) => { console.error(error.stack || error.message); writeStatus({ status: 'FAILED', reason: error.message }); process.exitCode = 1; });

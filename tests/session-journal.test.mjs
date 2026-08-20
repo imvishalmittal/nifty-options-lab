@@ -17,7 +17,7 @@ test('compactPaperSession preserves a NO_TRADE session without inventing a trade
   }, 'BASE');
 
   assert.equal(row.thread, 'BASE');
-  assert.deepEqual(row.strategyVersions, ['V2', 'V3-5', 'V3-10']);
+  assert.deepEqual(row.strategyVersions, ['V2', 'V3-5', 'V3-10', 'V6', 'V7', 'V8']);
   assert.equal(row.status, 'NO_TRADE');
   assert.equal(row.tradeCount, 0);
   assert.equal(row.totalPnl, null);
@@ -31,7 +31,7 @@ test('compactPaperSession records V4 identity and signal source when present', (
     side: 'PE', strike: 24250, entry: 188.2, entryTime: '2026-08-20T09:36:00+05:30', signalSource: 'BACKUP',
   }, 'V4');
 
-  assert.deepEqual(row.strategyVersions, ['V4']);
+  assert.deepEqual(row.strategyVersions, ['V4', 'V5']);
   assert.equal(row.side, 'PE');
   assert.equal(row.entry, 188.2);
   assert.equal(row.signalSource, 'BACKUP');
