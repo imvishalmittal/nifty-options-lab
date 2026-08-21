@@ -1,12 +1,13 @@
 {
-  "enabled": true,
-  "status": "running",
+  "enabled": false,
+  "status": "failed",
   "scope": "discovery-2020-2024",
   "expectedWorkflow": "Research - NIFTY VWAP trend pullback",
-  "expectedRunId": "32499258456",
   "runs": {
     "late_breakout_run_id": "32487683576"
   },
   "startedAt": "2026-08-21T13:35:31Z",
-  "updatedAt": "2026-08-21T15:45:00Z"
+  "updatedAt": "2026-08-21T15:50:31.325Z",
+  "failedWorkflow": "Research - NIFTY VWAP trend pullback",
+  "failedRunId": 32499258456
 }
