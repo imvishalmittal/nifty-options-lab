@@ -1,0 +1,81 @@
+name: Research - compare NIFTY opportunity strategies
+
+on:
+  workflow_dispatch:
+    inputs:
+      late_breakout_run_id:
+        description: Completed late-breakout workflow run ID
+        required: true
+        type: string
+      vwap_pullback_run_id:
+        description: Completed VWAP-pullback workflow run ID
+        required: true
+        type: string
+      failed_break_run_id:
+        description: Completed failed-break workflow run ID
+        required: true
+        type: string
+      afternoon_breakout_run_id:
+        description: Completed afternoon-breakout workflow run ID
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with:
+          name: opportunity-late-breakout-retest-consolidated
+          path: inputs/late
+          run-id: ${{ inputs.late_breakout_run_id }}
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: opportunity-vwap-trend-pullback-consolidated
+          path: inputs/vwap
+          run-id: ${{ inputs.vwap_pullback_run_id }}
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: opportunity-failed-opening-range-break-consolidated
+          path: inputs/failed
+          run-id: ${{ inputs.failed_break_run_id }}
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: opportunity-afternoon-compression-breakout-consolidated
+          path: inputs/afternoon
+          run-id: ${{ inputs.afternoon_breakout_run_id }}
+          github-token: ${{ github.token }}
+      - run: node research/opportunity/compare-results.mjs --dir=inputs --out=comparison.json
+      - name: Write comparison summary
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const result = JSON.parse(fs.readFileSync('comparison.json', 'utf8'));
+          const lines = [
+            '# NIFTY opportunity research comparison',
+            '',
+            `Period: ${result.period.startDate} to ${result.period.endDate}`,
+            '',
+            '| Strategy | Trades | Win rate | Gross PF | Stress expectancy | Gate |',
+            '|---|---:|---:|---:|---:|---|',
+            ...result.strategies.map((row) => `| ${row.strategy} | ${row.trades} | ${row.winRate == null ? 'n/a' : (100 * row.winRate).toFixed(1) + '%'} | ${row.profitFactorBeforeCosts?.toFixed?.(2) ?? 'n/a'} | ${row.stress1ExpectancyRupees?.toFixed?.(2) ?? 'n/a'} | ${row.passesResearchGate ? 'PASS' : 'FAIL'} |`),
+            '',
+            '**Research only. No strategy is promoted to paper or live trading by this workflow.**',
+          ];
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opportunity-strategy-comparison
+          path: comparison.json
+          retention-days: 90
