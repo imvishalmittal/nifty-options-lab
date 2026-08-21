@@ -89,6 +89,12 @@ test('an unavailable exact-minute option quote is a no-trade, not a fabricated f
 test('documented irregular sessions are explicit exclusions while unknown short data remains invalid', () => {
   assert.equal(classifyShortSession('2020-11-14', 62).status, 'EXCLUDED_SESSION');
   assert.equal(classifyShortSession('2021-02-24', 139).status, 'EXCLUDED_SESSION');
+  assert.equal(classifyShortSession('2022-10-24', 62).status, 'EXCLUDED_SESSION');
+  assert.equal(classifyShortSession('2023-11-12', 62).status, 'EXCLUDED_SESSION');
+  assert.equal(classifyShortSession('2024-01-20', 112).status, 'EXCLUDED_SESSION');
+  assert.equal(classifyShortSession('2024-03-02', 110).status, 'EXCLUDED_SESSION');
+  assert.equal(classifyShortSession('2024-05-18', 112).status, 'EXCLUDED_SESSION');
+  assert.equal(classifyShortSession('2024-11-01', 63).status, 'EXCLUDED_SESSION');
   assert.equal(classifyShortSession('2022-10-03', 139).status, 'DATA_MISSING');
   const summary = summarizeOpportunityResults([{ date: '2020-11-14', status: 'EXCLUDED_SESSION' }]);
   assert.equal(summary.excludedSessions, 1);
