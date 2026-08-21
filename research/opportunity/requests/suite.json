@@ -1,11 +1,12 @@
 {
-  "enabled": true,
-  "status": "waiting-for-corrected-late-breakout",
+  "enabled": false,
+  "status": "failed",
   "scope": "discovery-2020-2024",
   "expectedWorkflow": "Research - NIFTY late breakout retest",
   "runs": {},
   "initialRunId": "32451468960",
   "startedAt": "2026-08-21T05:29:00Z",
-  "expectedRunId": "32451468960",
-  "updatedAt": "2026-08-21T05:42:30Z"
+  "updatedAt": "2026-08-21T08:18:42.994Z",
+  "failedWorkflow": "Research - NIFTY late breakout retest",
+  "failedRunId": 32451468960
 }
