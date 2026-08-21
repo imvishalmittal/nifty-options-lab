@@ -7,6 +7,8 @@ import {
 } from '../nifty-180-premium-strategy.mjs';
 import {
   DEFAULT_RULES,
+  classifyShortSession,
+  expiryYearsForSessionDates,
   STRATEGIES,
   detectOpportunity,
   evaluateOptionPosition,
@@ -261,17 +263,17 @@ export async function backtestOpportunity({
     segment: 'CASH', symbol: 'NSE-NIFTY', startDate, endDate,
   });
   const sessions = groupByDate(spotCandles);
-  const years = [...new Set([...sessions.keys()].map((date) => Number(date.slice(0, 4))))];
   const expiries = [];
-  for (const year of years) expiries.push(...await fetchExpiries(token, year));
+  for (const year of expiryYearsForSessionDates(sessions.keys())) expiries.push(...await fetchExpiries(token, year));
   expiries.sort();
   const contractsByExpiry = new Map();
   const historyCache = new Map();
   const results = [];
 
   for (const [date, candles] of [...sessions.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-    if (candles.length < MINIMUM_SESSION_CANDLES) {
-      results.push({ date, status: 'DATA_MISSING', reason: `Only ${candles.length} underlying one-minute candles` });
+    const shortSession = classifyShortSession(date, candles.length, MINIMUM_SESSION_CANDLES);
+    if (shortSession) {
+      results.push({ date, ...shortSession });
       continue;
     }
     const detected = detectOpportunity(candles, strategy, rules);
