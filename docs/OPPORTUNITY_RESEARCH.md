@@ -38,7 +38,7 @@ Run each of the four workflows separately for the same scope:
 2. `validation-2025` — one untouched validation pass after parameter lock.
 3. `holdout-2026` — final untouched holdout through the current date.
 
-Each workflow splits the scope into monthly jobs, serializes its API use, applies historically changing NIFTY lot sizes from the selected option's expiry (so transition months are not treated as one regime), uploads raw monthly artifacts, applies a strict integrity gate, and produces one consolidated artifact. A month fails consolidation if any observed session has missing underlying/option data, reaches the maximum contract-search boundary, uses a same-candle entry, has incomplete cost scenarios, or overlaps another partition.
+Each workflow splits the scope into monthly jobs, serializes its API use, applies historically changing NIFTY lot sizes from the selected option's expiry (so transition months are not treated as one regime), uploads raw monthly artifacts, applies a strict integrity gate, and produces one consolidated artifact. A month fails consolidation if any observed session has missing underlying/option data, reaches the configured contract-search cap while deeper listed contracts remain uninspected, uses a same-candle entry, has incomplete cost scenarios, or overlaps another partition. Exhausting the complete listed ITM catalog is not a search-boundary failure; in that case the closest available quoted contract remains observable.
 
 After all four runs for one scope finish, launch **Research - compare NIFTY opportunity strategies** with their four run IDs. The comparison refuses unequal periods and requires, per strategy:
 

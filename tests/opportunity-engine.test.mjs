@@ -7,7 +7,7 @@ import {
   evaluateOptionPosition,
   niftyLotSizeForExpiry,
 } from '../research/opportunity/opportunity-engine.mjs';
-import { normalizeCandles } from '../research/opportunity/groww-opportunity-backtest.mjs';
+import { candidateSearchIsTruncated, normalizeCandles } from '../research/opportunity/groww-opportunity-backtest.mjs';
 import { validateOpportunityResult } from '../research/opportunity/result-integrity.mjs';
 
 function times(start, end) {
@@ -142,6 +142,19 @@ test('duplicate provider timestamps are merged before selecting the next entry b
   });
   const result = evaluateOptionPosition(candles, candles[0].timestamp);
   assert.equal(result.entryTime, '2024-01-01T09:46:00+05:30');
+});
+
+test('contract boundary fails only when the configured cap truncates deeper ITM contracts', () => {
+  const common = {
+    inspectedCandidates: 24,
+    selectedPremium: 156,
+    maxCandidates: 24,
+    referencePremium: 180,
+  };
+  assert.equal(candidateSearchIsTruncated({ ...common, availableCandidates: 25 }), true);
+  assert.equal(candidateSearchIsTruncated({ ...common, availableCandidates: 24 }), false);
+  assert.equal(candidateSearchIsTruncated({ ...common, availableCandidates: 17, inspectedCandidates: 17 }), false);
+  assert.equal(candidateSearchIsTruncated({ ...common, availableCandidates: 25, selectedPremium: 180 }), false);
 });
 
 test('integrity gate rejects a same-candle look-ahead entry', () => {
