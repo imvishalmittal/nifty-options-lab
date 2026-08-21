@@ -1,0 +1,132 @@
+name: Research - NIFTY late breakout retest
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Backtest partition set
+        required: true
+        type: choice
+        default: validation-2025
+        options: [discovery-2020-2024, validation-2025, holdout-2026, custom]
+      custom_start:
+        description: YYYY-MM-DD (custom scope only)
+        required: false
+        type: string
+      custom_end:
+        description: YYYY-MM-DD (custom scope only)
+        required: false
+        type: string
+      custom_lot_size:
+        description: Lot size (custom scope only)
+        required: false
+        type: number
+        default: 65
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nifty-opportunity-late-breakout
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.result }}
+      count: ${{ steps.matrix.outputs.count }}
+    steps:
+      - id: matrix
+        uses: actions/github-script@v7
+        env:
+          SCOPE: ${{ inputs.scope }}
+          CUSTOM_START: ${{ inputs.custom_start }}
+          CUSTOM_END: ${{ inputs.custom_end }}
+          CUSTOM_LOT: ${{ inputs.custom_lot_size }}
+        with:
+          result-encoding: string
+          script: |
+            const scope = process.env.SCOPE;
+            const partitions = [];
+            const appendMonths = (startYear, startMonth, endYear, endMonth, finalEnd = null) => {
+              for (let year = startYear; year <= endYear; year++) {
+                const first = year === startYear ? startMonth : 1;
+                const last = year === endYear ? endMonth : 12;
+                for (let month = first; month <= last; month++) {
+                  const mm = String(month).padStart(2, '0');
+                  const lastDay = new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+                  const end = finalEnd && year === endYear && month === endMonth ? finalEnd : lastDay;
+                  partitions.push({ label: `${year}-${mm}`, start: `${year}-${mm}-01`, end, lot: 'auto' });
+                }
+              }
+            };
+            if (scope === 'discovery-2020-2024') appendMonths(2020, 1, 2024, 12);
+            else if (scope === 'validation-2025') appendMonths(2025, 1, 2025, 12);
+            else if (scope === 'holdout-2026') {
+              const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+              const end = today.getFullYear() === 2026 ? today.toISOString().slice(0, 10) : '2026-12-31';
+              const month = Number(end.slice(5, 7));
+              appendMonths(2026, 1, 2026, month, end);
+            } else {
+              if (!/^\d{4}-\d{2}-\d{2}$/.test(process.env.CUSTOM_START) || !/^\d{4}-\d{2}-\d{2}$/.test(process.env.CUSTOM_END)) core.setFailed('custom_start and custom_end must be YYYY-MM-DD');
+              partitions.push({ label: 'custom', start: process.env.CUSTOM_START, end: process.env.CUSTOM_END, lot: Number(process.env.CUSTOM_LOT) });
+            }
+            core.setOutput('count', partitions.length);
+            return JSON.stringify({ include: partitions });
+
+  backtest:
+    needs: plan
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node --test tests/opportunity-engine.test.mjs
+      - name: Backtest partition
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+        run: >-
+          node research/opportunity/groww-opportunity-backtest.mjs
+          --strategy=late-breakout-retest
+          --start=${{ matrix.start }}
+          --end=${{ matrix.end }}
+          --lot-size=${{ matrix.lot }}
+          --out=result.json
+      - name: Strict integrity gate
+        run: node research/opportunity/result-integrity.mjs --in=result.json --out=integrity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: opportunity-late-breakout-retest-part-${{ matrix.label }}
+          path: |
+            result.json
+            integrity.json
+          retention-days: 90
+
+  consolidate:
+    if: ${{ !cancelled() }}
+    needs: [plan, backtest]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: opportunity-late-breakout-retest-part-*
+          path: artifacts
+      - run: node research/opportunity/aggregate-results.mjs --dir=artifacts --strategy=late-breakout-retest --expected-count=${{ needs.plan.outputs.count }} --out=consolidated.json
+      - run: node research/opportunity/result-integrity.mjs --in=consolidated.json --out=consolidated-integrity.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opportunity-late-breakout-retest-consolidated
+          path: |
+            consolidated.json
+            consolidated-integrity.json
+          retention-days: 90
