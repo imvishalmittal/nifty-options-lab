@@ -25,6 +25,8 @@ All four use the same execution model so the first experiment measures entry qua
 - one trade per strategy per session;
 - conservative stop-first handling if stop and target occur in the same one-minute candle;
 - no trade when no option candle exists at the exact signal minute; the backtest never substitutes a stale quote;
+- explicitly exclude the documented 2020/2021 Muhurat sessions and the 24 February 2021 NSE outage session; all other short sessions remain integrity failures;
+- load the following year's expiry calendar for December signals and inspect up to 24 ITM contracts when bracketing the ₹180 reference premium;
 - net results at zero, 0.5, and 1.0 adverse premium points per leg using the repository's Groww cost helper.
 
 ## Backtest protocol
