@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { STRATEGIES, timestampTime } from './opportunity-engine.mjs';
 
-const VALID_STATUSES = new Set(['TRADE', 'NO_SIGNAL', 'NO_TRADE', 'DATA_MISSING', 'CANDIDATE_BOUNDARY']);
+const VALID_STATUSES = new Set(['TRADE', 'NO_SIGNAL', 'NO_TRADE', 'EXCLUDED_SESSION', 'DATA_MISSING', 'CANDIDATE_BOUNDARY']);
 
 export function validateOpportunityResult(document) {
   const errors = [];
@@ -41,6 +41,8 @@ export function validateOpportunityResult(document) {
   if (document?.summary?.observedSessions !== document?.results?.length) errors.push('summary observedSessions does not match results');
   if (document?.summary?.trades === 0) warnings.push('partition contains no executed trades');
   if ((document?.diagnostics?.vwapFallbackSessions ?? 0) > 0) warnings.push('index volume unavailable for at least one signal; causal typical-price fallback used');
+  const excluded = (document?.results ?? []).filter((row) => row.status === 'EXCLUDED_SESSION');
+  if (excluded.length) warnings.push(`${excluded.length} documented irregular session(s) excluded`);
   return { valid: errors.length === 0, errors, warnings };
 }
 
