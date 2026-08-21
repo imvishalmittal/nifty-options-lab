@@ -43,4 +43,12 @@ test('failure stops the suite and unexpected workflows are ignored', () => {
 
   const ignored = planAdvance({ suite: suite(), completedWorkflow: WORKFLOWS.vwap.name, conclusion: 'success', runId: 10 });
   assert.equal(ignored.action, 'ignore');
+
+  const awaitingRerun = suite();
+  awaitingRerun.expectedRunId = '12';
+  const stale = planAdvance({ suite: awaitingRerun, completedWorkflow: WORKFLOWS.late.name, conclusion: 'failure', runId: 11 });
+  assert.equal(stale.action, 'ignore');
+  const rerun = planAdvance({ suite: awaitingRerun, completedWorkflow: WORKFLOWS.late.name, conclusion: 'success', runId: 12 });
+  assert.equal(rerun.action, 'dispatch');
+  assert.equal(rerun.suite.expectedRunId, undefined);
 });
