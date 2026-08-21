@@ -32,7 +32,6 @@ permissions:
 concurrency:
   group: groww-opportunity-backtest-api
   cancel-in-progress: false
-  queue: max
 
 jobs:
   plan:
