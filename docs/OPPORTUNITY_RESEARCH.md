@@ -5,7 +5,7 @@ This research lane looks for intraday opportunities after the existing morning p
 ## Isolation guarantees
 
 - Every file in this change is new. Existing paper workflows, V2-V8 strategy code, journals, dashboards, and `/paper` are not changed.
-- The four strategy workflows are manual-only (`workflow_dispatch`). They have no schedule and no broker-order path.
+- The four strategy workflows have no schedule and no broker-order path. They support manual dispatch and isolated run-request files on the dedicated `research/opportunity-runs` branch.
 - Each strategy has its own workflow and artifacts. The comparison workflow only reads consolidated artifacts from four explicitly supplied run IDs.
 - Passing a comparison gate does not promote, merge, schedule, or paper-trade a strategy.
 
@@ -43,6 +43,8 @@ After all four runs for one scope finish, launch **Research - compare NIFTY oppo
 - positive total and average net P&L at one adverse premium point per leg.
 
 The gate is necessary, not sufficient. A candidate still needs stable monthly results, acceptable drawdown, parameter-neighborhood stability, expiry-day/non-expiry-day analysis, and a separate forward paper phase before any discussion of live use.
+
+For autonomous queued runs, update only the strategy's JSON request under `research/opportunity/requests/` on the `research/opportunity-runs` branch. The shared `groww-opportunity-backtest-api` concurrency group serializes all four families so they do not compete for the Groww API. Request files never merge into `main` and cannot affect paper execution.
 
 ## Data and interpretation limits
 
