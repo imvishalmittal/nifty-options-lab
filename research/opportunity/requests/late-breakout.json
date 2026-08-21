@@ -1,1 +1,5 @@
-{"scope":"discovery-2020-2024"}
+{
+  "scope": "discovery-2020-2024",
+  "requestedAt": "2026-08-21T05:42:00Z",
+  "reason": "classify absent exact-minute quote as no-trade"
+}
