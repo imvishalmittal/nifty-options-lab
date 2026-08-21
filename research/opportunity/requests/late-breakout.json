@@ -1,5 +1,5 @@
 {
   "scope": "discovery-2020-2024",
-  "requestedAt": "2026-08-21T05:42:00Z",
-  "reason": "classify absent exact-minute quote as no-trade"
+  "requestedAt": "2026-08-21T11:43:30Z",
+  "reason": "repair documented irregular sessions, year-end expiries, and premium bracketing"
 }
