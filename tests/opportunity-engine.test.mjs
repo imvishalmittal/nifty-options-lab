@@ -7,6 +7,7 @@ import {
   evaluateOptionPosition,
   niftyLotSizeForExpiry,
 } from '../research/opportunity/opportunity-engine.mjs';
+import { normalizeCandles } from '../research/opportunity/groww-opportunity-backtest.mjs';
 import { validateOpportunityResult } from '../research/opportunity/result-integrity.mjs';
 
 function times(start, end) {
@@ -120,6 +121,27 @@ test('option entry uses next bar and same-bar ambiguity is resolved stop-first',
   assert.equal(result.result, 'STOP');
   assert.equal(result.exit, 160);
   assert.equal(result.ambiguousBar, true);
+});
+
+test('duplicate provider timestamps are merged before selecting the next entry bar', () => {
+  const candles = normalizeCandles([
+    ['2024-01-01 09:45:00', 180, 185, 178, 182, 1000, 10000],
+    ['2024-01-01 09:45:00', 181, 188, 176, 184, 1200, 10100],
+    ['2024-01-01 09:46:00', 185, 190, 184, 189, 900, 10200],
+    ['2024-01-01 15:20:00', 190, 192, 189, 191, 800, 9900],
+  ]);
+  assert.equal(candles.length, 3);
+  assert.deepEqual(candles[0], {
+    timestamp: '2024-01-01T09:45:00+05:30',
+    open: 180,
+    high: 188,
+    low: 176,
+    close: 184,
+    volume: 1200,
+    openInterest: 10100,
+  });
+  const result = evaluateOptionPosition(candles, candles[0].timestamp);
+  assert.equal(result.entryTime, '2024-01-01T09:46:00+05:30');
 });
 
 test('integrity gate rejects a same-candle look-ahead entry', () => {
