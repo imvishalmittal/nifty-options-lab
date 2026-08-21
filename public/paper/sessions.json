@@ -5,7 +5,7 @@
       "BASE",
       "V4"
     ],
-    "updatedAt": "2026-08-20T07:31:07.412Z"
+    "updatedAt": "2026-08-21T04:16:30.548Z"
   },
   "sessions": [
     {
@@ -139,6 +139,78 @@
       "signalSource": "PRIMARY",
       "tradeCount": 1,
       "totalPnl": 14255.69
+    },
+    {
+      "date": "2026-08-21",
+      "thread": "BASE",
+      "strategyVersions": [
+        "V2",
+        "V3-5",
+        "V3-10",
+        "V6",
+        "V7",
+        "V8"
+      ],
+      "status": "NO_TRADE",
+      "reason": "No valid ₹180 crossing before 09:45",
+      "updatedAt": "2026-08-21T04:16:30.548Z",
+      "spot925": 24220.4,
+      "expiry": "2026-08-25",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-25Aug26-24150-CE",
+        "strike": 24150,
+        "optionType": "CE",
+        "premium": 168
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-25Aug26-24400-PE",
+        "strike": 24400,
+        "optionType": "PE",
+        "premium": 163.35
+      },
+      "side": null,
+      "strike": null,
+      "entry": null,
+      "entryTime": null,
+      "signalSource": null,
+      "tradeCount": 0,
+      "totalPnl": null,
+      "strategyOutcomes": {}
+    },
+    {
+      "date": "2026-08-21",
+      "thread": "V4",
+      "strategyVersions": [
+        "V4",
+        "V5"
+      ],
+      "status": "NO_TRADE",
+      "reason": "No V4 option signal with matching NIFTY confirmation before 09:45",
+      "updatedAt": "2026-08-21T04:16:16.303Z",
+      "spot925": 24220.4,
+      "expiry": "2026-08-25",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-25Aug26-24150-CE",
+        "strike": 24150,
+        "optionType": "CE",
+        "premium": 168
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-25Aug26-24400-PE",
+        "strike": 24400,
+        "optionType": "PE",
+        "premium": 163.35
+      },
+      "side": null,
+      "strike": null,
+      "entry": null,
+      "entryTime": null,
+      "signalSource": null,
+      "tradeCount": 0,
+      "totalPnl": null,
+      "strategyOutcomes": {}
     }
   ]
 }
