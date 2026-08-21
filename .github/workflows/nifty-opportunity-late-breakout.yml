@@ -22,13 +22,17 @@ on:
         required: false
         type: number
         default: 65
+  push:
+    branches: [research/opportunity-runs]
+    paths: [research/opportunity/requests/late-breakout.json]
 
 permissions:
   contents: read
 
 concurrency:
-  group: nifty-opportunity-late-breakout
+  group: groww-opportunity-backtest-api
   cancel-in-progress: false
+  queue: max
 
 jobs:
   plan:
@@ -37,43 +41,15 @@ jobs:
       matrix: ${{ steps.matrix.outputs.result }}
       count: ${{ steps.matrix.outputs.count }}
     steps:
+      - uses: actions/checkout@v4
       - id: matrix
-        uses: actions/github-script@v7
         env:
-          SCOPE: ${{ inputs.scope }}
-          CUSTOM_START: ${{ inputs.custom_start }}
-          CUSTOM_END: ${{ inputs.custom_end }}
-          CUSTOM_LOT: ${{ inputs.custom_lot_size }}
-        with:
-          result-encoding: string
-          script: |
-            const scope = process.env.SCOPE;
-            const partitions = [];
-            const appendMonths = (startYear, startMonth, endYear, endMonth, finalEnd = null) => {
-              for (let year = startYear; year <= endYear; year++) {
-                const first = year === startYear ? startMonth : 1;
-                const last = year === endYear ? endMonth : 12;
-                for (let month = first; month <= last; month++) {
-                  const mm = String(month).padStart(2, '0');
-                  const lastDay = new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
-                  const end = finalEnd && year === endYear && month === endMonth ? finalEnd : lastDay;
-                  partitions.push({ label: `${year}-${mm}`, start: `${year}-${mm}-01`, end, lot: 'auto' });
-                }
-              }
-            };
-            if (scope === 'discovery-2020-2024') appendMonths(2020, 1, 2024, 12);
-            else if (scope === 'validation-2025') appendMonths(2025, 1, 2025, 12);
-            else if (scope === 'holdout-2026') {
-              const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-              const end = today.getFullYear() === 2026 ? today.toISOString().slice(0, 10) : '2026-12-31';
-              const month = Number(end.slice(5, 7));
-              appendMonths(2026, 1, 2026, month, end);
-            } else {
-              if (!/^\d{4}-\d{2}-\d{2}$/.test(process.env.CUSTOM_START) || !/^\d{4}-\d{2}-\d{2}$/.test(process.env.CUSTOM_END)) core.setFailed('custom_start and custom_end must be YYYY-MM-DD');
-              partitions.push({ label: 'custom', start: process.env.CUSTOM_START, end: process.env.CUSTOM_END, lot: Number(process.env.CUSTOM_LOT) });
-            }
-            core.setOutput('count', partitions.length);
-            return JSON.stringify({ include: partitions });
+          INPUT_SCOPE: ${{ inputs.scope }}
+          INPUT_CUSTOM_START: ${{ inputs.custom_start }}
+          INPUT_CUSTOM_END: ${{ inputs.custom_end }}
+          INPUT_CUSTOM_LOT: ${{ inputs.custom_lot_size }}
+          REQUEST_FILE: research/opportunity/requests/late-breakout.json
+        run: node research/opportunity/workflow-plan.mjs
 
   backtest:
     needs: plan

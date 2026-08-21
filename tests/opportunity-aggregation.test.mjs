@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { aggregateDocuments } from '../research/opportunity/aggregate-results.mjs';
 import { compareDocuments } from '../research/opportunity/compare-results.mjs';
 import { DEFAULT_RULES, STRATEGIES, summarizeOpportunityResults } from '../research/opportunity/opportunity-engine.mjs';
+import { buildPartitions } from '../research/opportunity/workflow-plan.mjs';
 
 function trade(date, strategy, net = 100) {
   const signalTime = `${date}T10:00:00+05:30`;
@@ -63,4 +64,12 @@ test('comparison ranks only after all integrity and research gates pass', () => 
   assert.equal(result.strategies[0].strategy, STRATEGIES[0]);
   assert.ok(result.strategies.every((row) => row.passesResearchGate));
   assert.equal(result.promotionDecision, 'NONE_AUTOMATIC');
+});
+
+test('workflow scopes produce deterministic monthly partitions', () => {
+  assert.equal(buildPartitions({ scope: 'discovery-2020-2024' }).length, 60);
+  assert.equal(buildPartitions({ scope: 'validation-2025' }).length, 12);
+  const holdout = buildPartitions({ scope: 'holdout-2026', today: new Date('2026-08-21T00:00:00Z') });
+  assert.equal(holdout.length, 8);
+  assert.equal(holdout.at(-1).end, '2026-08-21');
 });

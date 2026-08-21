@@ -7,20 +7,20 @@ on:
       custom_start: { description: 'YYYY-MM-DD (custom only)', required: false, type: string }
       custom_end: { description: 'YYYY-MM-DD (custom only)', required: false, type: string }
       custom_lot_size: { description: Lot size (custom only), required: false, type: number, default: 65 }
+  push:
+    branches: [research/opportunity-runs]
+    paths: [research/opportunity/requests/failed-break.json]
 permissions: { contents: read }
-concurrency: { group: nifty-opportunity-failed-break, cancel-in-progress: false }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false, queue: max }
 jobs:
   plan:
     runs-on: ubuntu-latest
     outputs: { matrix: '${{ steps.matrix.outputs.result }}', count: '${{ steps.matrix.outputs.count }}' }
     steps:
+      - uses: actions/checkout@v4
       - id: matrix
-        uses: actions/github-script@v7
-        env: { SCOPE: '${{ inputs.scope }}', CUSTOM_START: '${{ inputs.custom_start }}', CUSTOM_END: '${{ inputs.custom_end }}', CUSTOM_LOT: '${{ inputs.custom_lot_size }}' }
-        with:
-          result-encoding: string
-          script: |
-            const scope=process.env.SCOPE,p=[];const add=(sy,sm,ey,em,final=null)=>{for(let y=sy;y<=ey;y++)for(let m=y===sy?sm:1;m<=(y===ey?em:12);m++){const mm=String(m).padStart(2,'0'),last=new Date(Date.UTC(y,m,0)).toISOString().slice(0,10);p.push({label:`${y}-${mm}`,start:`${y}-${mm}-01`,end:final&&y===ey&&m===em?final:last,lot:'auto'});}};if(scope==='discovery-2020-2024')add(2020,1,2024,12);else if(scope==='validation-2025')add(2025,1,2025,12);else if(scope==='holdout-2026'){const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'})),end=now.getFullYear()===2026?now.toISOString().slice(0,10):'2026-12-31';add(2026,1,2026,Number(end.slice(5,7)),end);}else{if(!/^\d{4}-\d{2}-\d{2}$/.test(process.env.CUSTOM_START)||!/^\d{4}-\d{2}-\d{2}$/.test(process.env.CUSTOM_END))core.setFailed('custom dates must be YYYY-MM-DD');p.push({label:'custom',start:process.env.CUSTOM_START,end:process.env.CUSTOM_END,lot:Number(process.env.CUSTOM_LOT)});}core.setOutput('count',p.length);return JSON.stringify({include:p});
+        env: { INPUT_SCOPE: '${{ inputs.scope }}', INPUT_CUSTOM_START: '${{ inputs.custom_start }}', INPUT_CUSTOM_END: '${{ inputs.custom_end }}', INPUT_CUSTOM_LOT: '${{ inputs.custom_lot_size }}', REQUEST_FILE: research/opportunity/requests/failed-break.json }
+        run: node research/opportunity/workflow-plan.mjs
   backtest:
     needs: plan
     strategy: { fail-fast: false, max-parallel: 1, matrix: '${{ fromJSON(needs.plan.outputs.matrix) }}' }
