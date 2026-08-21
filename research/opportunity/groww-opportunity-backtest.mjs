@@ -181,6 +181,18 @@ function candleAt(candles, timestamp) {
   return candles.find((row) => row.timestamp === timestamp) ?? null;
 }
 
+export function candidateSearchIsTruncated({
+  availableCandidates,
+  inspectedCandidates,
+  selectedPremium,
+  maxCandidates,
+  referencePremium,
+}) {
+  return availableCandidates > inspectedCandidates
+    && inspectedCandidates >= maxCandidates
+    && selectedPremium < referencePremium;
+}
+
 async function selectOption(token, {
   date,
   expiry,
@@ -191,7 +203,8 @@ async function selectOption(token, {
   historyCache,
   rules,
 }) {
-  const candidates = itmContracts(contracts, spot, optionType).slice(0, rules.maxCandidates);
+  const availableCandidates = itmContracts(contracts, spot, optionType);
+  const candidates = availableCandidates.slice(0, rules.maxCandidates);
   if (!candidates.length) return { status: 'DATA_MISSING', reason: `No ITM ${optionType} candidates` };
   const inspected = [];
   let bracketed = false;
@@ -222,7 +235,13 @@ async function selectOption(token, {
   const selected = chooseClosestPremium(usable.map((row) => row.candidate), bySymbol, rules.referencePremium);
   const selectedRow = usable.find((row) => row.candidate.symbol === selected?.symbol);
   if (!selected || !selectedRow) return { status: 'DATA_MISSING', reason: `${optionType} selection failed` };
-  if (!bracketed && inspected.length === candidates.length && selectedRow.premium < rules.referencePremium) {
+  if (!bracketed && candidateSearchIsTruncated({
+    availableCandidates: availableCandidates.length,
+    inspectedCandidates: inspected.length,
+    selectedPremium: selectedRow.premium,
+    maxCandidates: rules.maxCandidates,
+    referencePremium: rules.referencePremium,
+  })) {
     return {
       status: 'CANDIDATE_BOUNDARY',
       reason: `${optionType} reference premium not bracketed at maximum ITM depth`,
