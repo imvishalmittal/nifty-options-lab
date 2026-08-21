@@ -73,8 +73,10 @@ Research changes must also run their workflow-specific tests and integrity gates
 
 - `CI` validates application and deterministic tests.
 - `NIFTY Paper Session` starts around 09:20 IST Monday-Friday and runs one continuous paper session.
-- `NIFTY 180 Stepped Trail 2025` compares V3 5-point and 10-point steps.
-- V2 research/backfill and negative controls remain available for audit/history.
+- `NIFTY Paper Smoke` manually validates paper mechanics, Groww authentication, and a small historical-data request.
+- The isolated `Research - NIFTY ...` workflows run the four active opportunity studies, suite chain, and comparison.
+
+Completed historical studies, diagnostics, and ledger backfills keep their scripts, tests, accepted outputs, documentation, and Git history, but no longer retain one-time workflow YAML files. Restore a historical workflow from Git only when a declared rerun is required; do not leave completed experiments in the active Actions inventory.
 
 The paper workflow intentionally does not schedule every minute. GitHub Actions is being evaluated only for paper observation, not production live-order execution.
 
