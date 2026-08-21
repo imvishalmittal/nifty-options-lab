@@ -70,16 +70,14 @@ V3 is a separately named hypothesis. A 2025 actual-contract comparison of **5-po
 
 ## Automation
 
-Key GitHub Actions workflows include:
+Active GitHub Actions workflows are intentionally limited to:
 
 - `CI` — lint, build, rendered-site tests, and strategy regression tests.
 - `NIFTY Paper Session` — weekday continuous paper suite starting at about **09:20 IST**, producing V2–V8 shadow outcomes.
-- `NIFTY 180 Stepped Trail 2025` — V3 5-vs-10 step historical comparison.
-- `NIFTY 180 Momentum 2025` / `2026` — preserved V2 development/holdout research.
-- `Paper Ledger Backfill` — converts accepted historical artifacts to dashboard rows.
-- Earlier opening-range, Quick Flip, Stocks-in-Play, and V1 workflows remain research history/negative controls.
+- `NIFTY Paper Smoke` — manually checks paper mechanics, Groww authentication, and a small historical-data request.
+- `Research - NIFTY ...` opportunity workflows — four isolated strategy backtests, their suite chain, and comparison report.
 
-Groww-heavy research jobs share a serialized API group to reduce rate-limit conflicts.
+Completed NIFTY 180, opening-range, Quick Flip, Stocks-in-Play, ledger-backfill, and diagnostic studies remain preserved as code, tests, documentation, accepted ledger data, and Git history. Their one-time Action entry points were removed after completion to keep the Actions page operationally focused. Groww-heavy active research jobs share a serialized API group to reduce rate-limit conflicts.
 
 ## Methodology controls
 
