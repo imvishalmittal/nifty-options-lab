@@ -46,6 +46,8 @@ The gate is necessary, not sufficient. A candidate still needs stable monthly re
 
 For autonomous runs, update only the strategy's JSON request under `research/opportunity/requests/` on the `research/opportunity-runs` branch. The shared `groww-opportunity-backtest-api` concurrency group prevents simultaneous Groww API use. GitHub keeps at most one pending run per concurrency group, so submit the next request only after the current run completes. Request files never merge into `main` and cannot affect paper execution.
 
+The separate `Research - chain NIFTY opportunity suite` workflow may advance an enabled suite through the four strategy workflows and then the comparison workflow. It records each completed run ID in `suite.json`, stops immediately on any failure, ignores out-of-order completions, and never promotes a result into paper or live execution.
+
 ## Data and interpretation limits
 
 - Groww documents historical CASH and FNO candles, including one-minute OHLC and option volume/open interest, from 2020: <https://groww.in/trade-api/docs/curl/backtesting>
