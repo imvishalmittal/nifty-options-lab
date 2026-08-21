@@ -194,7 +194,13 @@ async function selectOption(token, {
     }
   }
   const usable = inspected.filter((row) => Number.isFinite(row.premium));
-  if (!usable.length) return { status: 'DATA_MISSING', reason: `No ${optionType} premium at signal time` };
+  if (!usable.length) {
+    return {
+      status: 'NO_TRADE',
+      reason: `No executable ${optionType} quote at signal time`,
+      inspected: inspected.length,
+    };
+  }
   const bySymbol = Object.fromEntries(usable.map((row) => [row.candidate.symbol, row.premium]));
   const selected = chooseClosestPremium(usable.map((row) => row.candidate), bySymbol, rules.referencePremium);
   const selectedRow = usable.find((row) => row.candidate.symbol === selected?.symbol);
