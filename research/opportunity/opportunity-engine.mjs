@@ -5,12 +5,42 @@ export const STRATEGIES = Object.freeze([
   'afternoon-compression-breakout',
 ]);
 
+export const DOCUMENTED_IRREGULAR_SESSIONS = Object.freeze({
+  '2020-11-14': 'Muhurat trading session',
+  '2021-02-24': 'NSE technical outage and extended session',
+  '2021-11-04': 'Muhurat trading session',
+});
+
+export function expiryYearsForSessionDates(dates) {
+  const years = new Set();
+  for (const date of dates) {
+    const year = Number(String(date).slice(0, 4));
+    if (Number.isInteger(year)) {
+      years.add(year);
+      years.add(year + 1);
+    }
+  }
+  return [...years].sort((a, b) => a - b);
+}
+
+export function classifyShortSession(date, candleCount, minimumCandles = 300) {
+  if (candleCount >= minimumCandles) return null;
+  const documentedReason = DOCUMENTED_IRREGULAR_SESSIONS[date];
+  if (documentedReason) {
+    return {
+      status: 'EXCLUDED_SESSION',
+      reason: `${documentedReason}; ${candleCount} underlying one-minute candles`,
+    };
+  }
+  return { status: 'DATA_MISSING', reason: `Only ${candleCount} underlying one-minute candles` };
+}
+
 export const DEFAULT_RULES = Object.freeze({
   openingRangeStart: '09:15',
   openingRangeEnd: '09:45',
   forcedExit: '15:20',
   referencePremium: 180,
-  maxCandidates: 8,
+  maxCandidates: 24,
   entryPremiumMin: 80,
   entryPremiumMax: 300,
   stopPoints: 20,
@@ -371,6 +401,7 @@ export function summarizeOpportunityResults(results) {
     trades: trades.length,
     noSignalSessions: results.filter((row) => row.status === 'NO_SIGNAL').length,
     noTradeSessions: results.filter((row) => row.status === 'NO_TRADE').length,
+    excludedSessions: results.filter((row) => row.status === 'EXCLUDED_SESSION').length,
     dataMissingSessions: results.filter((row) => row.status === 'DATA_MISSING').length,
     candidateBoundarySessions: results.filter((row) => row.status === 'CANDIDATE_BOUNDARY').length,
     targets: trades.filter((row) => row.result === 'TARGET').length,
