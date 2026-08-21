@@ -73,3 +73,15 @@ test('workflow scopes produce deterministic monthly partitions', () => {
   assert.equal(holdout.length, 8);
   assert.equal(holdout.at(-1).end, '2026-08-21');
 });
+
+test('an unavailable exact-minute option quote is a no-trade, not a fabricated fill or data gap', () => {
+  const summary = summarizeOpportunityResults([{
+    date: '2020-03-23',
+    strategy: 'late-breakout-retest',
+    status: 'NO_TRADE',
+    reason: 'No executable PE quote at signal time',
+  }]);
+  assert.equal(summary.noTradeSessions, 1);
+  assert.equal(summary.dataMissingSessions, 0);
+  assert.equal(summary.trades, 0);
+});
