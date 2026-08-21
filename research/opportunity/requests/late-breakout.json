@@ -1,5 +1,5 @@
 {
   "scope": "discovery-2020-2024",
-  "requestedAt": "2026-08-21T11:43:30Z",
-  "reason": "repair documented irregular sessions, year-end expiries, and premium bracketing"
+  "requestedAt": "2026-08-21T13:35:45Z",
+  "reason": "repair duplicate provider timestamps and documented special sessions"
 }
