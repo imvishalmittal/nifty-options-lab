@@ -32,12 +32,14 @@ const ORDER = ['late', 'vwap', 'failed', 'afternoon'];
 export function planAdvance({ suite, completedWorkflow, conclusion, runId }) {
   if (!suite.enabled) return { action: 'ignore', suite };
   if (suite.expectedWorkflow !== completedWorkflow) return { action: 'ignore', suite };
+  if (suite.expectedRunId && String(suite.expectedRunId) !== String(runId)) return { action: 'ignore', suite };
 
   const currentKey = Object.keys(WORKFLOWS).find((key) => WORKFLOWS[key].name === completedWorkflow);
   if (!currentKey) return { action: 'ignore', suite };
 
   const nextSuite = structuredClone(suite);
   nextSuite.updatedAt = new Date().toISOString();
+  delete nextSuite.expectedRunId;
 
   if (conclusion !== 'success') {
     nextSuite.enabled = false;
