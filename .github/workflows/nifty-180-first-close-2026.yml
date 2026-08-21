@@ -1,0 +1,91 @@
+name: NIFTY 180 First-Close Study 2026
+
+on:
+  push:
+    branches:
+      - research/first-close-180-backtest
+    paths:
+      - '.github/workflows/nifty-180-first-close-2026.yml'
+      - 'research/nifty-180-premium-strategy.mjs'
+      - 'research/groww-backtest-nifty-180-first-close.mjs'
+      - 'tests/nifty-180-first-close-research.test.mjs'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/nifty-180-first-close-2026.yml'
+      - 'research/nifty-180-premium-strategy.mjs'
+      - 'research/groww-backtest-nifty-180-first-close.mjs'
+      - 'tests/nifty-180-first-close-research.test.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  month:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        period:
+          - { key: '2026-01', start: '2026-01-01', end: '2026-01-31' }
+          - { key: '2026-02', start: '2026-02-01', end: '2026-02-28' }
+          - { key: '2026-04', start: '2026-04-01', end: '2026-04-30' }
+          - { key: '2026-05', start: '2026-05-01', end: '2026-05-31' }
+          - { key: '2026-06', start: '2026-06-01', end: '2026-06-30' }
+          - { key: '2026-08', start: '2026-08-01', end: '2026-08-14' }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate first-close research rule
+        run: node --test tests/nifty-180-first-close-research.test.mjs tests/nifty-180-momentum-trail.test.mjs tests/nifty-180-stepped-trail.test.mjs tests/groww-option-costs.test.mjs
+
+      - name: Run first-close actual-contract study
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_REQUEST_SPACING_MS: '1500'
+          PERIOD_KEY: ${{ matrix.period.key }}
+          START_DATE: ${{ matrix.period.start }}
+          END_DATE: ${{ matrix.period.end }}
+        run: |
+          mkdir -p "outputs/nifty-180-first-close-2026/${PERIOD_KEY}"
+          node research/groww-backtest-nifty-180-first-close.mjs \
+            "--start=${START_DATE}" \
+            "--end=${END_DATE}" \
+            --lot-size=65 \
+            "--out=outputs/nifty-180-first-close-2026/${PERIOD_KEY}/result.json" \
+            > "outputs/nifty-180-first-close-2026/${PERIOD_KEY}/stdout.json"
+
+      - name: Upload monthly result
+        uses: actions/upload-artifact@v4
+        with:
+          name: nifty-180-first-close-${{ matrix.period.key }}-${{ github.run_id }}
+          path: outputs/nifty-180-first-close-2026/${{ matrix.period.key }}/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Require complete session ledger and cohort equality
+        env:
+          RESULT: outputs/nifty-180-first-close-2026/${{ matrix.period.key }}/result.json
+        run: |
+          node --input-type=module - <<'NODE'
+          import fs from 'node:fs';
+          const result = JSON.parse(fs.readFileSync(process.env.RESULT, 'utf8'));
+          const expected = result.baselineDiagnostics.tradingDates;
+          if (result.sessionLedger.length !== expected) {
+            throw new Error(`Session ledger ${result.sessionLedger.length} != trading dates ${expected}`);
+          }
+          const tradeCount = result.sessionStatusCounts.TRADE ?? 0;
+          for (const key of ['V2', 'V3_5', 'V3_10']) {
+            if (result.variants[key].summary.trades !== tradeCount) {
+              throw new Error(`${key} trades ${result.variants[key].summary.trades} != baseline trades ${tradeCount}`);
+            }
+          }
+          console.log(JSON.stringify({ period: result.period, statusCounts: result.sessionStatusCounts, tradeCount }, null, 2));
+          NODE
