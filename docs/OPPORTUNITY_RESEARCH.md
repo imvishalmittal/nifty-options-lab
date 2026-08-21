@@ -24,6 +24,7 @@ All four use the same execution model so the first experiment measures entry qua
 - 20 premium-point stop, 40 premium-point target, 15:20 exit;
 - one trade per strategy per session;
 - conservative stop-first handling if stop and target occur in the same one-minute candle;
+- no trade when no option candle exists at the exact signal minute; the backtest never substitutes a stale quote;
 - net results at zero, 0.5, and 1.0 adverse premium points per leg using the repository's Groww cost helper.
 
 ## Backtest protocol
