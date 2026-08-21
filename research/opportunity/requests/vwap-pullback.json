@@ -1,5 +1,5 @@
 {
   "scope": "discovery-2020-2024",
-  "requestedAt": "2026-08-21T15:44:00Z",
-  "reason": "rerun after distinguishing complete option catalogs from configured search truncation"
+  "requestedAt": "2026-08-21T15:50:00Z",
+  "reason": "cancel obsolete pre-fix attempt and start corrected contract-boundary discovery"
 }
