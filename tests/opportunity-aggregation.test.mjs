@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { aggregateDocuments } from '../research/opportunity/aggregate-results.mjs';
 import { compareDocuments } from '../research/opportunity/compare-results.mjs';
-import { DEFAULT_RULES, STRATEGIES, summarizeOpportunityResults } from '../research/opportunity/opportunity-engine.mjs';
+import { classifyShortSession, DEFAULT_RULES, expiryYearsForSessionDates, STRATEGIES, summarizeOpportunityResults } from '../research/opportunity/opportunity-engine.mjs';
 import { buildPartitions } from '../research/opportunity/workflow-plan.mjs';
 
 function trade(date, strategy, net = 100) {
@@ -84,4 +84,18 @@ test('an unavailable exact-minute option quote is a no-trade, not a fabricated f
   assert.equal(summary.noTradeSessions, 1);
   assert.equal(summary.dataMissingSessions, 0);
   assert.equal(summary.trades, 0);
+});
+
+test('documented irregular sessions are explicit exclusions while unknown short data remains invalid', () => {
+  assert.equal(classifyShortSession('2020-11-14', 62).status, 'EXCLUDED_SESSION');
+  assert.equal(classifyShortSession('2021-02-24', 139).status, 'EXCLUDED_SESSION');
+  assert.equal(classifyShortSession('2022-10-03', 139).status, 'DATA_MISSING');
+  const summary = summarizeOpportunityResults([{ date: '2020-11-14', status: 'EXCLUDED_SESSION' }]);
+  assert.equal(summary.excludedSessions, 1);
+  assert.equal(summary.dataMissingSessions, 0);
+});
+
+test('expiry coverage includes the following year for year-end sessions', () => {
+  assert.deepEqual(expiryYearsForSessionDates(['2021-12-31']), [2021, 2022]);
+  assert.deepEqual(expiryYearsForSessionDates(['2020-01-02', '2021-12-31']), [2020, 2021, 2022]);
 });
