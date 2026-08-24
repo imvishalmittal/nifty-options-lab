@@ -60,5 +60,6 @@ jobs:
     steps:
       - env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           OUTCOME: ${{ needs.plan.result == 'success' && needs.backtest.result == 'success' && needs.consolidate.result == 'success' && 'success' || 'failure' }}
         run: gh workflow run nifty-opportunity-suite-chain.yml --ref main -f completed_workflow='Research - NIFTY VWAP trend pullback' -f completed_run_id=${{ github.run_id }} -f conclusion=$OUTCOME
