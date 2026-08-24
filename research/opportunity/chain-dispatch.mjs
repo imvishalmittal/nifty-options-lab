@@ -27,6 +27,16 @@ export const WORKFLOWS = Object.freeze({
 
 const ORDER = ['late', 'vwap', 'failed', 'afternoon'];
 
+export function recoverConclusion(runConclusion, jobs) {
+  if (runConclusion !== 'failure') return runConclusion;
+  const notifier = jobs.find((job) => job.name === 'notify-suite');
+  const researchJobs = jobs.filter((job) => job.name !== 'notify-suite');
+  const notifierOnlyFailure = notifier?.conclusion === 'failure'
+    && researchJobs.length > 0
+    && researchJobs.every((job) => job.conclusion === 'success');
+  return notifierOnlyFailure ? 'success' : runConclusion;
+}
+
 export function planAdvance({ suite, completedWorkflow, conclusion, runId }) {
   if (!suite.enabled) return { action: 'ignore', suite };
   if (suite.expectedWorkflow !== completedWorkflow) return { action: 'ignore', suite };
@@ -108,12 +118,17 @@ async function main() {
     const expected = Object.values(WORKFLOWS).find((workflow) => workflow.name === suite.expectedWorkflow);
     if (!suite.enabled || !expected) return;
     const since = Date.parse(suite.updatedAt ?? suite.startedAt ?? '1970-01-01T00:00:00Z');
-    const runs = await github(`/repos/${owner}/${repo}/actions/workflows/${expected.file}/runs?branch=${encodeURIComponent(process.env.RUN_BRANCH)}&status=completed&per_page=20`);
+    const workflowRef = process.env.WORKFLOW_REF ?? 'main';
+    const runs = await github(`/repos/${owner}/${repo}/actions/workflows/${expected.file}/runs?branch=${encodeURIComponent(workflowRef)}&status=completed&per_page=20`);
     const recovered = runs.workflow_runs.find((run) => Date.parse(run.created_at) >= since);
     if (!recovered) return;
     completedWorkflow = recovered.name;
     conclusion = recovered.conclusion;
     runId = recovered.id;
+    if (conclusion === 'failure') {
+      const jobs = await github(`/repos/${owner}/${repo}/actions/runs/${runId}/jobs?per_page=100`);
+      conclusion = recoverConclusion(conclusion, jobs.jobs);
+    }
   }
   const plan = planAdvance({
     suite,
