@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { planAdvance, WORKFLOWS } from '../research/opportunity/chain-dispatch.mjs';
 
 function suite() {
@@ -52,4 +53,21 @@ test('failure stops the suite and unexpected workflows are ignored', () => {
   const rerun = planAdvance({ suite: awaitingRerun, completedWorkflow: WORKFLOWS.late.name, conclusion: 'success', runId: 12 });
   assert.equal(rerun.action, 'dispatch');
   assert.equal(rerun.suite.expectedRunId, undefined);
+});
+
+test('suite notification jobs identify the repository outside a checkout', () => {
+  const workflowFiles = [
+    WORKFLOWS.late.file,
+    WORKFLOWS.vwap.file,
+    WORKFLOWS.failed.file,
+    WORKFLOWS.afternoon.file,
+    WORKFLOWS.comparison.file,
+  ];
+
+  for (const workflowFile of workflowFiles) {
+    const workflow = readFileSync(new URL(`../.github/workflows/${workflowFile}`, import.meta.url), 'utf8');
+    const notifySuite = workflow.split(/^  notify-suite:/m)[1];
+    assert.ok(notifySuite, `${workflowFile} has a notify-suite job`);
+    assert.match(notifySuite, /GH_REPO: \$\{\{ github\.repository \}\}/, `${workflowFile} sets GH_REPO`);
+  }
 });
