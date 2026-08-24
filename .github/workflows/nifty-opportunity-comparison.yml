@@ -92,5 +92,6 @@ jobs:
     steps:
       - env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           OUTCOME: ${{ needs.compare.result == 'success' && 'success' || 'failure' }}
         run: gh workflow run nifty-opportunity-suite-chain.yml --ref main -f completed_workflow='Research - compare NIFTY opportunity strategies' -f completed_run_id=${{ github.run_id }} -f conclusion=$OUTCOME
