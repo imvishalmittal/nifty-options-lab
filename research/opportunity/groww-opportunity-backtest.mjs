@@ -184,13 +184,9 @@ function candleAt(candles, timestamp) {
 export function candidateSearchIsTruncated({
   availableCandidates,
   inspectedCandidates,
-  selectedPremium,
-  maxCandidates,
-  referencePremium,
+  bracketed,
 }) {
-  return availableCandidates > inspectedCandidates
-    && inspectedCandidates >= maxCandidates
-    && selectedPremium < referencePremium;
+  return !bracketed && availableCandidates > inspectedCandidates;
 }
 
 async function selectOption(token, {
@@ -204,7 +200,10 @@ async function selectOption(token, {
   rules,
 }) {
   const availableCandidates = itmContracts(contracts, spot, optionType);
-  const candidates = availableCandidates.slice(0, rules.maxCandidates);
+  // Search the complete provider-listed ITM catalog. Stopping after the first
+  // premium that brackets the reference is causal and sufficient because the
+  // candidates are ordered from nearest to progressively deeper ITM strikes.
+  const candidates = availableCandidates;
   if (!candidates.length) return { status: 'DATA_MISSING', reason: `No ITM ${optionType} candidates` };
   const inspected = [];
   let bracketed = false;
@@ -238,9 +237,7 @@ async function selectOption(token, {
   if (!bracketed && candidateSearchIsTruncated({
     availableCandidates: availableCandidates.length,
     inspectedCandidates: inspected.length,
-    selectedPremium: selectedRow.premium,
-    maxCandidates: rules.maxCandidates,
-    referencePremium: rules.referencePremium,
+    bracketed,
   })) {
     return {
       status: 'CANDIDATE_BOUNDARY',
