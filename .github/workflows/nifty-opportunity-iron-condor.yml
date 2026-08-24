@@ -8,7 +8,7 @@ on:
       custom_end: { description: 'YYYY-MM-DD (custom only)', required: false, type: string }
       custom_lot_size: { description: Lot size (custom only), required: false, type: number, default: 65 }
   push:
-    branches: [research/opportunity-runs]
+    branches: [main, research/opportunity-runs]
     paths: [research/opportunity/requests/iron-condor.json]
 permissions: { contents: read }
 concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
