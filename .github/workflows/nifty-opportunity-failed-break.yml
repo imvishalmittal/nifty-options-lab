@@ -7,10 +7,11 @@ on:
       custom_start: { description: 'YYYY-MM-DD (custom only)', required: false, type: string }
       custom_end: { description: 'YYYY-MM-DD (custom only)', required: false, type: string }
       custom_lot_size: { description: Lot size (custom only), required: false, type: number, default: 65 }
+      suite_run: { description: Internal opportunity-suite continuation marker, required: false, type: boolean, default: false }
   push:
     branches: [research/opportunity-runs]
     paths: [research/opportunity/requests/failed-break.json]
-permissions: { contents: read }
+permissions: { contents: read, actions: write }
 concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
 jobs:
   plan:
@@ -51,3 +52,12 @@ jobs:
       - run: node research/opportunity/result-integrity.mjs --in=consolidated.json --out=consolidated-integrity.json
       - uses: actions/upload-artifact@v4
         with: { name: opportunity-failed-opening-range-break-consolidated, path: "consolidated.json\nconsolidated-integrity.json", retention-days: 90 }
+  notify-suite:
+    if: ${{ always() && inputs.suite_run == true }}
+    needs: [plan, backtest, consolidate]
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          OUTCOME: ${{ needs.plan.result == 'success' && needs.backtest.result == 'success' && needs.consolidate.result == 'success' && 'success' || 'failure' }}
+        run: gh workflow run nifty-opportunity-suite-chain.yml --ref main -f completed_workflow='Research - NIFTY failed opening-range break' -f completed_run_id=${{ github.run_id }} -f conclusion=$OUTCOME

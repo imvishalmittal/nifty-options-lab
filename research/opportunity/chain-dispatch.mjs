@@ -1,5 +1,3 @@
-import fs from 'node:fs';
-
 export const WORKFLOWS = Object.freeze({
   late: {
     name: 'Research - NIFTY late breakout retest',
@@ -65,7 +63,7 @@ export function planAdvance({ suite, completedWorkflow, conclusion, runId }) {
     return {
       action: 'dispatch',
       workflow: next.file,
-      inputs: { scope: nextSuite.scope },
+      inputs: { scope: nextSuite.scope, suite_run: true },
       suite: nextSuite,
     };
   }
@@ -74,7 +72,7 @@ export function planAdvance({ suite, completedWorkflow, conclusion, runId }) {
   return {
     action: 'dispatch',
     workflow: WORKFLOWS.comparison.file,
-    inputs: nextSuite.runs,
+    inputs: { ...nextSuite.runs, suite_run: true },
     suite: nextSuite,
   };
 }
@@ -95,23 +93,41 @@ async function github(path, { method = 'GET', body } = {}) {
 
 async function main() {
   const requestFile = process.env.SUITE_FILE;
-  const suite = JSON.parse(fs.readFileSync(requestFile, 'utf8'));
-  const plan = planAdvance({
-    suite,
-    completedWorkflow: process.env.COMPLETED_WORKFLOW,
-    conclusion: process.env.CONCLUSION,
-    runId: process.env.COMPLETED_RUN_ID,
-  });
-  if (plan.action === 'ignore') return;
-
   const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
   const apiPath = `/repos/${owner}/${repo}/contents/${requestFile}`;
   const current = await github(`${apiPath}?ref=${encodeURIComponent(process.env.RUN_BRANCH)}`);
+  const suite = JSON.parse(Buffer.from(current.content, 'base64').toString('utf8'));
+  let completedWorkflow = process.env.COMPLETED_WORKFLOW;
+  let conclusion = process.env.CONCLUSION;
+  let runId = process.env.COMPLETED_RUN_ID;
+
+  // workflow_run chains stop after three levels. Scheduled, manual and
+  // push-triggered watchdog runs start a fresh root and recover only the
+  // workflow currently recorded as expected in the durable suite state.
+  if (!completedWorkflow) {
+    const expected = Object.values(WORKFLOWS).find((workflow) => workflow.name === suite.expectedWorkflow);
+    if (!suite.enabled || !expected) return;
+    const since = Date.parse(suite.updatedAt ?? suite.startedAt ?? '1970-01-01T00:00:00Z');
+    const runs = await github(`/repos/${owner}/${repo}/actions/workflows/${expected.file}/runs?branch=${encodeURIComponent(process.env.RUN_BRANCH)}&status=completed&per_page=20`);
+    const recovered = runs.workflow_runs.find((run) => Date.parse(run.created_at) >= since);
+    if (!recovered) return;
+    completedWorkflow = recovered.name;
+    conclusion = recovered.conclusion;
+    runId = recovered.id;
+  }
+  const plan = planAdvance({
+    suite,
+    completedWorkflow,
+    conclusion,
+    runId,
+  });
+  if (plan.action === 'ignore') return;
+
   await github(apiPath, {
     method: 'PUT',
     body: {
       branch: process.env.RUN_BRANCH,
-      message: `Advance opportunity suite after ${process.env.COMPLETED_WORKFLOW}`,
+      message: `Advance opportunity suite after ${completedWorkflow}`,
       sha: current.sha,
       content: Buffer.from(`${JSON.stringify(plan.suite, null, 2)}\n`).toString('base64'),
     },
@@ -120,7 +136,7 @@ async function main() {
   if (plan.action === 'dispatch') {
     await github(`/repos/${owner}/${repo}/actions/workflows/${plan.workflow}/dispatches`, {
       method: 'POST',
-      body: { ref: process.env.RUN_BRANCH, inputs: plan.inputs },
+      body: { ref: process.env.WORKFLOW_REF ?? 'main', inputs: plan.inputs },
     });
   }
 }

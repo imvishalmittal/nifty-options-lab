@@ -9,21 +9,34 @@ on:
       - Research - NIFTY afternoon compression breakout
       - Research - compare NIFTY opportunity strategies
     types: [completed]
+  workflow_dispatch:
+    inputs:
+      completed_workflow: { description: Completed suite workflow name, required: true, type: string }
+      completed_run_id: { description: Completed suite workflow run ID, required: true, type: string }
+      conclusion: { description: Completed suite workflow conclusion, required: true, type: choice, options: [success, failure, cancelled] }
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/nifty-opportunity-suite-chain.yml
+      - research/opportunity/chain-dispatch.mjs
 
 permissions:
   contents: write
   actions: write
+concurrency:
+  group: nifty-opportunity-suite-chain
+  cancel-in-progress: false
+  queue: max
 
 jobs:
   advance:
     if: >-
-      github.event.workflow_run.head_branch == 'research/opportunity-runs' &&
-      github.event.workflow_run.head_repository.full_name == github.repository
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.head_branch == 'research/opportunity-runs' &&
+      github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: research/opportunity-runs
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: node --test tests/opportunity-chain.test.mjs
@@ -33,7 +46,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           RUN_BRANCH: research/opportunity-runs
           SUITE_FILE: research/opportunity/requests/suite.json
-          COMPLETED_WORKFLOW: ${{ github.event.workflow_run.name }}
-          COMPLETED_RUN_ID: ${{ github.event.workflow_run.id }}
-          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          COMPLETED_WORKFLOW: ${{ inputs.completed_workflow || github.event.workflow_run.name }}
+          COMPLETED_RUN_ID: ${{ inputs.completed_run_id || github.event.workflow_run.id }}
+          CONCLUSION: ${{ inputs.conclusion || github.event.workflow_run.conclusion }}
         run: node research/opportunity/chain-dispatch.mjs
