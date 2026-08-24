@@ -1,6 +1,6 @@
 {
-  "enabled": true,
-  "status": "running",
+  "enabled": false,
+  "status": "complete",
   "scope": "discovery-2020-2024",
   "expectedWorkflow": "Research - compare NIFTY opportunity strategies",
   "runs": {
@@ -10,5 +10,6 @@
     "afternoon_breakout_run_id": "32719992336"
   },
   "startedAt": "2026-08-21T13:35:31Z",
-  "updatedAt": "2026-08-24T14:23:19.399Z"
+  "updatedAt": "2026-08-24T14:23:53.495Z",
+  "comparisonRunId": 32738388894
 }
