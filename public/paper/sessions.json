@@ -5,7 +5,7 @@
       "BASE",
       "V4"
     ],
-    "updatedAt": "2026-08-21T04:16:30.548Z"
+    "updatedAt": "2026-08-24T04:18:18.407Z"
   },
   "sessions": [
     {
@@ -202,6 +202,78 @@
         "strike": 24400,
         "optionType": "PE",
         "premium": 163.35
+      },
+      "side": null,
+      "strike": null,
+      "entry": null,
+      "entryTime": null,
+      "signalSource": null,
+      "tradeCount": 0,
+      "totalPnl": null,
+      "strategyOutcomes": {}
+    },
+    {
+      "date": "2026-08-24",
+      "thread": "BASE",
+      "strategyVersions": [
+        "V2",
+        "V3-5",
+        "V3-10",
+        "V6",
+        "V7",
+        "V8"
+      ],
+      "status": "NO_TRADE",
+      "reason": "No valid ₹180 crossing before 09:45",
+      "updatedAt": "2026-08-24T04:18:18.389Z",
+      "spot925": 24304.65,
+      "expiry": "2026-08-25",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-25Aug26-24150-CE",
+        "strike": 24150,
+        "optionType": "CE",
+        "premium": 201.95
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-25Aug26-24500-PE",
+        "strike": 24500,
+        "optionType": "PE",
+        "premium": 170.35
+      },
+      "side": null,
+      "strike": null,
+      "entry": null,
+      "entryTime": null,
+      "signalSource": null,
+      "tradeCount": 0,
+      "totalPnl": null,
+      "strategyOutcomes": {}
+    },
+    {
+      "date": "2026-08-24",
+      "thread": "V4",
+      "strategyVersions": [
+        "V4",
+        "V5"
+      ],
+      "status": "NO_TRADE",
+      "reason": "No V4 option signal with matching NIFTY confirmation before 09:45",
+      "updatedAt": "2026-08-24T04:18:18.407Z",
+      "spot925": 24304.65,
+      "expiry": "2026-08-25",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-25Aug26-24150-CE",
+        "strike": 24150,
+        "optionType": "CE",
+        "premium": 201.95
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-25Aug26-24500-PE",
+        "strike": 24500,
+        "optionType": "PE",
+        "premium": 170.35
       },
       "side": null,
       "strike": null,
