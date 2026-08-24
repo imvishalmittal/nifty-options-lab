@@ -22,12 +22,18 @@ on:
         required: false
         type: number
         default: 65
+      suite_run:
+        description: Internal opportunity-suite continuation marker
+        required: false
+        type: boolean
+        default: false
   push:
     branches: [research/opportunity-runs]
     paths: [research/opportunity/requests/late-breakout.json]
 
 permissions:
   contents: read
+  actions: write
 
 concurrency:
   group: groww-opportunity-backtest-api
@@ -105,3 +111,18 @@ jobs:
             consolidated.json
             consolidated-integrity.json
           retention-days: 90
+
+  notify-suite:
+    if: ${{ always() && inputs.suite_run == true }}
+    needs: [plan, backtest, consolidate]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Continue opportunity suite from a fresh workflow root
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUTCOME: ${{ needs.plan.result == 'success' && needs.backtest.result == 'success' && needs.consolidate.result == 'success' && 'success' || 'failure' }}
+        run: >-
+          gh workflow run nifty-opportunity-suite-chain.yml --ref main
+          -f completed_workflow='Research - NIFTY late breakout retest'
+          -f completed_run_id=${{ github.run_id }}
+          -f conclusion=$OUTCOME

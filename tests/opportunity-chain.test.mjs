@@ -16,7 +16,7 @@ test('suite advances through separate strategy workflows', () => {
   const next = planAdvance({ suite: suite(), completedWorkflow: WORKFLOWS.late.name, conclusion: 'success', runId: 101 });
   assert.equal(next.action, 'dispatch');
   assert.equal(next.workflow, WORKFLOWS.vwap.file);
-  assert.deepEqual(next.inputs, { scope: 'discovery-2020-2024' });
+  assert.deepEqual(next.inputs, { scope: 'discovery-2020-2024', suite_run: true });
   assert.equal(next.suite.runs.late_breakout_run_id, '101');
   assert.equal(next.suite.expectedWorkflow, WORKFLOWS.vwap.name);
 });
@@ -32,6 +32,7 @@ test('last strategy dispatches comparison with recorded run IDs', () => {
     vwap_pullback_run_id: '2',
     failed_break_run_id: '3',
     afternoon_breakout_run_id: '4',
+    suite_run: true,
   });
 });
 

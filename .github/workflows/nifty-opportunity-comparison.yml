@@ -19,10 +19,15 @@ on:
         description: Completed afternoon-breakout workflow run ID
         required: true
         type: string
+      suite_run:
+        description: Internal opportunity-suite continuation marker
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
-  actions: read
+  actions: write
 
 jobs:
   compare:
@@ -79,3 +84,13 @@ jobs:
           name: opportunity-strategy-comparison
           path: comparison.json
           retention-days: 90
+
+  notify-suite:
+    if: ${{ always() && inputs.suite_run == true }}
+    needs: compare
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          OUTCOME: ${{ needs.compare.result == 'success' && 'success' || 'failure' }}
+        run: gh workflow run nifty-opportunity-suite-chain.yml --ref main -f completed_workflow='Research - compare NIFTY opportunity strategies' -f completed_run_id=${{ github.run_id }} -f conclusion=$OUTCOME
