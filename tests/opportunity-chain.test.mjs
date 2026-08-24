@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { planAdvance, WORKFLOWS } from '../research/opportunity/chain-dispatch.mjs';
+import { planAdvance, recoverConclusion, WORKFLOWS } from '../research/opportunity/chain-dispatch.mjs';
 
 function suite() {
   return {
@@ -70,4 +70,20 @@ test('suite notification jobs identify the repository outside a checkout', () =>
     assert.ok(notifySuite, `${workflowFile} has a notify-suite job`);
     assert.match(notifySuite, /GH_REPO: \$\{\{ github\.repository \}\}/, `${workflowFile} sets GH_REPO`);
   }
+});
+
+test('watchdog recovers a notifier-only failure without hiding research failures', () => {
+  const notifierOnly = [
+    { name: 'plan', conclusion: 'success' },
+    { name: 'backtest (2024-12)', conclusion: 'success' },
+    { name: 'consolidate', conclusion: 'success' },
+    { name: 'notify-suite', conclusion: 'failure' },
+  ];
+  assert.equal(recoverConclusion('failure', notifierOnly), 'success');
+  assert.equal(recoverConclusion('success', notifierOnly), 'success');
+
+  const researchFailure = notifierOnly.map((job) => (
+    job.name === 'consolidate' ? { ...job, conclusion: 'failure' } : job
+  ));
+  assert.equal(recoverConclusion('failure', researchFailure), 'failure');
 });
