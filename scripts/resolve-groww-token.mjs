@@ -32,10 +32,15 @@ export function generateTotp(secret, nowMs = Date.now()) {
 
 export async function resolveGrowwAccessToken(env = process.env, fetchImpl = fetch) {
   const manual = env.GROWW_ACCESS_TOKEN?.trim();
-  if (manual) return { token: manual, source: 'manual' };
-
   const apiKey = env.GROWW_TOTP_TOKEN?.trim();
   const secret = env.GROWW_TOTP_SECRET?.trim();
+  const preferTotp = env.GROWW_PREFER_TOTP === 'true';
+
+  if (!preferTotp && manual) return { token: manual, source: 'manual' };
+  if (!apiKey && !secret && manual) return { token: manual, source: 'manual' };
+  if (Boolean(apiKey) !== Boolean(secret)) {
+    throw new Error('TOTP configuration is incomplete; both GROWW_TOTP_TOKEN and GROWW_TOTP_SECRET are required.');
+  }
   if (!apiKey || !secret) {
     throw new Error('GROWW_ACCESS_TOKEN is missing. Optional TOTP fallback requires both GROWW_TOTP_TOKEN and GROWW_TOTP_SECRET.');
   }
