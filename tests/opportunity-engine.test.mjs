@@ -144,17 +144,22 @@ test('duplicate provider timestamps are merged before selecting the next entry b
   assert.equal(result.entryTime, '2024-01-01T09:46:00+05:30');
 });
 
-test('contract boundary fails only when the configured cap truncates deeper ITM contracts', () => {
-  const common = {
+test('contract boundary detects an incomplete listed-catalog search', () => {
+  assert.equal(candidateSearchIsTruncated({
+    availableCandidates: 25,
     inspectedCandidates: 24,
-    selectedPremium: 156,
-    maxCandidates: 24,
-    referencePremium: 180,
-  };
-  assert.equal(candidateSearchIsTruncated({ ...common, availableCandidates: 25 }), true);
-  assert.equal(candidateSearchIsTruncated({ ...common, availableCandidates: 24 }), false);
-  assert.equal(candidateSearchIsTruncated({ ...common, availableCandidates: 17, inspectedCandidates: 17 }), false);
-  assert.equal(candidateSearchIsTruncated({ ...common, availableCandidates: 25, selectedPremium: 180 }), false);
+    bracketed: false,
+  }), true);
+  assert.equal(candidateSearchIsTruncated({
+    availableCandidates: 25,
+    inspectedCandidates: 25,
+    bracketed: false,
+  }), false);
+  assert.equal(candidateSearchIsTruncated({
+    availableCandidates: 25,
+    inspectedCandidates: 3,
+    bracketed: true,
+  }), false);
 });
 
 test('integrity gate rejects a same-candle look-ahead entry', () => {
