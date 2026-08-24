@@ -3,7 +3,7 @@ name: NIFTY Paper Smoke
 on:
   push:
     branches:
-      - agent/breakeven-trail
+      - agent/groww-totp-smoke
     paths:
       - '.github/workflows/nifty-paper-smoke.yml'
   workflow_dispatch:
