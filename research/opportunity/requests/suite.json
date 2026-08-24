@@ -2,11 +2,12 @@
   "enabled": true,
   "status": "running",
   "scope": "discovery-2020-2024",
-  "expectedWorkflow": "Research - NIFTY failed opening-range break",
+  "expectedWorkflow": "Research - NIFTY afternoon compression breakout",
   "runs": {
     "late_breakout_run_id": "32487683576",
-    "vwap_pullback_run_id": "32695514873"
+    "vwap_pullback_run_id": "32695514873",
+    "failed_break_run_id": "32706247385"
   },
   "startedAt": "2026-08-21T13:35:31Z",
-  "updatedAt": "2026-08-24T08:25:33.403Z"
+  "updatedAt": "2026-08-24T11:04:39.011Z"
 }
