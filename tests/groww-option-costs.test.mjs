@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculateLongOptionRoundTripCosts, growwOptionRatesForTradeDate } from '../research/groww-option-costs.mjs';
+import {
+  calculateLongOptionRoundTripCosts,
+  calculateOptionRoundTripCosts,
+  growwOptionRatesForTradeDate,
+} from '../research/groww-option-costs.mjs';
 
 test('round-trip option costs include brokerage, statutory charges and GST', () => {
   const result = calculateLongOptionRoundTripCosts({ entryPremium: 180, exitPremium: 220, lotSize: 65 });
@@ -32,4 +36,18 @@ test('STT schedule switches on 1 April 2026 without changing strategy economics'
   assert.equal(march.sttSellRate, 0.0010);
   assert.equal(april.sttSellRate, 0.0015);
   assert.ok(march.netPnl > april.netPnl);
+});
+
+test('short option costs reverse the trade direction and apply adverse slippage', () => {
+  const clean = calculateOptionRoundTripCosts({
+    entryPremium: 100, exitPremium: 60, lotSize: 65, side: 'SHORT',
+  });
+  const stressed = calculateOptionRoundTripCosts({
+    entryPremium: 100, exitPremium: 60, lotSize: 65, side: 'SHORT', slippagePointsPerLeg: 1,
+  });
+  assert.equal(clean.grossPnl, 2600);
+  assert.equal(stressed.effectiveEntry, 99);
+  assert.equal(stressed.effectiveExit, 61);
+  assert.equal(stressed.grossPnl, 2470);
+  assert.ok(stressed.netPnl < clean.netPnl);
 });

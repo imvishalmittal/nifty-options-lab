@@ -31,16 +31,44 @@ export function calculateLongOptionRoundTripCosts({
   rates = null,
   slippagePointsPerLeg = 0,
 }) {
+  return calculateOptionRoundTripCosts({
+    entryPremium,
+    exitPremium,
+    lotSize,
+    tradeDate,
+    rates,
+    slippagePointsPerLeg,
+    side: 'LONG',
+  });
+}
+
+export function calculateOptionRoundTripCosts({
+  entryPremium,
+  exitPremium,
+  lotSize,
+  tradeDate = null,
+  rates = null,
+  slippagePointsPerLeg = 0,
+  side,
+}) {
   if (!(entryPremium >= 0) || !(exitPremium >= 0)) throw new Error('entryPremium and exitPremium must be non-negative');
   if (!(lotSize > 0)) throw new Error('lotSize must be positive');
   if (!(slippagePointsPerLeg >= 0)) throw new Error('slippagePointsPerLeg must be non-negative');
+  if (!['LONG', 'SHORT'].includes(side)) throw new Error('side must be LONG or SHORT');
   const appliedRates = rates ?? growwOptionRatesForTradeDate(tradeDate);
 
-  // For a long option, adverse slippage raises the buy and lowers the sell.
-  const effectiveEntry = entryPremium + slippagePointsPerLeg;
-  const effectiveExit = Math.max(0, exitPremium - slippagePointsPerLeg);
-  const buyTurnover = effectiveEntry * lotSize;
-  const sellTurnover = effectiveExit * lotSize;
+  // Adverse slippage raises buys and lowers sells. A short option reverses the
+  // entry/exit transaction directions but uses the same statutory charge model.
+  const effectiveEntry = side === 'LONG'
+    ? entryPremium + slippagePointsPerLeg
+    : Math.max(0, entryPremium - slippagePointsPerLeg);
+  const effectiveExit = side === 'LONG'
+    ? Math.max(0, exitPremium - slippagePointsPerLeg)
+    : exitPremium + slippagePointsPerLeg;
+  const buyPremium = side === 'LONG' ? effectiveEntry : effectiveExit;
+  const sellPremium = side === 'LONG' ? effectiveExit : effectiveEntry;
+  const buyTurnover = buyPremium * lotSize;
+  const sellTurnover = sellPremium * lotSize;
   const totalTurnover = buyTurnover + sellTurnover;
 
   const brokerage = appliedRates.brokeragePerOrder * 2;
@@ -53,11 +81,14 @@ export function calculateLongOptionRoundTripCosts({
   const gst = gstBase * appliedRates.gstRate;
   const charges = brokerage + exchange + sebi + ipft + stampDuty + stt + gst;
 
-  const grossPnl = (effectiveExit - effectiveEntry) * lotSize;
+  const grossPnl = (side === 'LONG'
+    ? effectiveExit - effectiveEntry
+    : effectiveEntry - effectiveExit) * lotSize;
   const netPnl = grossPnl - charges;
 
   return {
     lotSize,
+    side,
     tradeDate,
     sttSellRate: appliedRates.sttSellRate,
     slippagePointsPerLeg,
