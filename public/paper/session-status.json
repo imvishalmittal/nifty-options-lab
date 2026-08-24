@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-24T03:57:09.672Z",
+  "updatedAt": "2026-08-24T03:57:20.297Z",
   "status": "FAILED",
   "reason": "Groww /historical/candles failed (401): {\"errorCode\":401,\"errorMessage\":{\"message\":\"Please Login and Try Again\"}}"
 }
