@@ -2,12 +2,13 @@
   "enabled": true,
   "status": "running",
   "scope": "discovery-2020-2024",
-  "expectedWorkflow": "Research - NIFTY afternoon compression breakout",
+  "expectedWorkflow": "Research - compare NIFTY opportunity strategies",
   "runs": {
     "late_breakout_run_id": "32487683576",
     "vwap_pullback_run_id": "32695514873",
-    "failed_break_run_id": "32706247385"
+    "failed_break_run_id": "32706247385",
+    "afternoon_breakout_run_id": "32719992336"
   },
   "startedAt": "2026-08-21T13:35:31Z",
-  "updatedAt": "2026-08-24T11:04:39.011Z"
+  "updatedAt": "2026-08-24T14:23:19.399Z"
 }
