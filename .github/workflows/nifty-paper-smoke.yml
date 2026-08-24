@@ -22,9 +22,14 @@ jobs:
           node-version: '22'
       - name: Validate paper and stepped-trail mechanics
         run: node --test tests/paper-engine.test.mjs tests/nifty-180-stepped-trail.test.mjs
-      - name: Validate Groww authentication and historical NIFTY data
+      - name: Resolve Groww access token
         env:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Validate Groww authentication and historical NIFTY data
         run: |
           node --input-type=module <<'NODE'
           const token = process.env.GROWW_ACCESS_TOKEN;

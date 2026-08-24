@@ -82,7 +82,7 @@ The paper workflow intentionally does not schedule every minute. GitHub Actions 
 
 ## Secrets
 
-`GROWW_ACCESS_TOKEN` is stored as a GitHub Actions secret and is used only for market-data access in the current workflow. Do not commit tokens or `.env*` files. No broker order credential is required or permitted.
+`GROWW_TOTP_TOKEN` and `GROWW_TOTP_SECRET` are stored as GitHub Actions secrets. The paper and smoke workflows use them to create a fresh Groww access token at runtime; `GROWW_ACCESS_TOKEN` remains a temporary fallback during provisioning. The resolved access token is masked and exists only in the workflow environment. Do not commit tokens, TOTP secrets, QR codes, or `.env*` files. No current workflow places broker orders.
 
 ## ChatGPT Sites deployment
 
