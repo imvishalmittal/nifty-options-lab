@@ -46,7 +46,6 @@ export const DEFAULT_RULES = Object.freeze({
   openingRangeEnd: '09:45',
   forcedExit: '15:20',
   referencePremium: 180,
-  maxCandidates: 24,
   entryPremiumMin: 80,
   entryPremiumMax: 300,
   stopPoints: 20,
