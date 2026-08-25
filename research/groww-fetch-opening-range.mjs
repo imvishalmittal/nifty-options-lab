@@ -147,7 +147,13 @@ async function main() {
 
   for (const symbol of symbols) {
     console.error(`Fetching ${symbol} ${startDate}..${endDate}`);
-    const candles = await fetchCash5m({ token, symbol, startDate, endDate });
+    const candles = await fetchCash5m({
+      token,
+      symbol,
+      startDate,
+      endDate,
+      pauseMs: Number(args['pause-ms'] || process.env.GROWW_REQUEST_SPACING_MS || 250),
+    });
     const file = path.join(outDir, `${symbol}.csv`);
     fs.writeFileSync(file, candlesToCsv(symbol, candles));
     manifest.symbols.push({ symbol, candles: candles.length, file });

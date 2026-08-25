@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { STRATEGIES, timestampTime } from './opportunity-engine.mjs';
+import { BACKTEST_STRATEGIES, timestampTime } from './opportunity-engine.mjs';
 
 const VALID_STATUSES = new Set(['TRADE', 'NO_SIGNAL', 'NO_TRADE', 'EXCLUDED_SESSION', 'DATA_MISSING', 'CANDIDATE_BOUNDARY']);
 
@@ -7,7 +7,7 @@ export function validateOpportunityResult(document) {
   const errors = [];
   const warnings = [];
   if (document?.schemaVersion !== 1) errors.push('schemaVersion must be 1');
-  if (!STRATEGIES.includes(document?.strategy)) errors.push(`unknown strategy: ${document?.strategy}`);
+  if (!BACKTEST_STRATEGIES.includes(document?.strategy)) errors.push(`unknown strategy: ${document?.strategy}`);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(document?.period?.startDate ?? '')) errors.push('invalid period.startDate');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(document?.period?.endDate ?? '')) errors.push('invalid period.endDate');
   if (!Array.isArray(document?.results) || document.results.length === 0) errors.push('results must contain at least one observed session');

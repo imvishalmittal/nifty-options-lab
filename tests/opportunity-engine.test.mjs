@@ -70,6 +70,27 @@ test('VWAP pullback requires trend re-acceptance on a completed candle', () => {
   assert.equal(result.optionType, 'CE');
 });
 
+test('selective VWAP V2 requires trend regime, expanding ADX and volume impulse', () => {
+  const rows = enrichedSession('13:31');
+  for (let index = 0; index < rows.length; index += 1) rows[index].volume = 1000;
+  replace(rows, '10:14', { open: 112, high: 114, low: 110, close: 111, ema9: 112, ema22: 106, vwap: 108, adx14: 25, volume: 1000 });
+  replace(rows, '10:15', { open: 111, high: 119, low: 110, close: 118, ema9: 113, ema22: 106, vwap: 109, adx14: 27, volume: 1800 });
+  const result = detectOpportunityFromEnriched(rows, 'selective-vwap-trend-pullback-v2');
+  assert.equal(result.status, 'SIGNAL');
+  assert.equal(result.optionType, 'CE');
+  assert.ok(result.evidence.signalVolumeRatio >= DEFAULT_RULES.minimumSignalVolumeRatio);
+  assert.ok(result.evidence.trendSeparationRatio >= DEFAULT_RULES.minimumTrendSeparationRatio);
+});
+
+test('selective VWAP V2 rejects an otherwise valid pullback without volume impulse', () => {
+  const rows = enrichedSession('13:31');
+  for (let index = 0; index < rows.length; index += 1) rows[index].volume = 1000;
+  replace(rows, '10:14', { open: 112, high: 114, low: 110, close: 111, ema9: 112, ema22: 106, vwap: 108, adx14: 25 });
+  replace(rows, '10:15', { open: 111, high: 119, low: 110, close: 118, ema9: 113, ema22: 106, vwap: 109, adx14: 27, volume: 1200 });
+  const result = detectOpportunityFromEnriched(rows, 'selective-vwap-trend-pullback-v2');
+  assert.equal(result.status, 'NO_SIGNAL');
+});
+
 test('failed opening-range high produces a put signal only after close returns inside', () => {
   const rows = enrichedSession('12:31');
   replace(rows, '09:45', { open: 113, high: 115, low: 107, close: 108, adx14: 22 });

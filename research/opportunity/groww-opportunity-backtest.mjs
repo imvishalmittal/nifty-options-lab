@@ -7,9 +7,9 @@ import {
 } from '../nifty-180-premium-strategy.mjs';
 import {
   DEFAULT_RULES,
+  BACKTEST_STRATEGIES,
   classifyShortSession,
   expiryYearsForSessionDates,
-  STRATEGIES,
   detectOpportunity,
   evaluateOptionPosition,
   niftyLotSizeForExpiry,
@@ -285,7 +285,7 @@ export async function backtestOpportunity({
   spacing = DEFAULT_REQUEST_SPACING_MS,
   rules = DEFAULT_RULES,
 }) {
-  if (!STRATEGIES.includes(strategy)) throw new Error(`Unknown strategy: ${strategy}`);
+  if (!BACKTEST_STRATEGIES.includes(strategy)) throw new Error(`Unknown strategy: ${strategy}`);
   requestSpacingMs = Math.max(250, Number(spacing) || DEFAULT_REQUEST_SPACING_MS);
   lastRequestAt = 0;
   requestCount = 0;

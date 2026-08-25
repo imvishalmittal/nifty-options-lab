@@ -1,10 +1,12 @@
 import fs from 'node:fs';
 import { parseCsv, summarize } from './opening-range-backtest.mjs';
 import { computeWilderAtrByDate, inspectContinuousSessions } from './quick-flip-backtest.mjs';
+import { equityIntradayCostScenarios } from './equity-intraday-costs.mjs';
+import { summarizePerformance } from './performance-statistics.mjs';
 
 export const SIP_ORB_VARIANTS = Object.freeze([
   { key: 'rvol-1.0', minRelativeVolume: 1.0, evidence: 'US Stocks-in-Play replication threshold' },
-  { key: 'rvol-1.2', minRelativeVolume: 1.2, evidence: 'NSE volume-surge sensitivity threshold' },
+  { key: 'rvol-1.2', minRelativeVolume: 1.2, evidence: 'NSE volume-surge threshold', primary: true },
   { key: 'rvol-1.5', minRelativeVolume: 1.5, evidence: 'NSE strong-volume-surge sensitivity threshold' },
 ]);
 
@@ -18,6 +20,7 @@ const DEFAULTS = Object.freeze({
   // (the last continuous-session close at 15:15) uniformly across history.
   lastEntryTime: '15:10',
   forcedExitBarTime: '15:10',
+  notionalPerTrade: 50000,
 });
 
 function parts(timestamp) {
@@ -179,6 +182,14 @@ export function backtestStocksInPlayOrb(candles, options = {}) {
 
       const outcome = scoreTrade(day, entryIndex, direction, trigger, stop, cfg.forcedExitBarTime);
       if (!outcome) continue;
+      const quantity = Math.floor(cfg.notionalPerTrade / trigger);
+      if (!(quantity > 0)) continue;
+      const costs = equityIntradayCostScenarios({
+        direction,
+        entry: trigger,
+        exit: outcome.exit,
+        quantity,
+      });
       trades.push({
         date,
         symbol,
@@ -198,8 +209,14 @@ export function backtestStocksInPlayOrb(candles, options = {}) {
         entry: trigger,
         stop,
         riskPoints: stopDistance,
+        quantity,
+        notionalPerTrade: cfg.notionalPerTrade,
+        costs,
         ...outcome,
         realizedR: outcome.pnlPoints / stopDistance,
+        netR: costs.normalized.netPnl / (stopDistance * quantity),
+        stress2bpsNetR: costs.stress2bps.netPnl / (stopDistance * quantity),
+        stress5bpsNetR: costs.stress5bps.netPnl / (stopDistance * quantity),
       });
     }
   }
@@ -211,7 +228,12 @@ export function backtestStocksInPlayOrb(candles, options = {}) {
       rvolLookback: cfg.rvolLookback,
       forcedExitBarTime: cfg.forcedExitBarTime,
     },
-    summary: summarize(trades),
+    summary: {
+      grossR: summarize(trades),
+      normalizedNetR: summarizePerformance(trades.map((trade) => trade.netR)),
+      stress2bpsNetR: summarizePerformance(trades.map((trade) => trade.stress2bpsNetR)),
+      stress5bpsNetR: summarizePerformance(trades.map((trade) => trade.stress5bpsNetR)),
+    },
     diagnostics,
     trades,
   };

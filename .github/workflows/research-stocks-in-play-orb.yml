@@ -1,0 +1,58 @@
+name: Research - Stocks-in-Play ORB discovery
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/next-opportunity-strategies]
+    paths: [research/next/requests/stocks-in-play-orb.json]
+
+permissions: { contents: read }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+
+jobs:
+  discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Validate isolated engines
+        run: node --test tests/equity-intraday-costs.test.mjs tests/stocks-in-play-orb-backtest.test.mjs tests/next-strategy-research.test.mjs
+      - name: Resolve Groww access token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Fetch frozen discovery universe
+        run: >-
+          node research/groww-fetch-opening-range.mjs
+          --symbols=RELIANCE,HDFCBANK,ICICIBANK,SBIN,INFY
+          --start=2020-01-01 --end=2024-12-31
+          --pause-ms=1600 --out=work/stocks-in-play
+      - name: Audit historical data
+        run: |
+          node research/quick-flip-data-quality.mjs work/stocks-in-play/*.csv > data-quality.json
+          jq -e '.quality.valid == true' data-quality.json
+      - name: Run relative-volume ORB variants
+        run: node research/stocks-in-play-orb-backtest.mjs work/stocks-in-play/*.csv > result.json
+      - name: Strict causal and cost integrity
+        run: node research/next/underlying-result-integrity.mjs --in=result.json --out=integrity.json --max-trades-per-date=5
+      - name: Robustness and predeclared gates
+        run: |
+          node research/strategy-robustness-report.mjs result.json robustness.json
+          node research/next/research-gates.mjs --in=result.json --type=underlying --out=gate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stocks-in-play-orb-discovery-2020-2024
+          path: |
+            work/stocks-in-play/manifest.json
+            data-quality.json
+            result.json
+            integrity.json
+            robustness.json
+            gate.json
+          retention-days: 90

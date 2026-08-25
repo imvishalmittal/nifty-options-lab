@@ -1,0 +1,5 @@
+{
+  "scope": "discovery-2020-2024",
+  "requestedAt": "2026-08-25T00:00:00.000Z",
+  "purpose": "Selective VWAP V2 discovery only; 2025 validation and 2026 holdout remain untouched"
+}

@@ -5,6 +5,12 @@ export const STRATEGIES = Object.freeze([
   'afternoon-compression-breakout',
 ]);
 
+export const EXTENDED_RESEARCH_STRATEGIES = Object.freeze([
+  'selective-vwap-trend-pullback-v2',
+]);
+
+export const BACKTEST_STRATEGIES = Object.freeze([...STRATEGIES, ...EXTENDED_RESEARCH_STRATEGIES]);
+
 export const DOCUMENTED_IRREGULAR_SESSIONS = Object.freeze({
   '2020-11-14': 'Muhurat trading session',
   '2021-02-24': 'NSE technical outage and extended session',
@@ -56,6 +62,9 @@ export const DEFAULT_RULES = Object.freeze({
   minimumAdx: 20,
   maximumReversalAdx: 25,
   maximumCompressionRatio: 0.65,
+  minimumSelectiveAdx: 25,
+  minimumTrendSeparationRatio: 0.05,
+  minimumSignalVolumeRatio: 1.5,
 });
 
 function timeOf(timestamp) {
@@ -254,6 +263,59 @@ function detectVwapPullback(rows, range, rules) {
   return null;
 }
 
+function median(values) {
+  const sorted = values.filter(Number.isFinite).sort((a, b) => a - b);
+  if (!sorted.length) return null;
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+function detectSelectiveVwapPullback(rows, range, rules) {
+  for (let i = 20; i < rows.length - 1; i += 1) {
+    const row = rows[i];
+    const previous = rows[i - 1];
+    const time = timeOf(row.timestamp);
+    if (time < '09:45' || time > '13:30') continue;
+    const priorVolumeMedian = median(rows.slice(i - 20, i).map((item) => Number(item.volume)));
+    const volumeRatio = priorVolumeMedian > 0 ? Number(row.volume) / priorVolumeMedian : null;
+    const adxExpanding = Number.isFinite(row.adx14)
+      && Number.isFinite(previous.adx14)
+      && row.adx14 >= rules.minimumSelectiveAdx
+      && row.adx14 > previous.adx14;
+    const separationRatio = range.width > 0 ? Math.abs(row.ema9 - row.ema22) / range.width : 0;
+    const liquidImpulse = volumeRatio != null && volumeRatio >= rules.minimumSignalVolumeRatio;
+    if (!adxExpanding || separationRatio < rules.minimumTrendSeparationRatio || !liquidImpulse) continue;
+
+    const longTrend = row.close > range.high
+      && row.ema9 > row.ema22
+      && previous.close > previous.vwap
+      && row.close > row.vwap;
+    const shortTrend = row.close < range.low
+      && row.ema9 < row.ema22
+      && previous.close < previous.vwap
+      && row.close < row.vwap;
+    const longReacceptance = previous.close <= previous.ema9
+      && row.low <= row.ema9 + rules.vwapTolerancePoints
+      && row.close > row.ema9
+      && row.close > row.open;
+    const shortReacceptance = previous.close >= previous.ema9
+      && row.high >= row.ema9 - rules.vwapTolerancePoints
+      && row.close < row.ema9
+      && row.close < row.open;
+    const evidence = {
+      openingRange: range,
+      vwap: row.vwap,
+      vwapMode: row.vwapMode,
+      adx14: row.adx14,
+      trendSeparationRatio: separationRatio,
+      signalVolumeRatio: volumeRatio,
+    };
+    if (longTrend && longReacceptance) return signal('selective-vwap-trend-pullback-v2', 'LONG', row, i, evidence);
+    if (shortTrend && shortReacceptance) return signal('selective-vwap-trend-pullback-v2', 'SHORT', row, i, evidence);
+  }
+  return null;
+}
+
 function detectFailedBreak(rows, range, rules) {
   for (let i = 1; i < rows.length - 1; i += 1) {
     const row = rows[i];
@@ -305,18 +367,19 @@ function detectAfternoonBreakout(rows, range, rules) {
 }
 
 export function detectOpportunity(candles, strategy, rules = DEFAULT_RULES) {
-  if (!STRATEGIES.includes(strategy)) throw new Error(`Unknown strategy: ${strategy}`);
+  if (!BACKTEST_STRATEGIES.includes(strategy)) throw new Error(`Unknown strategy: ${strategy}`);
   const rows = enrichIndicators(candles);
   return detectOpportunityFromEnriched(rows, strategy, rules);
 }
 
 export function detectOpportunityFromEnriched(rows, strategy, rules = DEFAULT_RULES) {
-  if (!STRATEGIES.includes(strategy)) throw new Error(`Unknown strategy: ${strategy}`);
+  if (!BACKTEST_STRATEGIES.includes(strategy)) throw new Error(`Unknown strategy: ${strategy}`);
   const range = openingRange(rows, rules);
   if (!range) return { status: 'DATA_MISSING', reason: 'Opening range unavailable' };
   const detector = {
     'late-breakout-retest': detectLateBreakoutRetest,
     'vwap-trend-pullback': detectVwapPullback,
+    'selective-vwap-trend-pullback-v2': detectSelectiveVwapPullback,
     'failed-opening-range-break': detectFailedBreak,
     'afternoon-compression-breakout': detectAfternoonBreakout,
   }[strategy];
