@@ -15,6 +15,7 @@ export const DOCUMENTED_IRREGULAR_SESSIONS = Object.freeze({
   '2024-03-02': 'NSE special live trading session',
   '2024-05-18': 'NSE special live trading session',
   '2024-11-01': 'Muhurat trading session',
+  '2025-10-21': 'Muhurat trading session',
 });
 
 export function expiryYearsForSessionDates(dates) {
