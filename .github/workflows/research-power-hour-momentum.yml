@@ -7,7 +7,7 @@ on:
     paths: [research/next/requests/power-hour-momentum.json]
 
 permissions: { contents: read }
-concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false, queue: max }
 
 jobs:
   discovery:
