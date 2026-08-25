@@ -31,6 +31,25 @@ test('normalizes Groww option candles including open interest', () => {
   assert.equal(rows[0].openInterest, 450000);
 });
 
+test('merges duplicate provider timestamps before causal next-bar evaluation', () => {
+  const rows = normalizeCandles([
+    ['2024-01-03 09:37:00', 180, 185, 178, 183.1, 1000, 10000],
+    ['2024-01-03 09:37:00', 174.3, 188, 172, 184, 1200, 10100],
+    ['2024-01-03 09:38:00', 185, 190, 184, 189, 900, 10200],
+  ]);
+  assert.equal(rows.length, 2);
+  assert.deepEqual(rows[0], {
+    timestamp: '2024-01-03T09:37:00+05:30',
+    open: 180,
+    high: 188,
+    low: 172,
+    close: 184,
+    volume: 1200,
+    openInterest: 10100,
+  });
+  assert.equal(rows[1].timestamp, '2024-01-03T09:38:00+05:30');
+});
+
 test('uses the 09:25 candle open for contemporaneous spot and premium selection', () => {
   const rows = normalizeCandles([
     ['2026-08-10 09:24:00', 24780, 24790, 24770, 24785, 1],

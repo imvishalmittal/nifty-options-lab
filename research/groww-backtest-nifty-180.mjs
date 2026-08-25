@@ -72,7 +72,7 @@ export function splitDateRange(startDate, endDate, maxCalendarDays = SAFE_ONE_MI
 }
 
 export function normalizeCandles(raw = []) {
-  return raw.map((c) => ({
+  const normalized = raw.map((c) => ({
     timestamp: normalizeTimestamp(c[0]),
     open: Number(c[1]),
     high: Number(c[2]),
@@ -81,6 +81,24 @@ export function normalizeCandles(raw = []) {
     volume: Number(c[5] ?? 0),
     openInterest: c[6] == null ? null : Number(c[6]),
   })).sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+
+  // Groww occasionally returns multiple fragments for the same one-minute
+  // timestamp. Treat them as one completed candle before any signal or
+  // next-bar lookup, using the same canonical merge as opportunity research.
+  const merged = [];
+  for (const candle of normalized) {
+    const previous = merged.at(-1);
+    if (!previous || previous.timestamp !== candle.timestamp) {
+      merged.push({ ...candle });
+      continue;
+    }
+    previous.high = Math.max(previous.high, candle.high);
+    previous.low = Math.min(previous.low, candle.low);
+    previous.close = candle.close;
+    previous.volume = Math.max(previous.volume, candle.volume);
+    if (candle.openInterest != null) previous.openInterest = candle.openInterest;
+  }
+  return merged;
 }
 
 export function candlesForDate(candles, date, startTime = null, endTime = null) {
