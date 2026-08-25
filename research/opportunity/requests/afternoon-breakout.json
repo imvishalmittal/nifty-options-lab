@@ -1,5 +1,5 @@
 {
   "scope": "validation-2025",
-  "requestedAt": "2026-08-25T03:24:42.184Z",
-  "purpose": "locked out-of-sample validation; do not inspect 2026 holdout yet"
+  "requestedAt": "2026-08-25T03:33:45.926Z",
+  "purpose": "rerun locked out-of-sample validation after documented 2025 Muhurat exclusion; do not inspect 2026 holdout yet"
 }
