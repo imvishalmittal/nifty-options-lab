@@ -1,5 +1,5 @@
 {
   "scope": "discovery-2020-2024",
-  "requestedAt": "2026-08-25T06:49:55.203Z",
-  "purpose": "Entry-relative NIFTY premium-risk discovery only; 2025 validation and 2026 holdout remain untouched"
+  "requestedAt": "2026-08-25T11:50:42.881Z",
+  "purpose": "Entry-relative NIFTY premium-risk discovery rerun after causal duplicate-minute normalization; 2025 validation and 2026 holdout remain untouched"
 }
