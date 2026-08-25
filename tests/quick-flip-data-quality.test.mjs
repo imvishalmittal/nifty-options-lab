@@ -39,3 +39,17 @@ test('audit identifies the exact continuous-session candle behind an implausible
   assert.equal(symbol.largeDailyRanges.length,1);
   assert.deepEqual(symbol.malformedCandles,[]);
 });
+
+test('audit preserves a cross-sectionally corroborated market-wide shock',()=>{
+  const rows=[];
+  for(const symbol of ['AAA','BBB','CCC']) {
+    for(let i=1;i<=16;i++) rows.push(...d(`2025-03-${String(i).padStart(2,'0')}`,100+i,symbol));
+    rows.push(...d('2025-03-17',117,symbol));
+    rows.push(c('2025-03-17T10:00:00+05:30',117,145,90,120,1000,symbol));
+  }
+  const out=auditQuickFlipData(rows);
+  assert.equal(out.quality.valid,true);
+  assert.equal(out.bySymbol.AAA.largeDailyRanges[0].corroboratedMarketEvent,true);
+  assert.deepEqual(out.bySymbol.AAA.largeDailyRanges[0].corroboratingSymbols,['AAA','BBB','CCC']);
+  assert.deepEqual(out.bySymbol.AAA.uncorroboratedLargeDailyRanges,[]);
+});
