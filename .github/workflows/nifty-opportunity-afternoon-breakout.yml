@@ -9,7 +9,7 @@ on:
       custom_lot_size: { description: Lot size (custom only), required: false, type: number, default: 65 }
       suite_run: { description: Internal opportunity-suite continuation marker, required: false, type: boolean, default: false }
   push:
-    branches: [research/opportunity-runs]
+    branches: [research/afternoon-validation-2025]
     paths: [research/opportunity/requests/afternoon-breakout.json]
 permissions: { contents: read, actions: write }
 concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
@@ -32,8 +32,14 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: node --test tests/opportunity-engine.test.mjs
-      - env: { GROWW_ACCESS_TOKEN: '${{ secrets.GROWW_ACCESS_TOKEN }}' }
-        run: node research/opportunity/groww-opportunity-backtest.mjs --strategy=afternoon-compression-breakout --start=${{ matrix.start }} --end=${{ matrix.end }} --lot-size=${{ matrix.lot }} --out=result.json
+      - name: Resolve Groww access token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - run: node research/opportunity/groww-opportunity-backtest.mjs --strategy=afternoon-compression-breakout --start=${{ matrix.start }} --end=${{ matrix.end }} --lot-size=${{ matrix.lot }} --out=result.json
       - run: node research/opportunity/result-integrity.mjs --in=result.json --out=integrity.json
       - uses: actions/upload-artifact@v4
         if: always()
