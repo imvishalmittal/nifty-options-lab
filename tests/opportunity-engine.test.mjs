@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   DEFAULT_RULES,
+  classifyShortSession,
   detectOpportunityFromEnriched,
   enrichIndicators,
   evaluateOptionPosition,
@@ -47,6 +48,17 @@ function replace(rows, time, overrides) {
   const index = rows.findIndex((item) => item.timestamp.includes(`T${time}:`));
   rows[index] = { ...rows[index], ...overrides };
 }
+
+test('documented shortened sessions are excluded without weakening missing-data checks', () => {
+  assert.deepEqual(classifyShortSession('2025-10-21', 95), {
+    status: 'EXCLUDED_SESSION',
+    reason: 'Muhurat trading session; 95 underlying one-minute candles',
+  });
+  assert.deepEqual(classifyShortSession('2025-10-22', 95), {
+    status: 'DATA_MISSING',
+    reason: 'Only 95 underlying one-minute candles',
+  });
+});
 
 test('late breakout waits for a completed retest instead of entering the first break', () => {
   const rows = enrichedSession('11:31');
