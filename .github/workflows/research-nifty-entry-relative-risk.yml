@@ -1,0 +1,77 @@
+name: Research - NIFTY entry-relative risk discovery
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/entry-relative-risk]
+    paths: [research/requests/nifty-entry-relative.json]
+
+permissions: { contents: read }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs: { matrix: '${{ steps.matrix.outputs.result }}', count: '${{ steps.matrix.outputs.count }}' }
+    steps:
+      - uses: actions/checkout@v4
+      - id: matrix
+        env: { REQUEST_FILE: research/requests/nifty-entry-relative.json }
+        run: node research/opportunity/workflow-plan.mjs
+
+  backtest:
+    needs: plan
+    strategy: { fail-fast: false, max-parallel: 1, matrix: '${{ fromJSON(needs.plan.outputs.matrix) }}' }
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Validate isolated entry-relative engine
+        run: node --test tests/nifty-180-entry-relative.test.mjs tests/groww-backtest-causal.test.mjs
+      - name: Resolve Groww access token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Backtest frozen entry-relative partition
+        run: >-
+          node research/groww-backtest-nifty-180-entry-relative.mjs
+          --start=${{ matrix.start }} --end=${{ matrix.end }} --out=result.json
+      - name: Strict causal and rule integrity
+        run: node research/nifty-180-entry-relative-integrity.mjs --in=result.json --out=integrity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: entry-relative-part-${{ matrix.label }}
+          path: |
+            result.json
+            integrity.json
+          retention-days: 90
+
+  consolidate:
+    if: ${{ !cancelled() }}
+    needs: [plan, backtest]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with: { pattern: 'entry-relative-part-*', path: artifacts }
+      - run: >-
+          node research/nifty-180-entry-relative-aggregate.mjs
+          --dir=artifacts --expected-count=${{ needs.plan.outputs.count }} --out=consolidated.json
+      - run: node research/nifty-180-entry-relative-integrity.mjs --in=consolidated.json --out=consolidated-integrity.json
+      - run: node research/nifty-180-entry-relative-gate.mjs --in=consolidated.json --out=gate.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nifty-entry-relative-risk-discovery-2020-2024
+          path: |
+            consolidated.json
+            consolidated-integrity.json
+            gate.json
+          retention-days: 90
