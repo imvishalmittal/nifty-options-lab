@@ -4,6 +4,8 @@ import { computeWilderAtrByDate } from './quick-flip-backtest.mjs';
 
 const MAX_ATR_TO_MEDIAN_CLOSE = 0.50;
 const LARGE_DAILY_RANGE_TO_MEDIAN_CLOSE = 0.20;
+const CROSS_SECTIONAL_EVENT_RANGE_TO_MEDIAN_CLOSE = 0.05;
+const CROSS_SECTIONAL_EVENT_MIN_SYMBOLS = 3;
 const OUTLIER_LIMIT = 12;
 
 function parts(timestamp) {
@@ -49,7 +51,6 @@ export function auditQuickFlipData(candles) {
   const grouped=group(candles);
   const bySymbol={};
   const allGaps=[];
-  const invalidSymbols=[];
   for (const [symbol,days] of grouped) {
     const dates=[...days.keys()].sort();
     const atr=computeWilderAtrByDate(days,14);
@@ -129,33 +130,52 @@ export function auditQuickFlipData(candles) {
     const largeDailyRanges=rankedSessionRanges.filter((row)=>row.rangeToMedianClose>=LARGE_DAILY_RANGE_TO_MEDIAN_CLOSE);
     const maxAtrToMedianClose=(atrStats.max != null && medianClose>0) ? atrStats.max/medianClose : null;
     const atrValid=maxAtrToMedianClose == null || maxAtrToMedianClose <= MAX_ATR_TO_MEDIAN_CLOSE;
-    const qualityValid=atrValid && largeDailyRanges.length===0;
-    if (!qualityValid) invalidSymbols.push({
-      symbol,
-      reasons:[
-        ...(!atrValid?['IMPLAUSIBLE_ATR']:[]),
-        ...(largeDailyRanges.length?['EXTREME_CONTINUOUS_SESSION_RANGE']:[]),
-      ],
-      maxAtrToMedianClose,
-      medianClose,
-      maxAtr:atrStats.max,
-      largestDailyRangeToMedianClose:rankedSessionRanges[0]?.rangeToMedianClose??null,
-    });
     bySymbol[symbol]={
       sessions:dates.length,
       atr:atrStats,
       medianContinuousClose:medianClose,
       maxAtrToMedianClose,
-      qualityValid,
+      atrValid,
       absoluteOvernightGapPct:stats(absGaps),
       gapsOver20Pct:gaps.filter((g)=>Math.abs(g.gapPct)>=20).sort((a,b)=>Math.abs(b.gapPct)-Math.abs(a.gapPct)),
       topOvernightGaps:gaps.sort((a,b)=>Math.abs(b.gapPct)-Math.abs(a.gapPct)).slice(0,8),
       largeDailyRanges,
+      crossSectionalEventCandidates:rankedSessionRanges.filter((row)=>row.rangeToMedianClose>=CROSS_SECTIONAL_EVENT_RANGE_TO_MEDIAN_CLOSE),
       topDailyRanges:rankedSessionRanges.slice(0,OUTLIER_LIMIT),
       topIntradayRanges:rankedIntradayRanges.slice(0,OUTLIER_LIMIT),
       malformedCandles:malformedCandles.slice(0,OUTLIER_LIMIT),
       monthlyOpeningCoverage,
     };
+  }
+  const corroborationByDate={};
+  for (const [symbol,row] of Object.entries(bySymbol)) {
+    for (const session of row.crossSectionalEventCandidates) {
+      corroborationByDate[session.date] ??= [];
+      corroborationByDate[session.date].push(symbol);
+    }
+  }
+  const invalidSymbols=[];
+  for (const [symbol,row] of Object.entries(bySymbol)) {
+    row.largeDailyRanges=row.largeDailyRanges.map((session)=>({
+      ...session,
+      corroboratingSymbols:corroborationByDate[session.date]??[],
+      corroboratedMarketEvent:(corroborationByDate[session.date]?.length??0)>=CROSS_SECTIONAL_EVENT_MIN_SYMBOLS,
+    }));
+    row.uncorroboratedLargeDailyRanges=row.largeDailyRanges.filter((session)=>!session.corroboratedMarketEvent);
+    row.qualityValid=row.atrValid && row.uncorroboratedLargeDailyRanges.length===0;
+    if (!row.qualityValid) invalidSymbols.push({
+      symbol,
+      reasons:[
+        ...(!row.atrValid?['IMPLAUSIBLE_ATR']:[]),
+        ...(row.uncorroboratedLargeDailyRanges.length?['UNCONFIRMED_EXTREME_CONTINUOUS_SESSION_RANGE']:[]),
+      ],
+      maxAtrToMedianClose:row.maxAtrToMedianClose,
+      medianClose:row.medianContinuousClose,
+      maxAtr:row.atr.max,
+      largestDailyRangeToMedianClose:row.topDailyRanges[0]?.rangeToMedianClose??null,
+    });
+    delete row.atrValid;
+    delete row.crossSectionalEventCandidates;
   }
   return {
     continuousSession: { start: '09:15', endExclusive: '15:15' },
@@ -163,6 +183,8 @@ export function auditQuickFlipData(candles) {
       valid: invalidSymbols.length===0,
       maxAtrToMedianCloseThreshold: MAX_ATR_TO_MEDIAN_CLOSE,
       largeDailyRangeToMedianCloseThreshold: LARGE_DAILY_RANGE_TO_MEDIAN_CLOSE,
+      crossSectionalEventRangeThreshold: CROSS_SECTIONAL_EVENT_RANGE_TO_MEDIAN_CLOSE,
+      crossSectionalEventMinimumSymbols: CROSS_SECTIONAL_EVENT_MIN_SYMBOLS,
       invalidSymbols: invalidSymbols.sort((a,b)=>b.maxAtrToMedianClose-a.maxAtrToMedianClose),
     },
     bySymbol,
