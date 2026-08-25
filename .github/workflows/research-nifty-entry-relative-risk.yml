@@ -36,7 +36,17 @@ jobs:
           GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
           GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
           GROWW_PREFER_TOTP: 'true'
-        run: node scripts/resolve-groww-token.mjs
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if node scripts/resolve-groww-token.mjs; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              exit 1
+            fi
+            echo "Groww authentication attempt $attempt failed; waiting 60 seconds before retry"
+            sleep 60
+          done
       - name: Backtest frozen entry-relative partition
         run: >-
           node research/groww-backtest-nifty-180-entry-relative.mjs
