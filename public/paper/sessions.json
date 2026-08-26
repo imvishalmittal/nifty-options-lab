@@ -5,7 +5,7 @@
       "BASE",
       "V4"
     ],
-    "updatedAt": "2026-08-26T04:26:38.154Z"
+    "updatedAt": "2026-08-26T10:22:22.259Z"
   },
   "sessions": [
     {
@@ -401,13 +401,18 @@
         "V7",
         "V8"
       ],
-      "status": "DATA_BOUNDARY",
-      "reason": "Could not bracket ₹180 on both CE and PE candidate ladders",
-      "updatedAt": "2026-08-26T04:26:38.154Z",
+      "status": "NO_TRADE",
+      "reason": "No valid ₹180 crossing before 09:45",
+      "updatedAt": "2026-08-26T10:22:22.259Z",
       "spot925": 24353.3,
       "expiry": "2026-09-01",
       "referencePremium": 180,
-      "ce": null,
+      "ce": {
+        "symbol": "NSE-NIFTY-01Sep26-24300-CE",
+        "strike": 24300,
+        "optionType": "CE",
+        "premium": 193.3
+      },
       "pe": {
         "symbol": "NSE-NIFTY-01Sep26-24550-PE",
         "strike": 24550,
@@ -430,13 +435,18 @@
         "V4",
         "V5"
       ],
-      "status": "DATA_BOUNDARY",
-      "reason": "Could not bracket ₹180 on both CE and PE candidate ladders",
-      "updatedAt": "2026-08-26T04:26:38.133Z",
+      "status": "NO_TRADE",
+      "reason": "No V4 option signal with matching NIFTY confirmation before 09:45",
+      "updatedAt": "2026-08-26T10:22:22.259Z",
       "spot925": 24353.3,
       "expiry": "2026-09-01",
       "referencePremium": 180,
-      "ce": null,
+      "ce": {
+        "symbol": "NSE-NIFTY-01Sep26-24300-CE",
+        "strike": 24300,
+        "optionType": "CE",
+        "premium": 193.3
+      },
       "pe": {
         "symbol": "NSE-NIFTY-01Sep26-24550-PE",
         "strike": 24550,

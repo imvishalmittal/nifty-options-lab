@@ -1,10 +1,9 @@
 {
-  "updatedAt": "2026-08-26T10:22:22.259Z",
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-26T10:22:22.186Z",
   "date": "2026-08-26",
-  "status": "NO_TRADE",
-  "reason": "No valid ₹180 crossing before 09:45",
-  "reconstructed": true,
   "source": "PAPER_REPLAY",
+  "complete": true,
   "selectionAudit": {
     "spot925": 24353.3,
     "expiry": "2026-09-01",
@@ -195,5 +194,85 @@
       ],
       "actualCandidateCount": 10
     }
+  },
+  "base": {
+    "status": "NO_TRADE",
+    "reason": "No valid ₹180 crossing before 09:45",
+    "trades": [],
+    "complete": true
+  },
+  "confirmed": {
+    "status": "NO_TRADE",
+    "reason": "No V4 option signal with matching NIFTY confirmation before 09:45",
+    "trades": [],
+    "complete": true
+  },
+  "integrity": {
+    "passed": true,
+    "checks": [
+      {
+        "name": "schema-version",
+        "passed": true
+      },
+      {
+        "name": "date-format",
+        "passed": true
+      },
+      {
+        "name": "replay-complete",
+        "passed": true
+      },
+      {
+        "name": "ce-bracketed",
+        "passed": true
+      },
+      {
+        "name": "pe-bracketed",
+        "passed": true
+      },
+      {
+        "name": "threads-terminal",
+        "passed": true
+      },
+      {
+        "name": "base-trade-count",
+        "passed": true,
+        "detail": "expected=0"
+      },
+      {
+        "name": "confirmed-trade-count",
+        "passed": true,
+        "detail": "expected=0"
+      },
+      {
+        "name": "trade-source",
+        "passed": true
+      },
+      {
+        "name": "trade-dates",
+        "passed": true
+      },
+      {
+        "name": "causal-times",
+        "passed": true
+      },
+      {
+        "name": "finite-accounting",
+        "passed": true
+      },
+      {
+        "name": "entry-band",
+        "passed": true
+      },
+      {
+        "name": "v8-relative-stop",
+        "passed": true
+      },
+      {
+        "name": "unique-trades",
+        "passed": true
+      }
+    ],
+    "tradeCount": 0
   }
 }
