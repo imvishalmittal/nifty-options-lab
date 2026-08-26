@@ -16,6 +16,10 @@ Historical V2/V3 studies use real historical NIFTY option contracts/candles from
 
 The paper session depends on Groww API availability and GitHub Actions runtime reliability. Authentication failures, throttling, missing/delayed candles, runner interruption, or incomplete contract metadata must be recorded as operational/data failures rather than converted into hypothetical successful trades.
 
+The contracts endpoint is not assumed to be a complete near-spot chain. Paper selection validates the expected 50-point grid with actual 09:25 candles. Missing prices remain missing; the system never interpolates or invents an option premium.
+
+Post-close recovery is allowed only for a non-terminal live session and is labeled `PAPER_REPLAY`. A replay must pass cohort, causal-time, entry-band, accounting, uniqueness, and V8 relative-stop checks before it can update the paper journal.
+
 ## Candle-completion rule
 
 Signals and stop changes that rely on close/high/low use only fully completed one-minute candles. A higher stop derived from a bar becomes effective only from the following bar.
