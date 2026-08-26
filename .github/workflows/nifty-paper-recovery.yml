@@ -5,11 +5,6 @@ on:
     # 15:40 IST, after the 15:29 strategy exit candle is complete.
     - cron: '10 10 * * 1-5'
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - .github/nifty-paper-recovery-trigger
 
 permissions:
   contents: write
