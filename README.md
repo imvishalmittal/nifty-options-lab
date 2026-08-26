@@ -74,6 +74,7 @@ Active GitHub Actions workflows are intentionally limited to:
 
 - `CI` — lint, build, rendered-site tests, and strategy regression tests.
 - `NIFTY Paper Session` — weekday continuous paper suite starting at about **09:20 IST**, producing V2–V8 shadow outcomes.
+- `NIFTY Paper Post-Close Recovery` — at **15:40 IST**, causally replays only an incomplete data/infrastructure session, verifies it, and persists it without overwriting a terminal live outcome.
 - `NIFTY Paper Smoke` — manually checks paper mechanics, Groww authentication, and a small historical-data request.
 - `Research - NIFTY ...` opportunity workflows — four isolated strategy backtests, their suite chain, and comparison report.
 
@@ -99,6 +100,8 @@ app/
 paper/
   paper-engine.mjs                 current forward paper mechanics
   run-session.mjs                  Groww-backed continuous paper session
+  replay-session.mjs               Deterministic post-close recovery
+  paper-contract-selection.mjs     Complete 50-point near-spot strike ladder
   build-ledger.mjs                 research-artifact → dashboard ledger conversion
 public/paper/
   trades.json                      historical + forward paper trade ledger

@@ -1,0 +1,33 @@
+name: NIFTY Paper Repair CI
+
+on:
+  pull_request:
+    paths:
+      - 'paper/**'
+      - 'tests/paper-*.test.mjs'
+      - '.github/workflows/nifty-paper-*.yml'
+  push:
+    branches: [agent/fix-paper-contract-selection]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate paper engine, selection, workflow health, and replay
+        run: >-
+          node --test
+          tests/paper-engine.test.mjs
+          tests/paper-itm-contracts-recovery.test.mjs
+          tests/paper-contract-selection.test.mjs
+          tests/paper-session-outcome.test.mjs
+          tests/paper-replay.test.mjs
+          tests/paper-replay-integrity.test.mjs
+

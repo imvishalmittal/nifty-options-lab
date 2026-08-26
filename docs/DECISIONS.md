@@ -20,6 +20,16 @@
 
 **Decision:** Use one weekday job beginning around 09:20 IST and keep it alive through the session. This is acceptable for paper observation, not production live execution.
 
+Incomplete data statuses are persisted for diagnosis but fail workflow health after bounded retries. A green Action therefore means a terminal strategy outcome, not merely that the runner process exited normally.
+
+## ADR-010: Complete strike grid and guarded replay recovery
+
+**Decision:** Construct a deterministic 50-point NIFTY strike grid around the contemporaneous 09:25 spot and merge it with Groww's contract catalogue. Missing catalogue strikes are probed using the canonical Groww symbol and explicitly tagged `synthetic_gap_fill`; invalid symbols remain auditable and are never assigned fabricated prices.
+
+Both CE and PE must independently bracket ₹180. A one-sided fallback would change the strategy and is not allowed.
+
+If the live session remains incomplete, a 15:40 IST recovery may replay the same frozen rules from historical one-minute candles. Replay uses the 09:25 selection premium, completed 09:30–09:44 signals, next-bar-open entries, stop-first exits, period-correct charges, and an integrity gate. It is idempotent and cannot replace a terminal live outcome.
+
 ## ADR-006: Causal completed-bar stop updates
 
 **Decision:** A stop calculated from a completed 1-minute bar becomes effective only from the following bar.

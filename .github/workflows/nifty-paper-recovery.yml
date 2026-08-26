@@ -1,0 +1,84 @@
+name: NIFTY Paper Post-Close Recovery
+
+on:
+  schedule:
+    # 15:40 IST, after the 15:29 strategy exit candle is complete.
+    - cron: '10 10 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nifty-paper-session
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check whether today's paper session needs recovery
+        id: guard
+        run: node paper/session-guard.mjs
+
+      - name: Resolve Groww access token
+        if: steps.guard.outputs.run == 'true'
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+
+      - name: Resolve India session date
+        if: steps.guard.outputs.run == 'true'
+        id: session
+        run: echo "date=$(TZ=Asia/Kolkata date +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Reconstruct paper session causally
+        if: steps.guard.outputs.run == 'true'
+        env:
+          GROWW_REQUEST_SPACING_MS: '1500'
+        run: node paper/replay-session.mjs --date=${{ steps.session.outputs.date }} --out=paper-replay.json
+
+      - name: Verify replay integrity
+        if: steps.guard.outputs.run == 'true'
+        run: node paper/verify-paper-replay.mjs --in=paper-replay.json --out=paper-replay-integrity.json
+
+      - name: Apply verified recovery
+        if: steps.guard.outputs.run == 'true'
+        run: |
+          node paper/apply-paper-replay.mjs --in=paper-replay.json --integrity=paper-replay-integrity.json
+          node paper/merge-v4-ledger.mjs
+          node paper/assert-session-outcome.mjs
+
+      - name: Persist recovered journal
+        if: steps.guard.outputs.run == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/paper/trades.json public/paper/session-status.json public/paper/v4-trades.json public/paper/v4-session-status.json public/paper/sessions.json public/paper/replays
+          if git diff --cached --quiet; then
+            echo "No recovered paper journal change"
+          else
+            git commit -m "Recover NIFTY paper session ${{ steps.session.outputs.date }}"
+            git push origin HEAD:main
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.guard.outputs.run == 'true'
+        with:
+          name: nifty-paper-replay-${{ steps.session.outputs.date }}
+          path: |
+            paper-replay.json
+            paper-replay-integrity.json
+          retention-days: 90
+

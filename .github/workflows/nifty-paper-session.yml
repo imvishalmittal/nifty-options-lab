@@ -71,9 +71,11 @@ jobs:
           cat /tmp/v4-paper.log
 
           node paper/merge-v4-ledger.mjs
+          outcome_rc=0
+          node paper/assert-session-outcome.mjs || outcome_rc=$?
 
-          if [ "$base_rc" -ne 0 ] || [ "$v4_rc" -ne 0 ]; then
-            echo "Paper runner failure: base=$base_rc v4=$v4_rc"
+          if [ "$base_rc" -ne 0 ] || [ "$v4_rc" -ne 0 ] || [ "$outcome_rc" -ne 0 ]; then
+            echo "Paper runner failure: base=$base_rc v4=$v4_rc outcome=$outcome_rc"
             exit 1
           fi
 
