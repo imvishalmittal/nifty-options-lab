@@ -1,0 +1,59 @@
+name: Research - ETF dip recovery free daily 3-year approximation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/etf-dip-recovery-3m]
+    paths:
+      - research/etf-dip-recovery/requests/run-daily-3y.json
+
+permissions:
+  contents: read
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify strategy, archive parser, and integrity tests
+        run: >-
+          node --test
+          tests/etf-dip-recovery-engine.test.mjs
+          tests/etf-dip-recovery-integrity.test.mjs
+          tests/dhan-etf-dip-recovery.test.mjs
+          tests/nse-daily-etf-dip-recovery.test.mjs
+
+      - name: Run free NSE daily approximation
+        run: >-
+          node research/nse-daily-etf-dip-recovery-backtest.mjs
+          --start=2023-08-28
+          --end=2026-08-27
+          --concurrency=6
+          --out=etf-dip-recovery-daily-3y-result.json
+
+      - name: Audit result integrity
+        if: ${{ always() && hashFiles('etf-dip-recovery-daily-3y-result.json') != '' }}
+        run: >-
+          node research/etf-dip-recovery-integrity.mjs
+          --in=etf-dip-recovery-daily-3y-result.json
+          --out=etf-dip-recovery-daily-3y-integrity.json
+          --start=2023-08-28
+          --end=2026-08-27
+          --require-capital=true
+
+      - name: Upload research artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: etf-dip-recovery-free-daily-3y
+          path: |
+            etf-dip-recovery-daily-3y-result.json
+            etf-dip-recovery-daily-3y-integrity.json
+          if-no-files-found: warn
+          retention-days: 90

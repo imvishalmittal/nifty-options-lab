@@ -37,3 +37,11 @@ The repository secret `DHAN_ACCESS_TOKEN` must contain a currently valid Dhan ac
 It never imports or calls an order endpoint.
 
 In addition to the original trade statistics, the long report includes equal-notional capital-slot usage: peak concurrent positions, average concurrent positions, open positions at the end, and marked return divided by the observed peak number of slots. This exposes capital lock-up from the no-stop/no-forced-exit rule.
+
+## Free daily robustness approximation
+
+The workflow `research-etf-dip-recovery-daily-3y.yml` requires no broker account or paid API. It downloads official NSE daily bhavcopy archives and tests 2023-08-28 through 2026-08-27.
+
+It is intentionally labelled an approximation because it changes two data-dependent parts of the creator strategy: daily close replaces the 15:15 price and full-session volume replaces volume accumulated by 15:15. The entry-day high is ignored because it occurred before a closing-price entry. Split-like ETF unit changes are mechanically adjusted and disclosed in the artifact.
+
+This free run is suitable for rejecting a weak strategy or deciding whether exact intraday validation is worth paying for. It must not be presented as an exact replay.
