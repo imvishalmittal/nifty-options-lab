@@ -64,3 +64,5 @@ jobs:
           if (!Array.isArray(candles) || candles.length === 0) throw new Error('Groww smoke returned no NIFTY candles');
           console.log(`Groww smoke OK: ${candles.length} historical NIFTY candle(s) fetched`);
           NODE
+
+# TOTP probe: 2026-08-27T04:15Z
