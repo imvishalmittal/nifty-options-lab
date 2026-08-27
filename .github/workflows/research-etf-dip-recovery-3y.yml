@@ -1,6 +1,6 @@
 name: Research - ETF dip recovery 3-year replay
 
-run-name: ETF dip recovery ${{ inputs.start_date }} to ${{ inputs.end_date }}
+run-name: ETF dip recovery ${{ inputs.start_date || '2023-08-28' }} to ${{ inputs.end_date || '2026-08-27' }}
 
 on:
   workflow_dispatch:
@@ -13,6 +13,10 @@ on:
         description: Last trading date to test
         required: true
         default: '2026-08-27'
+  push:
+    branches: [research/etf-dip-recovery-3m]
+    paths:
+      - research/etf-dip-recovery/requests/run-3y.json
 
 permissions:
   contents: read
@@ -49,8 +53,8 @@ jobs:
           DHAN_ACCESS_TOKEN: ${{ secrets.DHAN_ACCESS_TOKEN }}
         run: >-
           node research/dhan-etf-dip-recovery-backtest.mjs
-          --start=${{ inputs.start_date }}
-          --end=${{ inputs.end_date }}
+          --start=${{ inputs.start_date || '2023-08-28' }}
+          --end=${{ inputs.end_date || '2026-08-27' }}
           --pause-ms=225
           --out=etf-dip-recovery-3y-result.json
 
@@ -60,15 +64,15 @@ jobs:
           node research/etf-dip-recovery-integrity.mjs
           --in=etf-dip-recovery-3y-result.json
           --out=etf-dip-recovery-3y-integrity.json
-          --start=${{ inputs.start_date }}
-          --end=${{ inputs.end_date }}
+          --start=${{ inputs.start_date || '2023-08-28' }}
+          --end=${{ inputs.end_date || '2026-08-27' }}
           --require-capital=true
 
       - name: Upload research artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: etf-dip-recovery-3y-${{ inputs.start_date }}-${{ inputs.end_date }}
+          name: etf-dip-recovery-3y-${{ inputs.start_date || '2023-08-28' }}-${{ inputs.end_date || '2026-08-27' }}
           path: |
             etf-dip-recovery-3y-result.json
             etf-dip-recovery-3y-integrity.json
