@@ -126,11 +126,41 @@ function percentile(values, p) {
   return sorted[index];
 }
 
-export function summarizeTrades(trades, executionHaircutsPct = [0, 0.25, 0.5]) {
+export function summarizeCapitalUse(trades, sessions, executionHaircutsPct = [0, 0.25, 0.5]) {
+  const occupancy = sessions.map((date) => ({
+    date,
+    activeSlots: trades.filter((trade) => (
+      trade.date <= date && (trade.exitDate === null || trade.exitDate >= date)
+    )).length,
+  }));
+  const peakActiveSlots = occupancy.length ? Math.max(...occupancy.map((day) => day.activeSlots)) : 0;
+  const peakDates = occupancy
+    .filter((day) => day.activeSlots === peakActiveSlots && peakActiveSlots > 0)
+    .map((day) => day.date);
+  const totalMarkedProfitUnits = trades.reduce((sum, trade) => sum + trade.grossReturnPct / 100, 0);
+  const normalized = Object.fromEntries(executionHaircutsPct.map((haircut) => {
+    const profitUnits = trades.reduce((sum, trade) => sum + (trade.grossReturnPct - haircut) / 100, 0);
+    return [haircut, peakActiveSlots ? (profitUnits / peakActiveSlots) * 100 : null];
+  }));
+  return {
+    definition: 'Each trade uses one equal-notional capital slot; a slot remains occupied through its target day, and open trades remain occupied through the final session.',
+    peakActiveSlots,
+    peakDates,
+    averageActiveSlots: occupancy.length
+      ? occupancy.reduce((sum, day) => sum + day.activeSlots, 0) / occupancy.length
+      : 0,
+    occupiedSlotSessions: occupancy.reduce((sum, day) => sum + day.activeSlots, 0),
+    finalOpenSlots: trades.filter((trade) => trade.status === 'OPEN').length,
+    totalMarkedProfitUnits,
+    capitalNormalizedMarkedReturnPct: peakActiveSlots ? (totalMarkedProfitUnits / peakActiveSlots) * 100 : null,
+    capitalNormalizedAfterExecutionHaircutPct: normalized,
+  };
+}
+
+export function summarizeTrades(trades, executionHaircutsPct = [0, 0.25, 0.5], horizons = [10, 20, 40, 60]) {
   const closed = trades.filter((trade) => trade.status === 'TARGET');
   const open = trades.filter((trade) => trade.status === 'OPEN');
   const durations = closed.map((trade) => trade.sessionsToTarget);
-  const horizons = [10, 20, 40, 60];
   const targetByHorizon = Object.fromEntries(horizons.map((horizon) => {
     const mature = trades.filter((trade) => {
       const observed = trade.horizonReturns[horizon];
@@ -182,7 +212,14 @@ export function replayStrategy({ sessions, candidatesByDate, marketBySymbol }, o
     }
   }
   const trades = rawTrades.map((trade) => scoreTrade(trade, marketBySymbol, sessions, options));
-  return { selections, trades, summary: summarizeTrades(trades, options.executionHaircutsPct) };
+  const executionHaircutsPct = options.executionHaircutsPct ?? [0, 0.25, 0.5];
+  const horizons = options.horizons ?? [10, 20, 40, 60];
+  return {
+    selections,
+    trades,
+    summary: summarizeTrades(trades, executionHaircutsPct, horizons),
+    capitalUse: summarizeCapitalUse(trades, sessions, executionHaircutsPct),
+  };
 }
 
 export const STRATEGY_DEFAULTS = DEFAULTS;

@@ -68,6 +68,7 @@ function containsAny(text, terms) {
 // as the ETF name. Keep the sector decision auditable instead of guessing from
 // incomplete substrings during replay.
 const SYMBOL_CATEGORY_OVERRIDES = Object.freeze({
+  ABSLMSCIN: 'BROAD_MARKET',
   ABSLBANETF: 'BANKING_FINANCIAL',
   BBNPNBETF: 'BANKING_FINANCIAL',
   BFSI: 'BANKING_FINANCIAL',
@@ -76,23 +77,35 @@ const SYMBOL_CATEGORY_OVERRIDES = Object.freeze({
   CEMNTGROWW: 'METALS_MATERIALS',
   COMMOIETF: 'METALS_MATERIALS',
   CONSUMIETF: 'FMCG_CONSUMPTION',
+  DIVIDEND: 'FACTOR',
   DIVOPPBEES: 'FACTOR',
+  ECAPINSURE: 'BANKING_FINANCIAL',
+  ELMDIV: 'FACTOR',
   EVIETF: 'AUTO',
   FINIETF: 'BANKING_FINANCIAL',
   GSEC10IETF: 'DEBT_LIQUID',
   GSEC5IETF: 'DEBT_LIQUID',
+  GROWWHOSPI: 'HEALTHCARE_PHARMA',
   GROWWNET: 'TECHNOLOGY_IT',
   GROWWRAIL: 'INFRA_REALTY',
   HYBRIDETF: 'MULTI_ASSET',
+  HDFCBSE500: 'BROAD_MARKET',
+  ICICIB22: 'PSU_DEFENCE',
   INSUREIETF: 'BANKING_FINANCIAL',
   ITIETF: 'TECHNOLOGY_IT',
   JUNIORBEES: 'BROAD_MARKET',
+  LARGEMID50: 'BROAD_MARKET',
   LIQGRWBEES: 'DEBT_LIQUID',
   MANUFGBEES: 'INDUSTRIAL_MANUFACTURING',
   MID150BEES: 'BROAD_MARKET',
   MIDSELIETF: 'BROAD_MARKET',
   MOGSEC: 'DEBT_LIQUID',
+  MASPTOP50: 'GLOBAL',
+  MOIPO: 'FACTOR',
   MOM30IETF: 'FACTOR',
+  MSCI360: 'BROAD_MARKET',
+  MSCIADD: 'BROAD_MARKET',
+  MSCIINDIA: 'BROAD_MARKET',
   NETF: 'BROAD_MARKET',
   NEXT50ETF: 'BROAD_MARKET',
   NEXT50IETF: 'BROAD_MARKET',
@@ -100,6 +113,7 @@ const SYMBOL_CATEGORY_OVERRIDES = Object.freeze({
   NV20IETF: 'FACTOR',
   PVTBANIETF: 'BANKING_FINANCIAL',
   QUAL30IETF: 'FACTOR',
+  SELECTIPO: 'FACTOR',
   SBILIQETF: 'DEBT_LIQUID',
   SBINEQWETF: 'FACTOR',
   SBISMLETF: 'BROAD_MARKET',
@@ -265,7 +279,7 @@ function parseArgs(argv) {
   return args;
 }
 
-function candidateForDate({ instrument, date, dailyDates, closes, intraday }) {
+export function candidateForDate({ instrument, date, dailyDates, closes, intraday }) {
   const index = dailyDates.indexOf(date);
   if (index < 31) return null;
   const previousClose = closes.get(dailyDates[index - 1]);
@@ -366,6 +380,7 @@ async function main() {
     })),
     trades: replay.trades,
     summary: replay.summary,
+    capitalUse: replay.capitalUse,
     limitations: [
       'Current instrument master is used, so ETFs delisted before the run date are not represented.',
       'The test treats a 7% target touch as a limit fill at the target price and reports 0%, 0.25%, and 0.5% execution-haircut sensitivities.',

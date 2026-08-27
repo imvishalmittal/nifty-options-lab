@@ -24,3 +24,16 @@ This branch-only study replays the ETF strategy discussed on 27 August 2026. It 
 The artifact reports target hits, open positions, marked and adverse returns, sessions to target, maturity-aware 10/20/40/60-session hit rates, category exclusions, provider coverage, and 0%/0.25%/0.5% round-trip execution-haircut sensitivities.
 
 The current Groww instrument master defines the universe. Groww classifies both ordinary NSE cash shares and ETFs as `instrument_type=EQ`, so the discovery rule requires an ETF, Exchange Traded Fund, or BeES identity token in the exchange name/symbol and tests that ordinary shares are excluded. Using the current master introduces survivorship limitations for ETFs delisted before the run date, and the result discloses that limitation explicitly.
+
+## Exact three-year extension
+
+The manual workflow `research-etf-dip-recovery-3y.yml` extends the same frozen rules to a default period of 2023-08-28 through 2026-08-27. It uses DhanHQ historical data because Groww's historical endpoint is limited to three months.
+
+The repository secret `DHAN_ACCESS_TOKEN` must contain a currently valid Dhan access token with the Data API subscription enabled. Dhan access tokens generated from Dhan Web are valid for 24 hours, so generate the token shortly before starting the workflow. The runner calls only these read-only endpoints:
+
+- `/v2/charts/historical`
+- `/v2/charts/intraday`
+
+It never imports or calls an order endpoint.
+
+In addition to the original trade statistics, the long report includes equal-notional capital-slot usage: peak concurrent positions, average concurrent positions, open positions at the end, and marked return divided by the observed peak number of slots. This exposes capital lock-up from the no-stop/no-forced-exit rule.

@@ -5,6 +5,7 @@ import {
   replayStrategy,
   scoreTrade,
   selectDailyTrade,
+  summarizeCapitalUse,
 } from '../research/etf-dip-recovery-engine.mjs';
 import {
   chunkDateRange,
@@ -86,6 +87,18 @@ test('open trades stay marked to market and are not counted as wins', () => {
   assert.equal(replay.summary.targets, 0);
   assert.equal(replay.summary.open, 1);
   assert.ok(Math.abs(replay.trades[0].grossReturnPct + 3) < 1e-9);
+});
+
+test('capital use counts overlapping open positions as equal-notional slots', () => {
+  const sessions = ['2026-06-01', '2026-06-02', '2026-06-03'];
+  const capital = summarizeCapitalUse([
+    { date: '2026-06-01', exitDate: '2026-06-02', status: 'TARGET', grossReturnPct: 7 },
+    { date: '2026-06-02', exitDate: null, status: 'OPEN', grossReturnPct: -2 },
+  ], sessions);
+  assert.equal(capital.peakActiveSlots, 2);
+  assert.equal(capital.finalOpenSlots, 1);
+  assert.equal(capital.occupiedSlotSessions, 4);
+  assert.ok(Math.abs(capital.capitalNormalizedMarkedReturnPct - 2.5) < 1e-9);
 });
 
 test('five-minute chunks never exceed the official 14-calendar-day request span', () => {

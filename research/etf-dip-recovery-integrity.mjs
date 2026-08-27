@@ -14,7 +14,7 @@ function approximately(a, b, tolerance = 1e-8) {
   return Number.isFinite(Number(a)) && Number.isFinite(Number(b)) && Math.abs(Number(a) - Number(b)) <= tolerance;
 }
 
-export function inspectResult(result) {
+export function inspectResult(result, expected = {}) {
   const checks = [];
   const check = (name, pass, detail) => checks.push({ name, pass: Boolean(pass), detail });
   const rules = result.rules ?? {};
@@ -22,9 +22,15 @@ export function inspectResult(result) {
   const selections = result.selections ?? [];
   const tradeDates = new Set(trades.map((trade) => trade.date));
 
+  const expectedStartDate = expected.startDate ?? '2026-05-28';
+  const expectedEndDate = expected.endDate ?? '2026-08-27';
+  const calendarDays = Math.round((new Date(`${expectedEndDate}T00:00:00Z`) - new Date(`${expectedStartDate}T00:00:00Z`)) / 86_400_000) + 1;
+  const minSessions = expected.minSessions ?? Math.floor(calendarDays * 0.55);
+  const maxSessions = expected.maxSessions ?? Math.ceil(calendarDays * 0.8);
+
   check('schema_version', result.schemaVersion === 1, result.schemaVersion);
-  check('frozen_period', result.period?.startDate === '2026-05-28' && result.period?.endDate === '2026-08-27', result.period);
-  check('session_count_plausible', result.period?.sessions >= 55 && result.period?.sessions <= 70, result.period?.sessions);
+  check('expected_period', result.period?.startDate === expectedStartDate && result.period?.endDate === expectedEndDate, result.period);
+  check('session_count_plausible', result.period?.sessions >= minSessions && result.period?.sessions <= maxSessions, { sessions: result.period?.sessions, minSessions, maxSessions });
   check('daily_drop_rule', rules.dailyDropPct === -1, rules.dailyDropPct);
   check('thirty_session_at_or_below_minus_2_5', rules.maxThirtyDayReturnPct === -2.5 && rules.minThirtyDayReturnPct === undefined, { ceiling: rules.maxThirtyDayReturnPct });
   check('volume_rule', rules.minVolume === 500_000, rules.minVolume);
@@ -56,10 +62,28 @@ export function inspectResult(result) {
   const selectedDates = new Set(selections.filter((item) => item.status === 'SELECTED').map((item) => item.date));
   check('selection_trade_equality', selectedDates.size === trades.length && trades.every((trade) => selectedDates.has(trade.date)), { selections: selectedDates.size, trades: trades.length });
 
+  const consecutiveCategoryViolations = [];
+  for (let index = 1; index < selections.length; index++) {
+    const previous = selections[index - 1];
+    const current = selections[index];
+    if (previous?.selected && current?.selected && previous.selected.category === current.selected.category) {
+      consecutiveCategoryViolations.push({ previousDate: previous.date, date: current.date, category: current.selected.category });
+    }
+  }
+  check('no_consecutive_session_same_category', consecutiveCategoryViolations.length === 0, consecutiveCategoryViolations);
+
   const successful = result.dataQuality?.successfulSymbols ?? 0;
   const universe = result.universe?.instruments ?? 0;
   const coverageRatio = universe ? successful / universe : 0;
   check('provider_coverage_at_least_90pct', coverageRatio >= 0.9, { successful, universe, coverageRatio });
+
+  if (expected.requireCapitalUse) {
+    const capitalUse = result.capitalUse ?? {};
+    check('capital_use_reported', Number.isInteger(capitalUse.peakActiveSlots)
+      && capitalUse.peakActiveSlots >= capitalUse.finalOpenSlots
+      && capitalUse.finalOpenSlots === result.summary?.open,
+    capitalUse);
+  }
 
   return { status: checks.every((item) => item.pass) ? 'PASS' : 'FAIL', checks };
 }
@@ -68,7 +92,13 @@ function main() {
   const args = parseArgs(process.argv.slice(2));
   const input = args.in || 'etf-dip-recovery-result.json';
   const output = args.out || 'etf-dip-recovery-integrity.json';
-  const integrity = inspectResult(JSON.parse(fs.readFileSync(input, 'utf8')));
+  const integrity = inspectResult(JSON.parse(fs.readFileSync(input, 'utf8')), {
+    startDate: args.start,
+    endDate: args.end,
+    minSessions: args['min-sessions'] === undefined ? undefined : Number(args['min-sessions']),
+    maxSessions: args['max-sessions'] === undefined ? undefined : Number(args['max-sessions']),
+    requireCapitalUse: args['require-capital'] === 'true',
+  });
   fs.writeFileSync(output, JSON.stringify(integrity, null, 2));
   process.stdout.write(JSON.stringify(integrity, null, 2));
   if (integrity.status !== 'PASS') process.exitCode = 1;

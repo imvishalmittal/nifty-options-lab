@@ -37,3 +37,16 @@ test('integrity rejects an unclassified selected ETF', () => {
   result.trades[0].category = 'UNCLASSIFIED:MYSTERY';
   assert.equal(inspectResult(result).status, 'FAIL');
 });
+
+test('integrity rejects the same category on consecutive trading sessions', () => {
+  const result = validResult();
+  result.selections = [
+    { date: '2026-06-01', status: 'SELECTED', selected: { category: 'GOLD' } },
+    { date: '2026-06-02', status: 'SELECTED', selected: { category: 'GOLD' } },
+  ];
+  result.trades.push({ ...result.trades[0], date: '2026-06-02' });
+  result.summary = { trades: 2, targets: 0, open: 2 };
+  const integrity = inspectResult(result);
+  assert.equal(integrity.status, 'FAIL');
+  assert.equal(integrity.checks.find((item) => item.name === 'no_consecutive_session_same_category').pass, false);
+});
