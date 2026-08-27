@@ -16,6 +16,7 @@ function sessionIndex(sessions, date) {
 
 export function eligibleCandidate(candidate, options = {}) {
   const cfg = { ...DEFAULTS, ...options };
+  if (!candidate.category || String(candidate.category).startsWith('UNCLASSIFIED:')) return false;
   if (!finite(candidate.entryPrice) || Number(candidate.entryPrice) <= 0) return false;
   if (!finite(candidate.dayReturnPct) || Number(candidate.dayReturnPct) > cfg.dailyDropPct) return false;
   if (!finite(candidate.thirtyDayReturnPct)) return false;

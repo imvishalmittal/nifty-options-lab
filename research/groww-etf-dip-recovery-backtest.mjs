@@ -64,8 +64,53 @@ function containsAny(text, terms) {
   return terms.some((term) => text.includes(` ${term} `) || text.includes(term));
 }
 
+// Groww's instrument master often exposes only an abbreviated trading symbol
+// as the ETF name. Keep the sector decision auditable instead of guessing from
+// incomplete substrings during replay.
+const SYMBOL_CATEGORY_OVERRIDES = Object.freeze({
+  ABSLBANETF: 'BANKING_FINANCIAL',
+  BBNPNBETF: 'BANKING_FINANCIAL',
+  BSE500IETF: 'BROAD_MARKET',
+  CASHIETF: 'DEBT_LIQUID',
+  COMMOIETF: 'METALS_MATERIALS',
+  CONSUMIETF: 'FMCG_CONSUMPTION',
+  DIVOPPBEES: 'FACTOR',
+  EVIETF: 'AUTO',
+  FINIETF: 'BANKING_FINANCIAL',
+  GSEC10IETF: 'DEBT_LIQUID',
+  GSEC5IETF: 'DEBT_LIQUID',
+  HYBRIDETF: 'MULTI_ASSET',
+  INSUREIETF: 'BANKING_FINANCIAL',
+  ITIETF: 'TECHNOLOGY_IT',
+  JUNIORBEES: 'BROAD_MARKET',
+  LIQGRWBEES: 'DEBT_LIQUID',
+  MANUFGBEES: 'INDUSTRIAL_MANUFACTURING',
+  MID150BEES: 'BROAD_MARKET',
+  MIDSELIETF: 'BROAD_MARKET',
+  MOGSEC: 'DEBT_LIQUID',
+  MOM30IETF: 'FACTOR',
+  NETF: 'BROAD_MARKET',
+  NEXT50ETF: 'BROAD_MARKET',
+  NEXT50IETF: 'BROAD_MARKET',
+  NV20BEES: 'FACTOR',
+  NV20IETF: 'FACTOR',
+  PVTBANIETF: 'BANKING_FINANCIAL',
+  QUAL30IETF: 'FACTOR',
+  SBILIQETF: 'DEBT_LIQUID',
+  SBINEQWETF: 'FACTOR',
+  SBISMLETF: 'BROAD_MARKET',
+  SBIVALETF: 'FACTOR',
+  SHARIABEES: 'FACTOR',
+  SMALLIETF: 'BROAD_MARKET',
+  SNXT30BEES: 'BROAD_MARKET',
+  TNIDETF: 'TECHNOLOGY_IT',
+  TOP15IETF: 'FACTOR',
+  VAL30IETF: 'FACTOR',
+});
+
 export function classifyEtf(instrument) {
   const symbol = String(instrument.trading_symbol || '').toUpperCase();
+  if (SYMBOL_CATEGORY_OVERRIDES[symbol]) return SYMBOL_CATEGORY_OVERRIDES[symbol];
   const text = `${words(symbol)}${words(instrument.name)}`;
   const match = (category, terms) => (containsAny(text, terms) ? category : null);
   return match('GOLD', ['GOLD'])

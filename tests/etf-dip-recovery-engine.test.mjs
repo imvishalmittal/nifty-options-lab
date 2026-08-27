@@ -28,6 +28,7 @@ test('eligibility requires a negative 30-session return strictly above -2.5%', (
   assert.equal(eligibleCandidate(candidate('A', 'BANKING', 0.1)), false);
   assert.equal(eligibleCandidate(candidate('A', 'BANKING', -1, -0.99)), false);
   assert.equal(eligibleCandidate(candidate('A', 'BANKING', -1, -1.1, 500_000)), false);
+  assert.equal(eligibleCandidate(candidate('A', 'UNCLASSIFIED:A', -1)), false);
 });
 
 test('selection chooses the most negative eligible monthly return', () => {
@@ -104,6 +105,10 @@ test('instrument master filtering keeps NSE cash ETFs and assigns deterministic 
   const universe = etfUniverse(rows);
   assert.deepEqual(universe.map((item) => [item.symbol, item.category]), [['BANKBEES', 'BANKING_FINANCIAL'], ['GOLDBEES', 'GOLD']]);
   assert.equal(classifyEtf({ trading_symbol: 'NIFTYBEES', name: 'Nifty 50 ETF' }), 'BROAD_MARKET');
+  assert.equal(classifyEtf({ trading_symbol: 'PVTBANIETF', name: 'PVTBANIETF' }), 'BANKING_FINANCIAL');
+  assert.equal(classifyEtf({ trading_symbol: 'JUNIORBEES', name: 'JUNIORBEES' }), 'BROAD_MARKET');
+  assert.equal(classifyEtf({ trading_symbol: 'ITIETF', name: 'ICICITECH' }), 'TECHNOLOGY_IT');
+  assert.equal(classifyEtf({ trading_symbol: 'VAL30IETF', name: 'ICICI Prudential Nif' }), 'FACTOR');
 });
 
 test('15:15 entry summary uses only volume known through the 15:10 bar', () => {
