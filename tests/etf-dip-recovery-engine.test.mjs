@@ -110,6 +110,9 @@ test('instrument master filtering keeps NSE cash ETFs and assigns deterministic 
   assert.equal(classifyEtf({ trading_symbol: 'JUNIORBEES', name: 'JUNIORBEES' }), 'BROAD_MARKET');
   assert.equal(classifyEtf({ trading_symbol: 'ITIETF', name: 'ICICITECH' }), 'TECHNOLOGY_IT');
   assert.equal(classifyEtf({ trading_symbol: 'VAL30IETF', name: 'ICICI Prudential Nif' }), 'FACTOR');
+  assert.equal(classifyEtf({ trading_symbol: 'BFSI', name: 'Mirae Asset Nifty Financial Services ETF' }), 'BANKING_FINANCIAL');
+  assert.equal(classifyEtf({ trading_symbol: 'GROWWRAIL', name: 'Nifty India Railways PSU Index' }), 'INFRA_REALTY');
+  assert.equal(classifyEtf({ trading_symbol: 'TECH', name: 'Aditya Birla Sun Life Nifty IT ETF' }), 'TECHNOLOGY_IT');
 });
 
 test('15:15 entry summary uses only volume known through the 15:10 bar', () => {
