@@ -26,7 +26,7 @@ export function inspectResult(result) {
   check('frozen_period', result.period?.startDate === '2026-05-28' && result.period?.endDate === '2026-08-27', result.period);
   check('session_count_plausible', result.period?.sessions >= 55 && result.period?.sessions <= 70, result.period?.sessions);
   check('daily_drop_rule', rules.dailyDropPct === -1, rules.dailyDropPct);
-  check('negative_30_session_band', rules.minThirtyDayReturnPct === -2.5 && rules.maxThirtyDayReturnPct === 0, { min: rules.minThirtyDayReturnPct, max: rules.maxThirtyDayReturnPct });
+  check('thirty_session_at_or_below_minus_2_5', rules.maxThirtyDayReturnPct === -2.5 && rules.minThirtyDayReturnPct === undefined, { ceiling: rules.maxThirtyDayReturnPct });
   check('volume_rule', rules.minVolume === 500_000, rules.minVolume);
   check('target_only_exit', rules.targetReturnPct === 7 && String(rules.exit).includes('no stop'), rules.exit);
   check('one_trade_per_day', tradeDates.size === trades.length, { trades: trades.length, distinctDates: tradeDates.size });
@@ -34,8 +34,7 @@ export function inspectResult(result) {
 
   const invalidSignals = trades.filter((trade) => !(
     trade.dayReturnPct <= -1
-    && trade.thirtyDayReturnPct > -2.5
-    && trade.thirtyDayReturnPct < 0
+    && trade.thirtyDayReturnPct <= -2.5
     && trade.volumeToEntry > 500_000
   ));
   check('all_trades_pass_signal', invalidSignals.length === 0, invalidSignals.map((trade) => trade.date));

@@ -6,7 +6,7 @@ This branch-only study replays the ETF strategy discussed on 27 August 2026. It 
 
 - Evaluate NSE cash ETFs at 15:15 IST using the close of the 15:10 five-minute candle.
 - Require the price to be down at least 1% from the previous session close.
-- Require the previous session's 30-trading-session return to be strictly between -2.5% and 0%. If all daily-drop qualifiers have positive 30-session returns, record `NO_QUALIFIER`.
+- Require the previous session's 30-trading-session return to be -2.5% or more negative (at or below -2.5%).
 - Require cumulative volume known by 15:15 to exceed 500,000 units.
 - Rank qualifiers by the most negative eligible 30-session return, then the most negative one-day return, then the highest cumulative volume.
 - Buy no more than one ETF per session.

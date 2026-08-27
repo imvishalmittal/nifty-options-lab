@@ -1,7 +1,6 @@
 const DEFAULTS = Object.freeze({
   dailyDropPct: -1,
-  minThirtyDayReturnPct: -2.5,
-  maxThirtyDayReturnPct: 0,
+  maxThirtyDayReturnPct: -2.5,
   minVolume: 500_000,
   targetReturnPct: 7,
 });
@@ -20,8 +19,7 @@ export function eligibleCandidate(candidate, options = {}) {
   if (!finite(candidate.entryPrice) || Number(candidate.entryPrice) <= 0) return false;
   if (!finite(candidate.dayReturnPct) || Number(candidate.dayReturnPct) > cfg.dailyDropPct) return false;
   if (!finite(candidate.thirtyDayReturnPct)) return false;
-  if (!(Number(candidate.thirtyDayReturnPct) > cfg.minThirtyDayReturnPct)) return false;
-  if (!(Number(candidate.thirtyDayReturnPct) < cfg.maxThirtyDayReturnPct)) return false;
+  if (Number(candidate.thirtyDayReturnPct) > cfg.maxThirtyDayReturnPct) return false;
   if (!finite(candidate.volumeToEntry) || Number(candidate.volumeToEntry) <= cfg.minVolume) return false;
   return true;
 }

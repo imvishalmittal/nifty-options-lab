@@ -341,7 +341,7 @@ async function main() {
       ...STRATEGY_DEFAULTS,
       thirtyDayDefinition: 'previous session close versus close 30 trading sessions earlier',
       ranking: 'most negative eligible thirtyDayReturnPct, then most negative dayReturnPct, then highest volume',
-      positiveThirtyDayAction: 'NO_TRADE',
+      thirtyDayThreshold: 'at or below -2.5%; values above -2.5% are ineligible',
       consecutiveCategoryRule: 'exclude only when the immediately preceding trading session had a purchase in the same category; choose next ranked category',
       exit: 'limit target at entry * 1.07; no stop and no forced exit',
     },

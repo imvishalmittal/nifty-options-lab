@@ -22,9 +22,10 @@ const candidate = (symbol, category, monthly, daily = -1.2, volume = 600_000) =>
   entryPrice: 100,
 });
 
-test('eligibility requires a negative 30-session return strictly above -2.5%', () => {
-  assert.equal(eligibleCandidate(candidate('A', 'BANKING', -2.4)), true);
-  assert.equal(eligibleCandidate(candidate('A', 'BANKING', -2.5)), false);
+test('eligibility requires a 30-session return at or below -2.5%', () => {
+  assert.equal(eligibleCandidate(candidate('A', 'BANKING', -2.4)), false);
+  assert.equal(eligibleCandidate(candidate('A', 'BANKING', -2.5)), true);
+  assert.equal(eligibleCandidate(candidate('A', 'BANKING', -4)), true);
   assert.equal(eligibleCandidate(candidate('A', 'BANKING', 0.1)), false);
   assert.equal(eligibleCandidate(candidate('A', 'BANKING', -1, -0.99)), false);
   assert.equal(eligibleCandidate(candidate('A', 'BANKING', -1, -1.1, 500_000)), false);
@@ -34,7 +35,7 @@ test('eligibility requires a negative 30-session return strictly above -2.5%', (
 test('selection chooses the most negative eligible monthly return', () => {
   const decision = selectDailyTrade({
     date: '2026-06-02',
-    candidates: [candidate('A', 'BANKING', -0.4), candidate('B', 'GOLD', -2.1), candidate('C', 'AUTO', -1.2)],
+    candidates: [candidate('A', 'BANKING', -3.1), candidate('B', 'GOLD', -4.2), candidate('C', 'AUTO', -3.6)],
     priorSessionDate: '2026-06-01',
     priorPurchase: null,
   });
@@ -44,7 +45,7 @@ test('selection chooses the most negative eligible monthly return', () => {
 test('same category on the immediately previous session is skipped for next ranked category', () => {
   const decision = selectDailyTrade({
     date: '2026-06-02',
-    candidates: [candidate('BANK2', 'BANKING', -2.1), candidate('GOLD1', 'GOLD', -1.7)],
+    candidates: [candidate('BANK2', 'BANKING', -4.1), candidate('GOLD1', 'GOLD', -3.7)],
     priorSessionDate: '2026-06-01',
     priorPurchase: { date: '2026-06-01', category: 'BANKING' },
   });
@@ -55,7 +56,7 @@ test('same category on the immediately previous session is skipped for next rank
 test('a no-trade gap removes the consecutive-category block', () => {
   const decision = selectDailyTrade({
     date: '2026-06-03',
-    candidates: [candidate('BANK2', 'BANKING', -2.1)],
+    candidates: [candidate('BANK2', 'BANKING', -4.1)],
     priorSessionDate: '2026-06-02',
     priorPurchase: { date: '2026-06-01', category: 'BANKING' },
   });
@@ -76,7 +77,7 @@ test('target scoring ignores the entry day high before the 15:15 entry', () => {
 
 test('open trades stay marked to market and are not counted as wins', () => {
   const sessions = ['2026-06-01', '2026-06-02'];
-  const candidatesByDate = new Map([['2026-06-01', [candidate('ETF', 'GOLD', -1)]]]);
+  const candidatesByDate = new Map([['2026-06-01', [candidate('ETF', 'GOLD', -3)]]]);
   const marketBySymbol = new Map([['ETF', new Map([
     ['2026-06-01', { high: 101, low: 98, highAfterEntry: 101, lowAfterEntry: 99, markPrice: 100 }],
     ['2026-06-02', { high: 103, low: 96, highAfterEntry: 103, lowAfterEntry: 96, markPrice: 97 }],
