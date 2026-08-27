@@ -1,0 +1,7 @@
+{
+  "strategy": "etf-dip-recovery",
+  "startDate": "2026-05-28",
+  "endDate": "2026-08-27",
+  "requestedAt": "2026-08-27",
+  "purpose": "Initial three-month feasibility replay of the frozen creator strategy"
+}

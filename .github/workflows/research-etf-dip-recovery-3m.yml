@@ -1,0 +1,64 @@
+name: Research - ETF dip recovery 3-month replay
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/etf-dip-recovery-3m]
+    paths:
+      - research/etf-dip-recovery/requests/run.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: groww-backtest-api
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify frozen strategy and integrity tests
+        run: node --test tests/etf-dip-recovery-engine.test.mjs tests/etf-dip-recovery-integrity.test.mjs
+
+      - name: Resolve one-shot Groww access token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+
+      - name: Run ETF dip-recovery replay
+        run: >-
+          node research/groww-etf-dip-recovery-backtest.mjs
+          --start=2026-05-28
+          --end=2026-08-27
+          --pause-ms=300
+          --out=etf-dip-recovery-result.json
+
+      - name: Audit result integrity
+        if: ${{ always() && hashFiles('etf-dip-recovery-result.json') != '' }}
+        run: >-
+          node research/etf-dip-recovery-integrity.mjs
+          --in=etf-dip-recovery-result.json
+          --out=etf-dip-recovery-integrity.json
+
+      - name: Upload research artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: etf-dip-recovery-3m
+          path: |
+            etf-dip-recovery-result.json
+            etf-dip-recovery-integrity.json
+          if-no-files-found: warn
+          retention-days: 90
