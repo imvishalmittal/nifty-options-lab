@@ -96,9 +96,10 @@ test('five-minute chunks never exceed the official 14-calendar-day request span'
 
 test('instrument master filtering keeps NSE cash ETFs and assigns deterministic sectors', () => {
   const rows = [
-    { exchange: 'NSE', segment: 'CASH', instrument_type: 'ETF', trading_symbol: 'BANKBEES', groww_symbol: 'NSE-BANKBEES', name: 'Nippon India ETF Nifty Bank BeES', buy_allowed: '1' },
-    { exchange: 'NSE', segment: 'CASH', instrument_type: 'ETF', trading_symbol: 'GOLDBEES', groww_symbol: 'NSE-GOLDBEES', name: 'Gold ETF', buy_allowed: '1' },
-    { exchange: 'BSE', segment: 'CASH', instrument_type: 'ETF', trading_symbol: 'IGNORE', buy_allowed: '1' },
+    { exchange: 'NSE', segment: 'CASH', instrument_type: 'EQ', trading_symbol: 'BANKBEES', groww_symbol: 'NSE-BANKBEES', name: 'Nippon India ETF Nifty Bank BeES', buy_allowed: '1' },
+    { exchange: 'NSE', segment: 'CASH', instrument_type: 'EQ', trading_symbol: 'GOLDBEES', groww_symbol: 'NSE-GOLDBEES', name: 'Gold ETF', buy_allowed: '1' },
+    { exchange: 'NSE', segment: 'CASH', instrument_type: 'EQ', trading_symbol: 'RELIANCE', name: 'Reliance Industries Limited', buy_allowed: '1' },
+    { exchange: 'BSE', segment: 'CASH', instrument_type: 'EQ', trading_symbol: 'IGNOREETF', name: 'Ignore ETF', buy_allowed: '1' },
   ];
   const universe = etfUniverse(rows);
   assert.deepEqual(universe.map((item) => [item.symbol, item.category]), [['BANKBEES', 'BANKING_FINANCIAL'], ['GOLDBEES', 'GOLD']]);

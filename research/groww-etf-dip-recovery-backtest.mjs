@@ -89,7 +89,17 @@ export function classifyEtf(instrument) {
 export function etfUniverse(instruments) {
   const bySymbol = new Map();
   for (const instrument of instruments) {
-    const isEtf = String(instrument.instrument_type).toUpperCase() === 'ETF';
+    // Groww's instrument annexure classifies both ordinary shares and ETFs as
+    // instrument_type=EQ. ETF identity must therefore come from the exchange
+    // name/symbol rather than a non-existent ETF instrument type.
+    const identity = `${words(instrument.trading_symbol)}${words(instrument.name)}`;
+    const isCashEquity = String(instrument.instrument_type).toUpperCase() === 'EQ';
+    const isEtf = isCashEquity && (
+      /\bETF\b/.test(identity)
+      || identity.includes(' EXCHANGE TRADED FUND ')
+      || identity.includes(' BEES ')
+      || /(?:ETF|BEES)$/.test(String(instrument.trading_symbol).toUpperCase())
+    );
     const isNseCash = instrument.exchange === 'NSE' && instrument.segment === 'CASH';
     const allowed = !instrument.buy_allowed || String(instrument.buy_allowed) === '1';
     if (!isEtf || !isNseCash || !allowed || !instrument.trading_symbol) continue;
@@ -290,7 +300,12 @@ async function main() {
       consecutiveCategoryRule: 'exclude only when the immediately preceding trading session had a purchase in the same category; choose next ranked category',
       exit: 'limit target at entry * 1.07; no stop and no forced exit',
     },
-    universe: { instruments: universe.length, classified: universe.length - unclassified.length, unclassified },
+    universe: {
+      instruments: universe.length,
+      classified: universe.length - unclassified.length,
+      unclassified,
+      identification: 'Groww NSE CASH instrument_type=EQ with ETF, Exchange Traded Fund, or BeES identity token',
+    },
     dataQuality: { successfulSymbols: coverage.length, failedSymbols: failures.length, failures, coverage },
     selections: replay.selections.map((decision) => ({
       date: decision.date,

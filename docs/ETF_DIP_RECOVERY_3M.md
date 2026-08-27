@@ -23,4 +23,4 @@ This branch-only study replays the ETF strategy discussed on 27 August 2026. It 
 
 The artifact reports target hits, open positions, marked and adverse returns, sessions to target, maturity-aware 10/20/40/60-session hit rates, category exclusions, provider coverage, and 0%/0.25%/0.5% round-trip execution-haircut sensitivities.
 
-The current Groww instrument master defines the universe. This introduces survivorship limitations for ETFs delisted before the run date, and the result discloses that limitation explicitly.
+The current Groww instrument master defines the universe. Groww classifies both ordinary NSE cash shares and ETFs as `instrument_type=EQ`, so the discovery rule requires an ETF, Exchange Traded Fund, or BeES identity token in the exchange name/symbol and tests that ordinary shares are excluded. Using the current master introduces survivorship limitations for ETFs delisted before the run date, and the result discloses that limitation explicitly.
