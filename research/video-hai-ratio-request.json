@@ -1,0 +1,7 @@
+{
+  "requestedAt": "2026-08-28",
+  "strategy": "video-hai-call-ratio-1x3x2",
+  "startDate": "2025-09-01",
+  "endDate": "2026-08-21",
+  "reason": "Exact available-history replication; final week ends before the still-open 28-Aug-2026 session"
+}
