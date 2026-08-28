@@ -1,0 +1,43 @@
+name: Research - video HAI 1x3x2 ratio
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/video-hai-ratio-backtest]
+    paths: [research/video-hai-ratio-request.json]
+
+permissions: { contents: read }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Validate frozen engine
+        run: node --test tests/groww-option-costs.test.mjs tests/video-hai-ratio.test.mjs
+      - name: Resolve Groww access token once
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run complete-history exact replication
+        run: node research/groww-video-hai-ratio-backtest.mjs --start=2025-09-01 --end=2026-08-21 --lot-size=auto --out=result.json
+      - name: Strict causal and structural integrity
+        run: node research/video-hai-ratio-integrity.mjs --in=result.json --out=integrity.json
+      - name: Frozen post-publication replication gates
+        run: node research/video-hai-ratio-gates.mjs --in=result.json --out=acceptance-gates.json --enforce=true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: video-hai-ratio-replication
+          path: |
+            result.json
+            integrity.json
+            acceptance-gates.json
+          retention-days: 90
