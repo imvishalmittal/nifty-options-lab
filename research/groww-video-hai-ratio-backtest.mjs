@@ -183,6 +183,13 @@ function expiryAfterFriday(expiries, fridayDate) {
   return [...new Set(expiries)].filter((expiry) => expiry > fridayDate).sort()[0] ?? null;
 }
 
+export function expiryYearsForVideoPeriod(startDate, endDate) {
+  const coverageEnd = plusDays(endDate, 14);
+  const lastNeededYear = Number(coverageEnd.slice(0, 4));
+  return expiryYearsForSessionDates([startDate, endDate, coverageEnd])
+    .filter((year) => year <= lastNeededYear);
+}
+
 function priceAt(rows, timestamp, field = 'open') {
   const value = rows.find((row) => row.timestamp === timestamp)?.[field];
   return Number.isFinite(value) ? value : null;
@@ -228,7 +235,7 @@ export async function backtestVideoHaiRatio({
   const spotCandles = await fetchPeriod(token, { segment: 'CASH', symbol: 'NSE-NIFTY', startDate, endDate });
   const spotByDate = groupByDate(spotCandles);
   const mondays = allMondays(startDate, endDate);
-  const expiryYears = expiryYearsForSessionDates([startDate, endDate, plusDays(endDate, 14)]);
+  const expiryYears = expiryYearsForVideoPeriod(startDate, endDate);
   const expiries = [];
   for (const year of expiryYears) expiries.push(...await fetchExpiries(token, year));
   const contractsByExpiry = new Map();
