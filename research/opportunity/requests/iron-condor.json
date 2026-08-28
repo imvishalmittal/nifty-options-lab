@@ -1,5 +1,5 @@
 {
   "scope": "discovery-2020-2024",
-  "requestedAt": "2026-08-24T14:24:00Z",
-  "reason": "Initial isolated intraday iron-condor discovery backtest"
+  "requestedAt": "2026-08-28T09:30:00Z",
+  "reason": "Re-run frozen intraday iron-condor discovery after authentication recovery"
 }
