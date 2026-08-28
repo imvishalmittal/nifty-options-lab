@@ -157,6 +157,44 @@ export function summarizeCapitalUse(trades, sessions, executionHaircutsPct = [0,
   };
 }
 
+export function summarizeAnnualizedReturn(
+  trades,
+  sessions,
+  capitalUse,
+  executionHaircutsPct = [0, 0.25, 0.5],
+) {
+  const firstTradeDate = trades.length
+    ? trades.map((trade) => trade.date).sort()[0]
+    : null;
+  const endDate = sessions.at(-1) ?? null;
+  const elapsedDays = firstTradeDate && endDate
+    ? (new Date(`${endDate}T00:00:00Z`) - new Date(`${firstTradeDate}T00:00:00Z`)) / 86_400_000
+    : 0;
+  const initialCapitalUnits = Number(capitalUse?.peakActiveSlots ?? 0);
+  const scenarios = Object.fromEntries(executionHaircutsPct.map((haircut) => {
+    const profitUnits = trades.reduce(
+      (sum, trade) => sum + (Number(trade.grossReturnPct) - haircut) / 100,
+      0,
+    );
+    const endingCapitalUnits = initialCapitalUnits + profitUnits;
+    const totalReturnPct = initialCapitalUnits > 0
+      ? (endingCapitalUnits / initialCapitalUnits - 1) * 100
+      : null;
+    const xirrPct = initialCapitalUnits > 0 && endingCapitalUnits > 0 && elapsedDays > 0
+      ? ((endingCapitalUnits / initialCapitalUnits) ** (365 / elapsedDays) - 1) * 100
+      : null;
+    return [haircut, { profitUnits, endingCapitalUnits, totalReturnPct, xirrPct }];
+  }));
+  return {
+    definition: 'Portfolio XIRR treats the peak number of equal-notional slots as capital funded on the first purchase date and the marked portfolio value as one terminal cash flow on the final session.',
+    firstTradeDate,
+    endDate,
+    elapsedDays,
+    initialCapitalUnits,
+    scenarios,
+  };
+}
+
 export function summarizeTrades(trades, executionHaircutsPct = [0, 0.25, 0.5], horizons = [10, 20, 40, 60]) {
   const closed = trades.filter((trade) => trade.status === 'TARGET');
   const open = trades.filter((trade) => trade.status === 'OPEN');
@@ -214,11 +252,13 @@ export function replayStrategy({ sessions, candidatesByDate, marketBySymbol }, o
   const trades = rawTrades.map((trade) => scoreTrade(trade, marketBySymbol, sessions, options));
   const executionHaircutsPct = options.executionHaircutsPct ?? [0, 0.25, 0.5];
   const horizons = options.horizons ?? [10, 20, 40, 60];
+  const capitalUse = summarizeCapitalUse(trades, sessions, executionHaircutsPct);
   return {
     selections,
     trades,
     summary: summarizeTrades(trades, executionHaircutsPct, horizons),
-    capitalUse: summarizeCapitalUse(trades, sessions, executionHaircutsPct),
+    capitalUse,
+    annualizedReturn: summarizeAnnualizedReturn(trades, sessions, capitalUse, executionHaircutsPct),
   };
 }
 
