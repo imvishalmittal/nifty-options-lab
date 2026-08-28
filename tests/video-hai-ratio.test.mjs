@@ -12,6 +12,7 @@ import {
 } from '../research/video-hai-ratio-engine.mjs';
 import { evaluateVideoHaiGates } from '../research/video-hai-ratio-gates.mjs';
 import { validateVideoHaiResult } from '../research/video-hai-ratio-integrity.mjs';
+import { expiryYearsForVideoPeriod } from '../research/groww-video-hai-ratio-backtest.mjs';
 
 const symbol = (strike) => `NSE-NIFTY-01SEP26-${strike}-CE`;
 const candle = (timestamp, open, close = open) => ({ timestamp, open, high: Math.max(open, close), low: Math.min(open, close), close });
@@ -110,4 +111,9 @@ test('integrity rejects a malformed ratio and precommitted gates reject a tiny s
   const gates = evaluateVideoHaiGates(document);
   assert.equal(gates.pass, false);
   assert.equal(gates.checks.find((row) => row.name === 'post-publication Mondays').pass, false);
+});
+
+test('expiry coverage includes the following calendar year only when the period needs it', () => {
+  assert.deepEqual(expiryYearsForVideoPeriod('2025-09-01', '2026-08-21'), [2025, 2026]);
+  assert.deepEqual(expiryYearsForVideoPeriod('2025-12-01', '2025-12-26'), [2025, 2026]);
 });
