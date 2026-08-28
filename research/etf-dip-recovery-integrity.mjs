@@ -85,6 +85,34 @@ export function inspectResult(result, expected = {}) {
     capitalUse);
   }
 
+  if (Array.isArray(result.targetSweep)) {
+    const expectedTargets = [7, 8, 10, 12, 15, 20];
+    check('target_sweep_complete',
+      result.targetSweep.length === expectedTargets.length
+        && expectedTargets.every((target, index) => result.targetSweep[index]?.targetReturnPct === target),
+      result.targetSweep.map((scenario) => scenario.targetReturnPct));
+    const baselineCohort = trades.map((trade) => `${trade.date}:${trade.symbol}`);
+    const scenarioFailures = [];
+    for (const scenario of result.targetSweep) {
+      const scenarioTrades = scenario.trades ?? [];
+      const target = Number(scenario.targetReturnPct);
+      const cohort = scenarioTrades.map((trade) => `${trade.date}:${trade.symbol}`);
+      const accountingOk = scenarioTrades.every((trade) => (
+        approximately(trade.targetPrice, trade.entryPrice * (1 + target / 100))
+        && (trade.status !== 'TARGET' || approximately(trade.exitPrice, trade.targetPrice))
+      ));
+      const countsOk = scenario.summary?.trades === scenarioTrades.length
+        && scenario.summary?.targets + scenario.summary?.open === scenarioTrades.length;
+      const capitalOk = scenario.capitalUse?.peakActiveSlots === scenario.annualizedReturn?.initialCapitalUnits;
+      const xirr = scenario.annualizedReturn?.scenarios?.[0]?.xirrPct;
+      if (JSON.stringify(cohort) !== JSON.stringify(baselineCohort)
+        || !accountingOk || !countsOk || !capitalOk || !Number.isFinite(Number(xirr))) {
+        scenarioFailures.push({ target, accountingOk, countsOk, capitalOk, xirr });
+      }
+    }
+    check('target_sweep_integrity', scenarioFailures.length === 0, scenarioFailures);
+  }
+
   return { status: checks.every((item) => item.pass) ? 'PASS' : 'FAIL', checks };
 }
 
