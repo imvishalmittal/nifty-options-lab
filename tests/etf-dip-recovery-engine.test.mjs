@@ -5,6 +5,7 @@ import {
   replayStrategy,
   scoreTrade,
   selectDailyTrade,
+  summarizeAnnualizedReturn,
   summarizeCapitalUse,
 } from '../research/etf-dip-recovery-engine.mjs';
 import {
@@ -99,6 +100,20 @@ test('capital use counts overlapping open positions as equal-notional slots', ()
   assert.equal(capital.finalOpenSlots, 1);
   assert.equal(capital.occupiedSlotSessions, 4);
   assert.ok(Math.abs(capital.capitalNormalizedMarkedReturnPct - 2.5) < 1e-9);
+});
+
+test('portfolio XIRR annualizes peak-slot capital from first purchase to final session', () => {
+  const sessions = ['2025-01-01', '2026-01-01'];
+  const trades = [
+    { date: '2025-01-01', exitDate: '2025-06-01', status: 'TARGET', grossReturnPct: 10 },
+    { date: '2025-01-01', exitDate: null, status: 'OPEN', grossReturnPct: 10 },
+  ];
+  const capital = summarizeCapitalUse(trades, sessions, [0]);
+  const annualized = summarizeAnnualizedReturn(trades, sessions, capital, [0]);
+  assert.equal(annualized.initialCapitalUnits, 2);
+  assert.equal(annualized.elapsedDays, 365);
+  assert.ok(Math.abs(annualized.scenarios[0].totalReturnPct - 10) < 1e-9);
+  assert.ok(Math.abs(annualized.scenarios[0].xirrPct - 10) < 1e-9);
 });
 
 test('five-minute chunks never exceed the official 14-calendar-day request span', () => {
