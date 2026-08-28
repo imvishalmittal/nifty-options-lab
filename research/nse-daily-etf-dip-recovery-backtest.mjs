@@ -142,6 +142,11 @@ async function main() {
   const dailyStart = args['daily-start'] || addDays(startDate, -75);
   const out = args.out || 'etf-dip-recovery-daily-3y-result.json';
   const concurrency = Number(args.concurrency || 6);
+  const targets = String(args.targets || '7,8,10,12,15,20')
+    .split(',')
+    .map((value) => Number(value.trim()))
+    .filter((value) => Number.isFinite(value) && value > 0);
+  if (!targets.length) throw new Error('At least one positive --targets value is required');
 
   const masterResponse = await fetch(DHAN_INSTRUMENT_URL);
   if (!masterResponse.ok) throw new Error(`Public ETF instrument master failed (${masterResponse.status})`);
@@ -200,7 +205,12 @@ async function main() {
 
   const sessions = tradingDates.filter((date) => date >= startDate && date <= endDate).sort();
   const horizons = [10, 20, 40, 60, 120, 250, 500];
-  const replay = replayStrategy({ sessions, candidatesByDate, marketBySymbol }, { horizons });
+  const replayInput = { sessions, candidatesByDate, marketBySymbol };
+  const replays = targets.map((targetReturnPct) => ({
+    targetReturnPct,
+    replay: replayStrategy(replayInput, { horizons, targetReturnPct }),
+  }));
+  const replay = replays[0].replay;
   const result = {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
@@ -219,7 +229,7 @@ async function main() {
       ranking: 'most negative eligible thirtyDayReturnPct, then most negative dayReturnPct, then highest volume',
       thirtyDayThreshold: 'at or below -2.5%; values above -2.5% are ineligible',
       consecutiveCategoryRule: 'exclude only when the immediately preceding trading session had a purchase in the same category; choose next ranked category',
-      exit: 'limit target at adjusted entry * 1.07 from the next session onward; no stop and no forced exit',
+      exit: `limit targets at adjusted entry * (1 + target/100) for ${targets.join(', ')}% from the next session onward; no stop and no forced exit`,
       approximationChanges: ['entry uses daily close', 'volume uses full-session volume', 'entry-day high cannot hit target'],
     },
     universe: {
@@ -247,12 +257,20 @@ async function main() {
     trades: replay.trades,
     summary: replay.summary,
     capitalUse: replay.capitalUse,
+    annualizedReturn: replay.annualizedReturn,
+    targetSweep: replays.map(({ targetReturnPct, replay: targetReplay }) => ({
+      targetReturnPct,
+      summary: targetReplay.summary,
+      capitalUse: targetReplay.capitalUse,
+      annualizedReturn: targetReplay.annualizedReturn,
+      trades: targetReplay.trades,
+    })),
     limitations: [
       'This is a robustness approximation, not an exact replay of the 15:15 strategy.',
       'Daily close replaces the 15:15 candle close and full-day volume replaces cumulative volume known at 15:15.',
       'The current active ETF master introduces survivorship bias because previously delisted ETFs are absent.',
       'Mechanical unit-change adjustment handles split-like discontinuities; cash distributions and unusual corporate actions may remain imperfect.',
-      'A 7% target touch is treated as a fill at exactly the target; execution-haircut sensitivities are reported.',
+      `A ${targets.join(', ')}% target touch is treated as a fill at exactly the target; execution-haircut sensitivities are reported.`,
       'Open positions are marked at the final adjusted close and are never counted as wins.',
     ],
   };
@@ -268,6 +286,12 @@ async function main() {
     },
     summary: result.summary,
     capitalUse: result.capitalUse,
+    targetSweep: result.targetSweep.map((item) => ({
+      targetReturnPct: item.targetReturnPct,
+      summary: item.summary,
+      capitalUse: item.capitalUse,
+      annualizedReturn: item.annualizedReturn,
+    })),
   }, null, 2));
 }
 
