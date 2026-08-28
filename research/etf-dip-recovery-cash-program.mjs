@@ -197,3 +197,137 @@ export function runRollingCashPrograms({
     return { targetReturnPct: target.targetReturnPct, scenarios };
   });
 }
+
+export function simulateFixedTicketProgram({
+  sessions,
+  trades,
+  startDate,
+  fundingMonths = 3,
+  ticketAmount = 15_000,
+  executionHaircutPct = 0,
+}) {
+  const finalDate = sessions.at(-1);
+  const fundingEndExclusive = addMonths(startDate, fundingMonths);
+  const tradeByDate = new Map(trades.map((trade) => [trade.date, trade]));
+  const holdings = [];
+  const purchases = [];
+  const cashFlows = [];
+  let cash = 0;
+  let totalFreshFunding = 0;
+  let totalPurchased = 0;
+  let lastPurchaseDate = startDate;
+  let lastExitDate = startDate;
+  let peakConcurrentPositions = 0;
+
+  for (const date of sessions) {
+    if (date < startDate) continue;
+    for (const holding of holdings) {
+      if (holding.closed || holding.trade.status !== 'TARGET' || holding.trade.exitDate !== date) continue;
+      const netReturnPct = holding.trade.grossReturnPct - executionHaircutPct;
+      holding.closed = true;
+      holding.proceeds = holding.invested * (1 + netReturnPct / 100);
+      cash += holding.proceeds;
+      lastExitDate = date;
+    }
+
+    if (date >= fundingEndExclusive) continue;
+    const trade = tradeByDate.get(date);
+    if (!trade) continue;
+    const freshFunding = Math.max(0, ticketAmount - cash);
+    if (freshFunding > 0) {
+      cash += freshFunding;
+      totalFreshFunding += freshFunding;
+      cashFlows.push({ date, amount: -freshFunding });
+    }
+    cash -= ticketAmount;
+    totalPurchased += ticketAmount;
+    lastPurchaseDate = date;
+    const holding = { trade, invested: ticketAmount, closed: false, proceeds: null };
+    holdings.push(holding);
+    purchases.push({
+      date,
+      symbol: trade.symbol,
+      invested: ticketAmount,
+      freshFunding,
+      recycledCashUsed: ticketAmount - freshFunding,
+      targetReturnPct: trade.targetReturnPct,
+      exitDate: trade.exitDate,
+      status: trade.status,
+    });
+    peakConcurrentPositions = Math.max(peakConcurrentPositions, holdings.filter((item) => !item.closed).length);
+  }
+
+  const openHoldings = holdings.filter((holding) => !holding.closed);
+  const terminalDate = openHoldings.length ? finalDate : [lastPurchaseDate, lastExitDate].sort().at(-1);
+  let terminalValue = cash;
+  for (const holding of openHoldings) {
+    const netReturnPct = holding.trade.grossReturnPct - executionHaircutPct;
+    terminalValue += holding.invested * (1 + netReturnPct / 100);
+  }
+  cashFlows.push({ date: terminalDate, amount: terminalValue });
+  const annualized = xirr(cashFlows);
+  return {
+    startDate,
+    fundingEndExclusive,
+    terminalDate,
+    ticketAmount,
+    purchases: purchases.length,
+    targetExits: holdings.filter((holding) => holding.closed).length,
+    openPositions: openHoldings.length,
+    peakConcurrentPositions,
+    peakInvested: peakConcurrentPositions * ticketAmount,
+    totalPurchased,
+    totalFreshFunding,
+    recycledCashUsed: totalPurchased - totalFreshFunding,
+    recyclingCoveragePct: totalPurchased ? ((totalPurchased - totalFreshFunding) / totalPurchased) * 100 : null,
+    terminalValue,
+    profit: terminalValue - totalFreshFunding,
+    totalReturnPct: totalFreshFunding ? ((terminalValue / totalFreshFunding) - 1) * 100 : null,
+    xirrPct: annualized === null ? null : annualized * 100,
+    purchaseLedger: purchases,
+  };
+}
+
+export function runRollingFixedTicketPrograms({
+  sessions,
+  targetSweep,
+  fundingMonths = 3,
+  ticketAmount = 15_000,
+  executionHaircutsPct = [0, 0.25, 0.5],
+}) {
+  const starts = monthlyProgramStarts(sessions, fundingMonths);
+  return targetSweep.map((target) => {
+    const scenarios = Object.fromEntries(executionHaircutsPct.map((haircut) => {
+      const programs = starts.map((startDate) => simulateFixedTicketProgram({
+        sessions,
+        trades: target.trades,
+        startDate,
+        fundingMonths,
+        ticketAmount,
+        executionHaircutPct: haircut,
+      }));
+      const xirrValues = programs.map((program) => program.xirrPct).filter(Number.isFinite);
+      const returnValues = programs.map((program) => program.totalReturnPct).filter(Number.isFinite);
+      return [String(haircut), {
+        programs,
+        summary: {
+          cohorts: programs.length,
+          medianXirrPct: percentile(xirrValues, 0.5),
+          p25XirrPct: percentile(xirrValues, 0.25),
+          p75XirrPct: percentile(xirrValues, 0.75),
+          worstXirrPct: xirrValues.length ? Math.min(...xirrValues) : null,
+          bestXirrPct: xirrValues.length ? Math.max(...xirrValues) : null,
+          medianTotalReturnPct: percentile(returnValues, 0.5),
+          medianFreshFunding: percentile(programs.map((program) => program.totalFreshFunding), 0.5),
+          medianTotalPurchased: percentile(programs.map((program) => program.totalPurchased), 0.5),
+          medianTerminalValue: percentile(programs.map((program) => program.terminalValue), 0.5),
+          medianPurchases: percentile(programs.map((program) => program.purchases), 0.5),
+          medianOpenPositions: percentile(programs.map((program) => program.openPositions), 0.5),
+          medianPeakInvested: percentile(programs.map((program) => program.peakInvested), 0.5),
+          medianRecyclingCoveragePct: percentile(programs.map((program) => program.recyclingCoveragePct), 0.5),
+        },
+      }];
+    }));
+    return { targetReturnPct: target.targetReturnPct, scenarios };
+  });
+}
