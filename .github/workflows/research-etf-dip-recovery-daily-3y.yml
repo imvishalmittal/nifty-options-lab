@@ -27,6 +27,7 @@ jobs:
         run: >-
           node --test
           tests/etf-dip-recovery-engine.test.mjs
+          tests/etf-dip-recovery-cash-program.test.mjs
           tests/etf-dip-recovery-integrity.test.mjs
           tests/dhan-etf-dip-recovery.test.mjs
           tests/nse-daily-etf-dip-recovery.test.mjs
