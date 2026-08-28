@@ -3,6 +3,6 @@
   "startDate": "2023-08-28",
   "endDate": "2026-08-27",
   "requestedAt": "2026-08-28",
-  "attempt": 2,
-  "purpose": "Free three-year robustness sweep for 7, 8, 10, 12, 15, and 20 percent targets with XIRR"
+  "attempt": 3,
+  "purpose": "Rolling three-month INR 15,000 daily-funded cash portfolio with reinvested ETF sale proceeds and XIRR"
 }
