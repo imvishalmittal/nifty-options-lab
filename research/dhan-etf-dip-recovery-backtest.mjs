@@ -158,6 +158,9 @@ async function main() {
   const pauseMs = Number(args['pause-ms'] ?? 225);
   const out = args.out || 'etf-dip-recovery-3y-result.json';
   const maxSymbols = Number(args['max-symbols'] || 0);
+  const targetPcts = [...new Set(String(args.targets || '7,8,10,12,15,20')
+    .split(',').map(Number).filter((value) => Number.isFinite(value) && value > 0))];
+  if (!targetPcts.length) throw new Error('At least one positive --targets value is required');
 
   const instrumentResponse = await fetch(INSTRUMENT_URL);
   if (!instrumentResponse.ok) throw new Error(`Dhan instrument master failed (${instrumentResponse.status})`);
@@ -205,7 +208,14 @@ async function main() {
 
   const sessions = [...sessionSet].sort();
   const horizons = [10, 20, 40, 60, 120, 250, 500];
-  const replay = replayStrategy({ sessions, candidatesByDate, marketBySymbol }, { horizons });
+  const scenarioReplays = targetPcts.map((targetReturnPct) => ({
+    targetReturnPct,
+    replay: replayStrategy(
+      { sessions, candidatesByDate, marketBySymbol },
+      { horizons, targetReturnPct },
+    ),
+  }));
+  const { targetReturnPct: baselineTargetPct, replay } = scenarioReplays[0];
   const unclassified = universe
     .filter((item) => item.category.startsWith('UNCLASSIFIED:'))
     .map((item) => ({ symbol: item.symbol, name: item.name }));
@@ -223,11 +233,12 @@ async function main() {
     period: { startDate, endDate, dailyWarmupStart: dailyStart, sessions: sessions.length },
     rules: {
       ...STRATEGY_DEFAULTS,
+      targetReturnPct: baselineTargetPct,
       thirtyDayDefinition: 'previous session close versus close 30 trading sessions earlier',
       ranking: 'most negative eligible thirtyDayReturnPct, then most negative dayReturnPct, then highest volume',
       thirtyDayThreshold: 'at or below -2.5%; values above -2.5% are ineligible',
       consecutiveCategoryRule: 'exclude only when the immediately preceding trading session had a purchase in the same category; choose next ranked category',
-      exit: 'limit target at entry * 1.07; no stop and no forced exit',
+      exit: `limit target at entry * ${1 + baselineTargetPct / 100}; no stop and no forced exit`,
     },
     universe: {
       instruments: universe.length,
@@ -246,10 +257,18 @@ async function main() {
     trades: replay.trades,
     summary: replay.summary,
     capitalUse: replay.capitalUse,
+    annualizedReturn: replay.annualizedReturn,
+    targetSweep: scenarioReplays.map(({ targetReturnPct, replay: scenario }) => ({
+      targetReturnPct,
+      summary: scenario.summary,
+      capitalUse: scenario.capitalUse,
+      annualizedReturn: scenario.annualizedReturn,
+      trades: scenario.trades,
+    })),
     limitations: [
       'The current active-instrument master is used, so ETFs delisted before the run date are absent (survivorship bias).',
       'Some ETFs launched during the period have shorter histories; they become eligible only after enough data exists.',
-      'A 7% target touch is treated as a limit fill at exactly the target; 0%, 0.25%, and 0.5% execution-haircut sensitivities are reported.',
+      `Target touches (${targetPcts.join('%, ')}%) are treated as limit fills at exactly the target; 0%, 0.25%, and 0.5% execution-haircut sensitivities are reported.`,
       'Open positions are marked at the final available 15:15 price and are never relabelled as wins.',
       'Capital efficiency assumes equal notional for every signal and reserves enough capital for the observed peak number of concurrent positions.',
     ],
@@ -262,6 +281,13 @@ async function main() {
     dataQuality: { successfulSymbols: coverage.length, failedSymbols: failures.length },
     summary: result.summary,
     capitalUse: result.capitalUse,
+    annualizedReturn: result.annualizedReturn,
+    targetSweep: result.targetSweep.map((scenario) => ({
+      targetReturnPct: scenario.targetReturnPct,
+      summary: scenario.summary,
+      capitalUse: scenario.capitalUse,
+      annualizedReturn: scenario.annualizedReturn,
+    })),
   }, null, 2));
 }
 
