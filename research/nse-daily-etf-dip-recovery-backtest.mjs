@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { replayStrategy, STRATEGY_DEFAULTS } from './etf-dip-recovery-engine.mjs';
+import { runRollingCashPrograms } from './etf-dip-recovery-cash-program.mjs';
 import { candidateForDate, parseInstrumentCsv } from './groww-etf-dip-recovery-backtest.mjs';
 import { addDays, dhanEtfUniverse } from './dhan-etf-dip-recovery-backtest.mjs';
 
@@ -211,6 +212,20 @@ async function main() {
     replay: replayStrategy(replayInput, { horizons, targetReturnPct }),
   }));
   const replay = replays[0].replay;
+  const targetSweep = replays.map(({ targetReturnPct, replay: targetReplay }) => ({
+    targetReturnPct,
+    summary: targetReplay.summary,
+    capitalUse: targetReplay.capitalUse,
+    annualizedReturn: targetReplay.annualizedReturn,
+    trades: targetReplay.trades,
+  }));
+  const cashPrograms = runRollingCashPrograms({
+    sessions,
+    targetSweep,
+    fundingMonths: 3,
+    dailyContribution: 15_000,
+    executionHaircutsPct: [0, 0.25, 0.5],
+  });
   const result = {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
@@ -258,13 +273,8 @@ async function main() {
     summary: replay.summary,
     capitalUse: replay.capitalUse,
     annualizedReturn: replay.annualizedReturn,
-    targetSweep: replays.map(({ targetReturnPct, replay: targetReplay }) => ({
-      targetReturnPct,
-      summary: targetReplay.summary,
-      capitalUse: targetReplay.capitalUse,
-      annualizedReturn: targetReplay.annualizedReturn,
-      trades: targetReplay.trades,
-    })),
+    targetSweep,
+    cashPrograms,
     limitations: [
       'This is a robustness approximation, not an exact replay of the 15:15 strategy.',
       'Daily close replaces the 15:15 candle close and full-day volume replaces cumulative volume known at 15:15.',
@@ -272,6 +282,7 @@ async function main() {
       'Mechanical unit-change adjustment handles split-like discontinuities; cash distributions and unusual corporate actions may remain imperfect.',
       `A ${targets.join(', ')}% target touch is treated as a fill at exactly the target; execution-haircut sensitivities are reported.`,
       'Open positions are marked at the final adjusted close and are never counted as wins.',
+      'Cash-program results add INR 15,000 at the start of every trading session for three calendar months, invest all available cash on the selected signal, recycle target-sale proceeds including profit, then stop new purchases and mark any remaining positions at the data end.',
     ],
   };
   fs.writeFileSync(out, JSON.stringify(result, null, 2));
@@ -291,6 +302,13 @@ async function main() {
       summary: item.summary,
       capitalUse: item.capitalUse,
       annualizedReturn: item.annualizedReturn,
+    })),
+    cashPrograms: result.cashPrograms.map((item) => ({
+      targetReturnPct: item.targetReturnPct,
+      scenarios: Object.fromEntries(Object.entries(item.scenarios).map(([haircut, scenario]) => [
+        haircut,
+        scenario.summary,
+      ])),
     })),
   }, null, 2));
 }
