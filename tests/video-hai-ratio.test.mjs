@@ -26,11 +26,20 @@ test('video anchor rounds a 50-ending spot upward and builds exact 1:3:2 spacing
   const candidates = buildVideoHaiCandidates([
     symbol(24400), symbol(24600), symbol(24800), symbol(24500), symbol(24700), symbol(24900),
   ], 24150);
-  assert.equal(candidates.length, 2);
+  assert.equal(candidates.length, 9);
   assert.deepEqual(candidates[0].lowerLong.strike, 24400);
   assert.deepEqual(candidates[0].middleShort.strike, 24600);
   assert.deepEqual(candidates[0].upperLong.strike, 24800);
   assert.deepEqual([candidates[0].lowerLong.lots, candidates[0].middleShort.lots, candidates[0].upperLong.lots], [1, 3, 2]);
+});
+
+test('sparse contract ladders are completed with canonical auditable symbols', () => {
+  const contracts = [symbol(24400), symbol(24800)];
+  const [candidate] = buildVideoHaiCandidates(contracts, 24150);
+  assert.equal(candidate.lowerLong.discoverySource, 'contracts_api');
+  assert.equal(candidate.middleShort.symbol, symbol(24600));
+  assert.equal(candidate.middleShort.discoverySource, 'synthetic_gap_fill');
+  assert.equal(candidate.upperLong.discoverySource, 'contracts_api');
 });
 
 test('entry-credit filter shifts the entire structure outward', () => {
