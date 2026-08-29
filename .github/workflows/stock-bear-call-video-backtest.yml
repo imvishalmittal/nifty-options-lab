@@ -1,0 +1,55 @@
+name: Research - video large-cap bear-call spread
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/stock-bear-call-video]
+
+permissions: { contents: read }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Validate frozen engine
+        run: node --test tests/groww-option-costs.test.mjs tests/stock-bear-call-engine.test.mjs tests/stock-bear-call-integrity.test.mjs
+      - name: Resolve Groww access token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run post-publication replication
+        run: node research/stock-bear-call/groww-backtest.mjs --start=2026-06-04 --end=2026-08-28 --warmup=2026-01-01 --out=result.json
+      - name: Validate artifact
+        run: node research/stock-bear-call/integrity.mjs --in=result.json --out=integrity.json
+      - name: Write research summary
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const result = JSON.parse(fs.readFileSync('result.json', 'utf8'));
+          const s = result.summary;
+          const lines = [
+            '# Williams-%R large-cap bear-call replication', '',
+            `Period: ${result.period.startDate} to ${result.period.endDate}`,
+            `Signals: ${s.signals}; trades: ${s.trades}; data missing: ${s.dataMissing}; VIX rejected: ${s.vixRejected}`,
+            `Normalized net P&L: ${s.normalized?.totalNetPnlRupees ?? 'n/a'}`,
+            `Normalized win rate: ${s.normalized?.winRate == null ? 'n/a' : (s.normalized.winRate * 100).toFixed(1) + '%'}`,
+            `Normalized profit factor: ${s.normalized?.profitFactor ?? 'n/a'}`,
+            `1-point stress net P&L: ${s.stress1_0?.totalNetPnlRupees ?? 'n/a'}`, '',
+            '**Research only. This workflow cannot place or paper-trade orders.**',
+          ];
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stock-bear-call-video-replication
+          path: "result.json\nintegrity.json"
+          retention-days: 90
