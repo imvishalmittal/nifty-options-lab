@@ -11,6 +11,7 @@ function document(overrides = {}) {
     period: { startDate: '2026-06-04', endDate: '2026-08-28' },
     universe: VIDEO_STOCK_UNIVERSE,
     rules: BEAR_CALL_RULES,
+    diagnostics: VIDEO_STOCK_UNIVERSE.map((underlying) => ({ underlying, minuteCandles: 1000, completedTwoHourBars: 150, evaluationBars: 10, williamsCrosses: 0, bearishAlignments: 0, jointSignals: 0 })),
     results: [],
     summary: { trades: 0 },
     ...overrides,

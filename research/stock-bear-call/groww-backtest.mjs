@@ -169,6 +169,7 @@ export async function backtestStockBearCall({
   requests = 0; retries = 0; lastRequestAt = 0;
   const vix = await fetchPeriod(token, { segment: 'CASH', symbol: 'NSE-INDIAVIX', startDate, endDate }, spacingMs);
   const results = [];
+  const diagnostics = [];
   const optionCache = new Map();
 
   for (const underlying of universe) {
@@ -176,6 +177,27 @@ export async function backtestStockBearCall({
     const detected = detectBearCallSignals(spot, rules);
     const signals = detected.signals.filter((row) => row.signalTimestamp.slice(0, 10) >= startDate
       && row.signalTimestamp.slice(0, 10) <= endDate);
+    const evaluationBars = detected.bars.filter((bar) => bar.completedAt.slice(0, 10) >= startDate
+      && bar.completedAt.slice(0, 10) <= endDate);
+    let williamsCrosses = 0;
+    let bearishAlignments = 0;
+    for (let index = 1; index < evaluationBars.length; index += 1) {
+      const previous = evaluationBars[index - 1];
+      const current = evaluationBars[index];
+      if (Number.isFinite(previous.williamsR) && Number.isFinite(current.williamsR)
+        && previous.williamsR > rules.overboughtThreshold && current.williamsR <= rules.overboughtThreshold) williamsCrosses += 1;
+      if (Number.isFinite(current.ema5) && Number.isFinite(current.ema15) && Number.isFinite(current.ema50)
+        && current.ema5 < current.ema15 && current.ema15 < current.ema50) bearishAlignments += 1;
+    }
+    diagnostics.push({
+      underlying,
+      minuteCandles: spot.length,
+      completedTwoHourBars: detected.bars.length,
+      evaluationBars: evaluationBars.length,
+      williamsCrosses,
+      bearishAlignments,
+      jointSignals: signals.length,
+    });
     const expiries = await fetchExpiries(token, underlying, 2026, spacingMs);
     let occupiedUntil = '';
 
@@ -293,8 +315,9 @@ export async function backtestStockBearCall({
       missingQuotes: 'No forward-fill or fabricated option prices',
     },
     dataProvider: { name: 'Groww historical API', requests, retries },
+    diagnostics,
     results,
-    summary: summarizeBearCallResults(results),
+    summary: { ...summarizeBearCallResults(results), universeSize: universe.length },
   };
 }
 

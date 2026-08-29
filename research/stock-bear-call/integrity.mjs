@@ -14,6 +14,13 @@ export function validateBearCallResult(document) {
   if (document?.rules?.maximumShortDelta !== 0.25) errors.push('maximum short delta changed');
   if (document?.rules?.hedgeStrikeSteps !== 2) errors.push('hedge width assumption changed');
   if (!Array.isArray(document?.results)) errors.push('results must be an array');
+  if (!Array.isArray(document?.diagnostics) || document.diagnostics.length !== VIDEO_STOCK_UNIVERSE.length) errors.push('per-stock diagnostics incomplete');
+  for (const row of document?.diagnostics ?? []) {
+    if (!(row.minuteCandles > 0)) errors.push(`${row.underlying}: underlying candles unavailable`);
+    if (!(row.completedTwoHourBars >= 140)) errors.push(`${row.underlying}: Williams warmup incomplete`);
+    if (!(row.evaluationBars > 0)) errors.push(`${row.underlying}: evaluation bars unavailable`);
+    if (row.jointSignals > row.williamsCrosses || row.jointSignals > row.bearishAlignments) errors.push(`${row.underlying}: diagnostic signal counts inconsistent`);
+  }
   for (const [index, row] of (document?.results ?? []).entries()) {
     const label = `${row.underlying ?? 'unknown'} result ${index}`;
     if (!['TRADE', 'NO_TRADE', 'DATA_MISSING'].includes(row.status)) errors.push(`${label}: invalid status`);
@@ -36,6 +43,7 @@ export function validateBearCallResult(document) {
   const missing = (document?.results ?? []).filter((row) => row.status === 'DATA_MISSING').length;
   if (missing) warnings.push(`${missing} signal(s) have missing contract or quote data`);
   if (document?.summary?.trades === 0) warnings.push('No trades executed; replication is inconclusive');
+  if ((document?.diagnostics ?? []).reduce((sum, row) => sum + row.jointSignals, 0) === 0) warnings.push('No underlying produced the complete frozen signal');
   if (document?.summary?.trades !== (document?.results ?? []).filter((row) => row.status === 'TRADE').length) errors.push('summary trade count mismatch');
   return { valid: errors.length === 0, errors, warnings };
 }
