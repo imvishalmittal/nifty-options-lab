@@ -1,0 +1,31 @@
+name: Research - defined-risk weekly Batman
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/defined-risk-batman]
+
+permissions: { contents: read }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node --test tests/groww-option-costs.test.mjs tests/batman-engine.test.mjs
+      - name: Resolve Groww access token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - run: node research/batman/groww-backtest.mjs --start=2025-01-01 --end=2025-12-31 --out=result.json
+      - run: node research/batman/integrity.mjs --in=result.json --out=integrity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: defined-risk-batman-2025, path: "result.json\nintegrity.json", retention-days: 90 }
