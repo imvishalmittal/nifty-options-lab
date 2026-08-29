@@ -1,5 +1,5 @@
 {
   "scope": "discovery-2020-2024",
-  "requestedAt": "2026-08-28T09:30:00Z",
-  "reason": "Re-run frozen intraday iron-condor discovery after authentication recovery"
+  "requestedAt": "2026-08-29T13:55:00Z",
+  "reason": "Re-run frozen intraday iron-condor discovery with TOTP authentication and duplicate-minute normalization"
 }
