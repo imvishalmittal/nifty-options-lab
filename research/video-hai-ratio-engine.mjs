@@ -53,14 +53,23 @@ export function roundedUpHundredAnchor(spot) {
   return Math.ceil(spot / 100) * 100;
 }
 
-function contractAt(parsed, strike) {
-  return parsed.find((contract) => contract.optionType === 'CE' && contract.strike === strike) ?? null;
+function contractAt(parsed, expiryCode, strike) {
+  const actual = parsed.find((contract) => contract.optionType === 'CE' && contract.strike === strike);
+  return actual ? { ...actual, discoverySource: 'contracts_api' } : {
+    symbol: `NSE-NIFTY-${expiryCode}-${strike}-CE`,
+    expiryCode,
+    strike,
+    optionType: 'CE',
+    discoverySource: 'synthetic_gap_fill',
+  };
 }
 
 export function buildVideoHaiCandidates(contracts, spot, rules = VIDEO_HAI_RULES) {
   const parsed = contracts
     .map((item) => parseNiftyOptionContract(item.symbol ?? item.groww_symbol ?? item))
     .filter(Boolean);
+  const expiryCode = parsed.find((contract) => contract.optionType === 'CE')?.expiryCode;
+  if (!expiryCode) return [];
   const anchor = roundedUpHundredAnchor(spot);
   const candidates = [];
   for (
@@ -71,10 +80,9 @@ export function buildVideoHaiCandidates(contracts, spot, rules = VIDEO_HAI_RULES
     const lowerStrike = anchor + distance;
     const middleStrike = lowerStrike + rules.strikeSpacingPoints;
     const upperStrike = middleStrike + rules.strikeSpacingPoints;
-    const lowerLong = contractAt(parsed, lowerStrike);
-    const middleShort = contractAt(parsed, middleStrike);
-    const upperLong = contractAt(parsed, upperStrike);
-    if (![lowerLong, middleShort, upperLong].every(Boolean)) continue;
+    const lowerLong = contractAt(parsed, expiryCode, lowerStrike);
+    const middleShort = contractAt(parsed, expiryCode, middleStrike);
+    const upperLong = contractAt(parsed, expiryCode, upperStrike);
     candidates.push({
       anchor,
       distance,
