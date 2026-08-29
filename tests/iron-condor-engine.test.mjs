@@ -8,6 +8,18 @@ import {
   selectIronCondorContracts,
   summarizeIronCondorResults,
 } from '../research/opportunity/iron-condor-engine.mjs';
+import { normalizeIronCondorCandles } from '../research/opportunity/groww-iron-condor-backtest.mjs';
+
+test('duplicate provider candles are causally merged into one minute', () => {
+  const rows = normalizeIronCondorCandles([
+    ['2025-01-02 10:00:00', 10, 12, 9, 11, 100, 50],
+    ['2025-01-02 10:00:00', 11, 14, 8, 13, 120, 55],
+  ]);
+  assert.deepEqual(rows, [{
+    timestamp: '2025-01-02T10:00:00+05:30', open: 10, high: 14, low: 8, close: 13,
+    volume: 120, openInterest: 55,
+  }]);
+});
 
 function contract(strike, type) {
   return `NSE-NIFTY-27Aug26-${strike}-${type}`;
