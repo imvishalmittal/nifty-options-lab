@@ -26,6 +26,22 @@ jobs:
         run: node scripts/resolve-groww-token.mjs
       - run: node research/batman/groww-backtest.mjs --start=2025-01-01 --end=2025-12-31 --out=result.json
       - run: node research/batman/integrity.mjs --in=result.json --out=integrity.json
+      - name: Write research summary
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const result = JSON.parse(fs.readFileSync('result.json', 'utf8'));
+          const s = result.summary;
+          const lines = ['# Defined-risk Batman — 2025 discovery', '',
+            `Trades: ${s.trades}; missing: ${s.dataMissing}`,
+            `Net P&L: ${s.normalized.totalNetPnlRupees}; expectancy: ${s.normalized.expectancyRupees}`,
+            `Win rate: ${s.normalized.winRate == null ? 'n/a' : (s.normalized.winRate * 100).toFixed(1) + '%'}`,
+            `Profit factor: ${s.normalized.profitFactor}`,
+            `0.5-point stress P&L: ${s.stress0_5.totalNetPnlRupees}`,
+            `1-point stress P&L: ${s.stress1_0.totalNetPnlRupees}`, '',
+            '**Research only; no order-placement path.**'];
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
+          NODE
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: defined-risk-batman-2025, path: "result.json\nintegrity.json", retention-days: 90 }
