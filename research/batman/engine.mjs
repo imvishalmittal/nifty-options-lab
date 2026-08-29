@@ -5,8 +5,8 @@ export const BATMAN_STRATEGY = 'defined-risk-weekly-batman';
 export const BATMAN_RULES = Object.freeze({
   entryTime: '15:15',
   exitTime: '15:15',
-  minimumDte: 5,
-  maximumDte: 7,
+  minimumDte: 6,
+  maximumDte: 6,
   innerDistancePct: 0.01,
   bodyDistancePct: 0.02,
   outerDistancePct: 0.03,
