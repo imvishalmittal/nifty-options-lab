@@ -211,7 +211,12 @@ async function fetchCandidateLegs(token, selection, date, fridayDate, cache) {
     const symbol = selection[name].symbol;
     const key = `${date}:${symbol}`;
     if (!cache.has(key)) {
-      cache.set(key, await fetchPeriod(token, { segment: 'FNO', symbol, startDate: date, endDate: fridayDate }));
+      try {
+        cache.set(key, await fetchPeriod(token, { segment: 'FNO', symbol, startDate: date, endDate: fridayDate }));
+      } catch (error) {
+        if (!/failed \((400|404)\)/.test(error?.message ?? '')) throw error;
+        cache.set(key, []);
+      }
     }
     output[name] = cache.get(key);
   }
