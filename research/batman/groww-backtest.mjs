@@ -34,7 +34,6 @@ async function candles(token, segment, symbol, startDate, endDate, spacingMs) {
 async function expiries(token, year, spacingMs) { const payload = await apiGet(token, '/historical/expiries', { exchange: 'NSE', underlying_symbol: 'NIFTY', year }, spacingMs); return payload.expiries ?? []; }
 async function contracts(token, expiry, spacingMs) { const payload = await apiGet(token, '/historical/contracts', { exchange: 'NSE', underlying_symbol: 'NIFTY', expiry_date: expiry }, spacingMs); return payload.contracts ?? []; }
 const dayDifference = (a, b) => Math.round((new Date(`${b}T00:00:00Z`) - new Date(`${a}T00:00:00Z`)) / 86400000);
-const isWednesday = (date) => new Date(`${date}T00:00:00Z`).getUTCDay() === BATMAN_RULES.entryWeekday;
 const quoteAt = (rows, timestamp, field) => rows.find((row) => row.timestamp === timestamp)?.[field] ?? null;
 const commonLast = (legRows, cutoff) => {
   const names = BATMAN_LEGS.map(([name]) => name); const sets = names.map((name) => new Set(legRows[name].filter((row) => row.timestamp <= cutoff).map((row) => row.timestamp)));
@@ -44,15 +43,15 @@ const commonLast = (legRows, cutoff) => {
 export async function backtestBatman({ token, startDate = '2025-01-01', endDate = '2025-12-31', spacingMs = 1600, rules = BATMAN_RULES }) {
   lastRequestAt = 0; requests = 0; retries = 0;
   const spot = await candles(token, 'CASH', 'NSE-NIFTY', startDate, endDate, spacingMs);
-  const dates = [...new Set(spot.map((row) => row.timestamp.slice(0, 10)))].filter(isWednesday);
+  const dates = [...new Set(spot.map((row) => row.timestamp.slice(0, 10)))];
   const expiryList = [];
   for (let year = Number(startDate.slice(0, 4)); year <= Number(endDate.slice(0, 4)) + 1; year += 1) expiryList.push(...await expiries(token, year, spacingMs));
   const results = [];
   for (const date of dates) {
-    const entryTimestamp = `${date}T${rules.entryTime}:00+05:30`; const entrySpot = quoteAt(spot, entryTimestamp, 'close');
-    if (!(entrySpot > 0)) { results.push({ date, status: 'DATA_MISSING', reason: '15:15 NIFTY entry quote unavailable' }); continue; }
     const expiry = [...expiryList].filter((item) => { const dte = dayDifference(date, item); return dte >= rules.minimumDte && dte <= rules.maximumDte; }).sort()[0];
-    if (!expiry) { results.push({ date, status: 'DATA_MISSING', reason: '5-7 DTE NIFTY expiry unavailable' }); continue; }
+    if (!expiry) continue;
+    const entryTimestamp = `${date}T${rules.entryTime}:00+05:30`; const entrySpot = quoteAt(spot, entryTimestamp, 'close');
+    if (!(entrySpot > 0)) { results.push({ date, expiry, status: 'DATA_MISSING', reason: '15:15 NIFTY entry quote unavailable' }); continue; }
     const selection = selectBatmanContracts(await contracts(token, expiry, spacingMs), entrySpot, rules);
     if (!selection) { results.push({ date, expiry, status: 'DATA_MISSING', reason: 'Exact ordered six-leg structure unavailable' }); continue; }
     const legRows = {};
@@ -65,7 +64,7 @@ export async function backtestBatman({ token, startDate = '2025-01-01', endDate 
     if (costs.normalized.status !== 'TRADE') { results.push({ date, expiry, status: 'DATA_MISSING', reason: costs.normalized.reason, selection }); continue; }
     results.push({ date, expiry, status: 'TRADE', entryTimestamp, exitTimestamp, entrySpot, lotSize, selection, entryQuotes, exitQuotes, costs });
   }
-  return { schemaVersion: 1, strategy: BATMAN_STRATEGY, source: { videoId: 'SjesP4clpHM' }, period: { startDate, endDate }, rules, assumptions: { structure: 'Symmetric defined-risk +1/-2/+1 call and put butterflies', strikeSelection: 'Nearest listed strikes at 1%, 2%, and 3% OTM from Wednesday 15:15 NIFTY close', expiry: 'Nearest listed NIFTY expiry with 5-7 calendar DTE', exit: 'Last synchronized quote at or before expiry 15:15; no adjustments', costs: 'Twelve option-side executions with 0/0.5/1 point adverse slippage per leg' }, diagnostics: { requests, retries }, results, summary: summarizeBatmanResults(results) };
+  return { schemaVersion: 1, strategy: BATMAN_STRATEGY, source: { videoId: 'SjesP4clpHM' }, period: { startDate, endDate }, rules, assumptions: { structure: 'Symmetric defined-risk +1/-2/+1 call and put butterflies', strikeSelection: 'Nearest listed strikes at 1%, 2%, and 3% OTM from the 15:15 NIFTY close', entryCalendar: 'Trading session 5-7 calendar days before expiry: Friday under Thursday expiry and Wednesday under Tuesday expiry', expiry: 'Nearest listed NIFTY expiry with 5-7 calendar DTE', exit: 'Last synchronized quote at or before expiry 15:15; no adjustments', costs: 'Twelve option-side executions with 0/0.5/1 point adverse slippage per leg' }, diagnostics: { requests, retries }, results, summary: summarizeBatmanResults(results) };
 }
 
 if (process.argv[1]?.endsWith('groww-backtest.mjs')) {

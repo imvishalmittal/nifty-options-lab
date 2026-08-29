@@ -3,7 +3,6 @@ import { parseNiftyOptionContract } from '../nifty-180-premium-strategy.mjs';
 
 export const BATMAN_STRATEGY = 'defined-risk-weekly-batman';
 export const BATMAN_RULES = Object.freeze({
-  entryWeekday: 3,
   entryTime: '15:15',
   exitTime: '15:15',
   minimumDte: 5,
