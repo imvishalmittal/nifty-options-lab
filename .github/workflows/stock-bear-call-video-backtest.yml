@@ -38,7 +38,9 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           const result = JSON.parse(fs.readFileSync('result.json', 'utf8'));
+          const discovery = JSON.parse(fs.readFileSync('discovery-2025.json', 'utf8'));
           const s = result.summary;
+          const d = discovery.summary;
           const lines = [
             '# Williams-%R large-cap bear-call replication', '',
             `Period: ${result.period.startDate} to ${result.period.endDate}`,
@@ -47,6 +49,12 @@ jobs:
             `Normalized win rate: ${s.normalized?.winRate == null ? 'n/a' : (s.normalized.winRate * 100).toFixed(1) + '%'}`,
             `Normalized profit factor: ${s.normalized?.profitFactor ?? 'n/a'}`,
             `1-point stress net P&L: ${s.stress1_0?.totalNetPnlRupees ?? 'n/a'}`, '',
+            '## Frozen 2025 discovery', '',
+            `Signals: ${d.signals}; trades: ${d.trades}; data missing: ${d.dataMissing}; VIX rejected: ${d.vixRejected}`,
+            `Normalized net P&L: ${d.normalized?.totalNetPnlRupees ?? 'n/a'}`,
+            `Normalized win rate: ${d.normalized?.winRate == null ? 'n/a' : (d.normalized.winRate * 100).toFixed(1) + '%'}`,
+            `Normalized profit factor: ${d.normalized?.profitFactor ?? 'n/a'}`,
+            `1-point stress net P&L: ${d.stress1_0?.totalNetPnlRupees ?? 'n/a'}`, '',
             '**Research only. This workflow cannot place or paper-trade orders.**',
           ];
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
