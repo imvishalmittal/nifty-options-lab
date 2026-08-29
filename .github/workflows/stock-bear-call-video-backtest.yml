@@ -29,6 +29,10 @@ jobs:
         run: node research/stock-bear-call/groww-backtest.mjs --start=2026-06-04 --end=2026-08-28 --warmup=2026-01-01 --out=result.json
       - name: Validate artifact
         run: node research/stock-bear-call/integrity.mjs --in=result.json --out=integrity.json
+      - name: Run frozen 2025 discovery period
+        run: node research/stock-bear-call/groww-backtest.mjs --start=2025-01-01 --end=2025-12-31 --warmup=2024-08-01 --out=discovery-2025.json
+      - name: Validate discovery artifact
+        run: node research/stock-bear-call/integrity.mjs --scope=discovery-2025 --in=discovery-2025.json --out=discovery-2025-integrity.json
       - name: Write research summary
         run: |
           node --input-type=module <<'NODE'
@@ -51,5 +55,5 @@ jobs:
         if: always()
         with:
           name: stock-bear-call-video-replication
-          path: "result.json\nintegrity.json"
+          path: "result.json\nintegrity.json\ndiscovery-2025.json\ndiscovery-2025-integrity.json"
           retention-days: 90

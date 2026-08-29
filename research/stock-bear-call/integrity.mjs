@@ -1,13 +1,18 @@
 import fs from 'node:fs';
 import { BEAR_CALL_STRATEGY, VIDEO_STOCK_UNIVERSE } from './engine.mjs';
 
-export function validateBearCallResult(document) {
+export function validateBearCallResult(document, { scope = 'post-publication' } = {}) {
   const errors = [];
   const warnings = [];
   if (document?.schemaVersion !== 1) errors.push('schemaVersion must be 1');
   if (document?.strategy !== BEAR_CALL_STRATEGY) errors.push(`strategy must be ${BEAR_CALL_STRATEGY}`);
   if (document?.source?.videoId !== 'd3X5TNpZ0NM') errors.push('incorrect source video');
-  if (document?.period?.startDate !== '2026-06-04') errors.push('post-publication start must remain 2026-06-04');
+  if (!['post-publication', 'discovery-2025'].includes(scope)) errors.push(`unknown validation scope: ${scope}`);
+  if (scope === 'post-publication' && document?.period?.startDate !== '2026-06-04') errors.push('post-publication start must remain 2026-06-04');
+  if (scope === 'discovery-2025'
+    && (document?.period?.startDate !== '2025-01-01' || document?.period?.endDate !== '2025-12-31')) {
+    errors.push('2025 discovery period must remain 2025-01-01 through 2025-12-31');
+  }
   if (JSON.stringify(document?.universe) !== JSON.stringify(VIDEO_STOCK_UNIVERSE)) errors.push('video universe changed');
   if (document?.rules?.williamsPeriod !== 140) errors.push('Williams %R period changed');
   if (document?.rules?.overboughtThreshold !== -20) errors.push('Williams %R threshold changed');
@@ -51,8 +56,9 @@ export function validateBearCallResult(document) {
 if (process.argv[1]?.endsWith('integrity.mjs')) {
   const input = process.argv.find((arg) => arg.startsWith('--in='))?.slice(5);
   const output = process.argv.find((arg) => arg.startsWith('--out='))?.slice(6);
+  const scope = process.argv.find((arg) => arg.startsWith('--scope='))?.slice(8) ?? 'post-publication';
   if (!input) throw new Error('--in is required');
-  const report = validateBearCallResult(JSON.parse(fs.readFileSync(input, 'utf8')));
+  const report = validateBearCallResult(JSON.parse(fs.readFileSync(input, 'utf8')), { scope });
   if (output) fs.writeFileSync(output, JSON.stringify(report, null, 2));
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
   if (!report.valid) process.exitCode = 1;

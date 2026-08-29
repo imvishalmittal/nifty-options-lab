@@ -24,6 +24,12 @@ test('accepts a frozen empty result as valid but inconclusive', () => {
   assert.match(report.warnings.join(' '), /inconclusive/);
 });
 
+test('accepts the frozen 2025 discovery period only under discovery scope', () => {
+  const discovery = document({ period: { startDate: '2025-01-01', endDate: '2025-12-31', warmupStart: '2024-08-01' } });
+  assert.equal(validateBearCallResult(discovery, { scope: 'discovery-2025' }).valid, true);
+  assert.equal(validateBearCallResult(discovery).valid, false);
+});
+
 test('rejects hindsight entry and out-of-band short delta', () => {
   const row = {
     underlying: 'RELIANCE', status: 'DATA_MISSING', date: '2026-06-10', expiry: '2026-06-25',

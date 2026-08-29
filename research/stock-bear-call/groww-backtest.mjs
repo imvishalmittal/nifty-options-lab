@@ -98,6 +98,16 @@ async function fetchExpiries(token, underlying, year, spacingMs) {
   return payload.expiries ?? [];
 }
 
+async function fetchExpiriesForPeriod(token, underlying, startDate, endDate, spacingMs) {
+  const firstYear = Number(startDate.slice(0, 4));
+  const lastYear = Number(endDate.slice(0, 4));
+  const expiries = [];
+  for (let year = firstYear; year <= lastYear; year += 1) {
+    expiries.push(...await fetchExpiries(token, underlying, year, spacingMs));
+  }
+  return [...new Set(expiries)].sort();
+}
+
 async function fetchContracts(token, underlying, expiry, spacingMs) {
   const payload = await apiGet(token, '/historical/contracts', {
     exchange: 'NSE', underlying_symbol: underlying, expiry_date: expiry,
@@ -198,7 +208,7 @@ export async function backtestStockBearCall({
       bearishAlignments,
       jointSignals: signals.length,
     });
-    const expiries = await fetchExpiries(token, underlying, 2026, spacingMs);
+    const expiries = await fetchExpiriesForPeriod(token, underlying, startDate, endDate, spacingMs);
     let occupiedUntil = '';
 
     for (const signal of signals) {
