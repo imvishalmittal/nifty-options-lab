@@ -20,7 +20,17 @@ async function apiGet(token, endpoint, params, spacingMs) {
 }
 
 function normalize(raw = []) { return raw.map((row) => ({ timestamp: `${String(row[0]).replace(' ', 'T')}+05:30`, open: Number(row[1]), high: Number(row[2]), low: Number(row[3]), close: Number(row[4]) })).filter((row) => Number.isFinite(row.close)).sort((a, b) => a.timestamp.localeCompare(b.timestamp)); }
-async function candles(token, segment, symbol, startDate, endDate, spacingMs) { const payload = await apiGet(token, '/historical/candles', { exchange: 'NSE', segment, groww_symbol: symbol, start_time: `${startDate} 09:15:00`, end_time: `${endDate} 15:16:00`, candle_interval: '1minute' }, spacingMs); return normalize(payload.candles ?? []); }
+const formatDate = (value) => value.toISOString().slice(0, 10);
+function plusDays(date, days) { const value = new Date(`${date}T00:00:00Z`); value.setUTCDate(value.getUTCDate() + days); return formatDate(value); }
+function splitRange(startDate, endDate) { const output = []; for (let cursor = startDate; cursor <= endDate;) { const proposed = plusDays(cursor, 27); const end = proposed < endDate ? proposed : endDate; output.push([cursor, end]); cursor = plusDays(end, 1); } return output; }
+async function candles(token, segment, symbol, startDate, endDate, spacingMs) {
+  const rows = [];
+  for (const [start, end] of splitRange(startDate, endDate)) {
+    const payload = await apiGet(token, '/historical/candles', { exchange: 'NSE', segment, groww_symbol: symbol, start_time: `${start} 09:15:00`, end_time: `${end} 15:16:00`, candle_interval: '1minute' }, spacingMs);
+    rows.push(...normalize(payload.candles ?? []));
+  }
+  return rows.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+}
 async function expiries(token, year, spacingMs) { const payload = await apiGet(token, '/historical/expiries', { exchange: 'NSE', underlying_symbol: 'NIFTY', year }, spacingMs); return payload.expiries ?? []; }
 async function contracts(token, expiry, spacingMs) { const payload = await apiGet(token, '/historical/contracts', { exchange: 'NSE', underlying_symbol: 'NIFTY', expiry_date: expiry }, spacingMs); return payload.contracts ?? []; }
 const dayDifference = (a, b) => Math.round((new Date(`${b}T00:00:00Z`) - new Date(`${a}T00:00:00Z`)) / 86400000);
