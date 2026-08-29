@@ -38,7 +38,7 @@ function normalizeTimestamp(value) {
 }
 
 export function normalizeIronCondorCandles(raw = []) {
-  return raw.map((row) => ({
+  const normalized = raw.map((row) => ({
     timestamp: normalizeTimestamp(row[0]),
     open: Number(row[1]),
     high: Number(row[2]),
@@ -48,6 +48,20 @@ export function normalizeIronCondorCandles(raw = []) {
     openInterest: row[6] == null ? null : Number(row[6]),
   })).filter((row) => [row.open, row.high, row.low, row.close].every(Number.isFinite))
     .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  const merged = [];
+  for (const candle of normalized) {
+    const previous = merged.at(-1);
+    if (!previous || previous.timestamp !== candle.timestamp) {
+      merged.push({ ...candle });
+      continue;
+    }
+    previous.high = Math.max(previous.high, candle.high);
+    previous.low = Math.min(previous.low, candle.low);
+    previous.close = candle.close;
+    previous.volume = Math.max(previous.volume, candle.volume);
+    if (candle.openInterest != null) previous.openInterest = candle.openInterest;
+  }
+  return merged;
 }
 
 function parseDate(date) {
