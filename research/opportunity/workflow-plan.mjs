@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-export function buildPartitions({ scope, customStart = '', customEnd = '', customLot = 65, today = new Date() }) {
+export function buildPartitions({ scope, customStart = '', customEnd = '', customLot = 65, partitionMode = 'month', today = new Date() }) {
   const partitions = [];
   const addMonths = (startYear, startMonth, endYear, endMonth, finalEnd = null) => {
     for (let year = startYear; year <= endYear; year += 1) {
@@ -17,15 +17,15 @@ export function buildPartitions({ scope, customStart = '', customEnd = '', custo
     }
   };
 
-  if (scope === 'discovery-2020-2024') addMonths(2020, 1, 2024, 12);
-  else if (scope === 'validation-2025') addMonths(2025, 1, 2025, 12);
+  const addYears = (startYear, endYear, finalEnd = null) => {\n    for (let year = startYear; year <= endYear; year += 1) {\n      partitions.push({\n        label: `${year}`,\n        start: `${year}-01-01`,\n        end: finalEnd && year === endYear ? finalEnd : `${year}-12-31`,\n        lot: 'auto',\n      });\n    }\n  };\n  const addRange = (startYear, startMonth, endYear, endMonth, finalEnd = null) => {\n    if (partitionMode === 'year') addYears(startYear, endYear, finalEnd);\n    else addMonths(startYear, startMonth, endYear, endMonth, finalEnd);\n  };\n\n  if (scope === 'discovery-2020-2024') addRange(2020, 1, 2024, 12);
+  else if (scope === 'validation-2025') addRange(2025, 1, 2025, 12);
   else if (scope === 'holdout-2026') {
     const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', {
       timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit',
     }).formatToParts(today).map((part) => [part.type, part.value]));
     const isoToday = `${parts.year}-${parts.month}-${parts.day}`;
     const end = isoToday.slice(0, 4) === '2026' ? isoToday : '2026-12-31';
-    addMonths(2026, 1, 2026, Number(end.slice(5, 7)), end);
+    addRange(2026, 1, 2026, Number(end.slice(5, 7)), end);
   } else if (scope === 'custom') {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(customStart) || !/^\d{4}-\d{2}-\d{2}$/.test(customEnd) || customStart > customEnd) {
       throw new Error('custom_start and custom_end must be ordered YYYY-MM-DD dates');
@@ -44,7 +44,7 @@ export function resolveWorkflowRequest(env = process.env) {
       scope: env.INPUT_SCOPE,
       customStart: env.INPUT_CUSTOM_START ?? '',
       customEnd: env.INPUT_CUSTOM_END ?? '',
-      customLot: env.INPUT_CUSTOM_LOT ?? 65,
+      customLot: env.INPUT_CUSTOM_LOT ?? 65,\n      partitionMode: env.PARTITION_MODE ?? 'month',
     };
   }
   if (!env.REQUEST_FILE || !fs.existsSync(env.REQUEST_FILE)) throw new Error('No workflow input or run-request file found');
@@ -53,7 +53,7 @@ export function resolveWorkflowRequest(env = process.env) {
     scope: request.scope,
     customStart: request.customStart ?? '',
     customEnd: request.customEnd ?? '',
-    customLot: request.customLot ?? 65,
+    customLot: request.customLot ?? 65,\n    partitionMode: env.PARTITION_MODE ?? request.partitionMode ?? 'month',
   };
 }
 
