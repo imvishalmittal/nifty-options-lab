@@ -32,7 +32,7 @@ These hypotheses are isolated research only. They cannot place paper or live ord
 
 ## Directional credit spread
 
-- Opening range: 09:15–10:00.
+- Opening range: 09:15–09:45; decision remains the completed 09:59 candle.
 - Require ADX(14) >= 25 at 09:59.
 - Bullish regime: EMA(9) > EMA(22), close above the opening-range high, and +DI > -DI.
 - Bearish regime: EMA(9) < EMA(22), close below the opening-range low, and -DI > +DI.
