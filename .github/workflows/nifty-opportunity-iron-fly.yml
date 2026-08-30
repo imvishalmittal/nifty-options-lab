@@ -1,0 +1,63 @@
+name: Research - NIFTY intraday iron butterfly
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope: { description: Backtest partition set, required: true, type: choice, default: validation-2025, options: [discovery-2020-2024, validation-2025, holdout-2026, custom] }
+      custom_start: { description: 'YYYY-MM-DD (custom only)', required: false, type: string }
+      custom_end: { description: 'YYYY-MM-DD (custom only)', required: false, type: string }
+      custom_lot_size: { description: Lot size (custom only), required: false, type: number, default: 65 }
+  push:
+    branches: [research/defined-credit-variants]
+    paths: [research/opportunity/requests/iron-fly.json]
+permissions: { contents: read }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs: { matrix: '${{ steps.matrix.outputs.result }}', count: '${{ steps.matrix.outputs.count }}' }
+    steps:
+      - uses: actions/checkout@v4
+      - id: matrix
+        env: { INPUT_SCOPE: '${{ inputs.scope }}', INPUT_CUSTOM_START: '${{ inputs.custom_start }}', INPUT_CUSTOM_END: '${{ inputs.custom_end }}', INPUT_CUSTOM_LOT: '${{ inputs.custom_lot_size }}', REQUEST_FILE: research/opportunity/requests/iron-fly.json }
+        run: node research/opportunity/workflow-plan.mjs
+  backtest:
+    needs: plan
+    strategy: { fail-fast: false, max-parallel: 1, matrix: '${{ fromJSON(needs.plan.outputs.matrix) }}' }
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node --test tests/groww-option-costs.test.mjs tests/iron-fly-engine.test.mjs
+      - name: Resolve Groww access token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - run: node research/opportunity/groww-iron-fly-backtest.mjs --start=${{ matrix.start }} --end=${{ matrix.end }} --lot-size=${{ matrix.lot }} --out=result.json
+      - run: node research/opportunity/iron-fly-integrity.mjs --in=result.json --out=integrity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: 'opportunity-intraday-iron-fly-part-${{ matrix.label }}', path: "result.json\nintegrity.json", retention-days: 90 }
+  consolidate:
+    if: ${{ !cancelled() }}
+    needs: [plan, backtest]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with: { pattern: 'opportunity-intraday-iron-fly-part-*', path: artifacts }
+      - run: node research/opportunity/aggregate-iron-fly-results.mjs --dir=artifacts --expected-count=${{ needs.plan.outputs.count }} --out=consolidated.json
+      - run: node research/opportunity/iron-fly-integrity.mjs --in=consolidated.json --out=consolidated-integrity.json
+      - run: node research/opportunity/iron-fly-gates.mjs --in=consolidated.json --out=acceptance-gates.json --enforce=true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: opportunity-intraday-iron-fly-consolidated, path: "consolidated.json\nconsolidated-integrity.json\nacceptance-gates.json", retention-days: 90 }
+
