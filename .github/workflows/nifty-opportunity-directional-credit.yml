@@ -37,9 +37,7 @@ jobs:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
           GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
           GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
-          # Reuse the stored token during a 60-partition discovery run. The
-          # resolver still falls back to TOTP when the stored token is absent.
-          GROWW_PREFER_TOTP: 'false'
+          GROWW_PREFER_TOTP: 'true'
         run: node scripts/resolve-groww-token.mjs
       - run: node research/opportunity/groww-directional-credit-backtest.mjs --start=${{ matrix.start }} --end=${{ matrix.end }} --lot-size=${{ matrix.lot }} --out=result.json
       - run: node research/opportunity/directional-credit-integrity.mjs --in=result.json --out=integrity.json
@@ -62,4 +60,3 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: opportunity-intraday-directional-credit-consolidated, path: "consolidated.json\nconsolidated-integrity.json\nacceptance-gates.json", retention-days: 90 }
-
