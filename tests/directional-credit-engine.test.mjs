@@ -8,6 +8,7 @@ import {
   selectDirectionalCreditContracts,
   summarizeDirectionalCreditResults,
 } from '../research/opportunity/directional-credit-engine.mjs';
+import { validateDirectionalCreditResult } from '../research/opportunity/directional-credit-integrity.mjs';
 
 const symbol = (strike, type) => `NSE-NIFTY-27Aug26-${strike}-${type}`;
 const candle = (timestamp, open, close = open) => ({ timestamp, open, high: Math.max(open, close), low: Math.min(open, close), close, volume: 100 });
@@ -73,4 +74,28 @@ test('summary remains isolated and reports scenario expectancy', () => {
   assert.equal(summary.trades, 2);
   assert.equal(summary.normalizedCosts.totalNetPnlRupees, 60);
   assert.equal(summary.normalizedCosts.expectancyRupees, 30);
+});
+
+test('integrity accepts the exact two-leg defined-risk structure', () => {
+  const costs = { netPnl: 100, legs: { shortOption: {}, longOption: {} } };
+  const row = {
+    date: '2026-08-24', expiry: '2026-08-25', status: 'TRADE',
+    selection: {
+      direction: 'BULLISH',
+      shortOption: { symbol: symbol(23850, 'PE'), strike: 23850, optionType: 'PE' },
+      longOption: { symbol: symbol(23650, 'PE'), strike: 23650, optionType: 'PE' },
+    },
+    entryTime: '2026-08-24T10:00:00+05:30', exitTime: '2026-08-24T10:01:00+05:30',
+    entryCredit: 20, exitDebit: 10, pnlPerUnit: 10, maximumLossPoints: 180,
+    entryQuotes: { shortOption: 30, longOption: 10 }, exitQuotes: { shortOption: 15, longOption: 5 },
+    costs: { normalized: costs, stress0_5: costs, stress1_0: costs },
+  };
+  const report = validateDirectionalCreditResult({
+    schemaVersion: 1, strategy: 'intraday-directional-credit-spread',
+    period: { startDate: '2026-08-24', endDate: '2026-08-24' },
+    rules: { entryTime: '10:00', wingWidthPoints: 200 }, results: [row],
+    summary: { observedSessions: 1, trades: 1 },
+  });
+  assert.deepEqual(report.errors, []);
+  assert.equal(report.valid, true);
 });
