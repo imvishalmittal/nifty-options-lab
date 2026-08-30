@@ -1,6 +1,6 @@
 {
   "scope": "discovery-2020-2024",
-  "partitionMode": "year",
-  "requestedAt": "2026-08-30T10:24:00Z",
-  "reason": "Run frozen directional credit discovery in five yearly partitions after planner validation"
+  "partitionMode": "all",
+  "requestedAt": "2026-08-30T11:23:00Z",
+  "reason": "Run frozen directional credit discovery in one process using one Groww authentication"
 }
