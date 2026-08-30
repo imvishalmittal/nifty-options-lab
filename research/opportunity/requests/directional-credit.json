@@ -1,6 +1,6 @@
 {
   "scope": "discovery-2020-2024",
   "partitionMode": "year",
-  "requestedAt": "2026-08-30T10:18:00Z",
-  "reason": "Run frozen directional credit discovery in five yearly partitions to stay within Groww TOTP rate limits"
+  "requestedAt": "2026-08-30T10:21:00Z",
+  "reason": "Run frozen directional credit discovery in five yearly partitions after planner syntax repair"
 }
