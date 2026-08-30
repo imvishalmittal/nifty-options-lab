@@ -30,7 +30,7 @@ export function generateTotp(secret, nowMs = Date.now()) {
   return String(binary % 1_000_000).padStart(6, '0');
 }
 
-export async function resolveGrowwAccessToken(env = process.env, fetchImpl = fetch) {
+export async function resolveGrowwAccessToken(env = process.env, fetchImpl = fetch, options = {}) {
   const manual = env.GROWW_ACCESS_TOKEN?.trim();
   const apiKey = env.GROWW_TOTP_TOKEN?.trim();
   const secret = env.GROWW_TOTP_SECRET?.trim();
@@ -45,21 +45,32 @@ export async function resolveGrowwAccessToken(env = process.env, fetchImpl = fet
     throw new Error('GROWW_ACCESS_TOKEN is missing. Optional TOTP fallback requires both GROWW_TOTP_TOKEN and GROWW_TOTP_SECRET.');
   }
 
-  const response = await fetchImpl(ACCESS_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify({ key_type: 'totp', totp: generateTotp(secret) }),
-  });
-  const body = await response.json().catch(() => ({}));
-  const token = body?.token ?? body?.payload?.token;
-  if (!response.ok || !token) {
-    throw new Error(`Groww TOTP access-token request failed (${response.status}): ${body?.error?.message || body?.message || 'unknown error'}`);
+  const maxAttempts = options.maxAttempts ?? 6;
+  const sleep = options.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const response = await fetchImpl(ACCESS_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ key_type: 'totp', totp: generateTotp(secret) }),
+    });
+    const body = await response.json().catch(() => ({}));
+    const token = body?.token ?? body?.payload?.token;
+    if (response.ok && token) return { token, source: 'totp' };
+    if (response.status !== 429 || attempt === maxAttempts) {
+      throw new Error(`Groww TOTP access-token request failed (${response.status}): ${body?.error?.message || body?.message || 'unknown error'}`);
+    }
+    const retryAfterSeconds = Number(response.headers?.get?.('retry-after'));
+    const delayMs = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+      ? retryAfterSeconds * 1_000
+      : Math.min(15_000 * attempt, 60_000);
+    console.warn(`Groww TOTP rate limited; retrying in ${Math.ceil(delayMs / 1_000)}s (attempt ${attempt + 1}/${maxAttempts})`);
+    await sleep(delayMs);
   }
-  return { token, source: 'totp' };
+  throw new Error('Groww TOTP access-token request exhausted retries');
 }
 
 async function main() {
