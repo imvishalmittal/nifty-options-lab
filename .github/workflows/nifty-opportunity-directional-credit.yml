@@ -20,13 +20,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: matrix
-        env: { INPUT_SCOPE: '${{ inputs.scope }}', INPUT_CUSTOM_START: '${{ inputs.custom_start }}', INPUT_CUSTOM_END: '${{ inputs.custom_end }}', INPUT_CUSTOM_LOT: '${{ inputs.custom_lot_size }}', REQUEST_FILE: research/opportunity/requests/directional-credit.json, PARTITION_MODE: year }
+        env: { INPUT_SCOPE: '${{ inputs.scope }}', INPUT_CUSTOM_START: '${{ inputs.custom_start }}', INPUT_CUSTOM_END: '${{ inputs.custom_end }}', INPUT_CUSTOM_LOT: '${{ inputs.custom_lot_size }}', REQUEST_FILE: research/opportunity/requests/directional-credit.json, PARTITION_MODE: all }
         run: node research/opportunity/workflow-plan.mjs
   backtest:
     needs: plan
     strategy: { fail-fast: false, max-parallel: 1, matrix: '${{ fromJSON(needs.plan.outputs.matrix) }}' }
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
