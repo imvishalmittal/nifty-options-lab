@@ -3,6 +3,7 @@ import { calculateLongOptionRoundTripCosts } from '../groww-option-costs.mjs';
 import { MORNING_TEA_RULES, MORNING_TEA_UNIVERSE, evaluateLongOption, qualifiesOpeningMover, rankOpeningMovers, summarizeMorningTea } from './engine.mjs';
 
 const BASE_URL = 'https://api.groww.in/v1';
+const INSTRUMENTS_URL = 'https://growwapi-assets.groww.in/instruments/instrument.csv';
 let lastRequestAt = 0;
 let requestCount = 0;
 let retryCount = 0;
@@ -39,6 +40,44 @@ async function candles(token, segment, symbol, start, end) {
   return normalize(payload.candles ?? []);
 }
 
+export function parseInstrumentCsv(text) {
+  const lines = String(text).trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const parseLine = (line) => {
+    const fields = []; let value = ''; let quoted = false;
+    for (let index = 0; index < line.length; index += 1) {
+      const char = line[index];
+      if (char === '"' && quoted && line[index + 1] === '"') { value += '"'; index += 1; }
+      else if (char === '"') quoted = !quoted;
+      else if (char === ',' && !quoted) { fields.push(value); value = ''; }
+      else value += char;
+    }
+    fields.push(value); return fields;
+  };
+  const headers = parseLine(lines[0]);
+  return lines.slice(1).map((line) => Object.fromEntries(headers.map((header, index) => [header, parseLine(line)[index] ?? ''])));
+}
+
+export function resolveInstrumentLotSize(rows, contract) {
+  const exact = rows.find((row) => row.groww_symbol === contract.symbol);
+  const exactLot = Number(exact?.lot_size);
+  if (exactLot > 0) return { lotSize: exactLot, source: 'instrument-exact-contract' };
+  const compatible = rows.filter((row) => row.exchange === 'NSE' && row.segment === 'FNO'
+      && row.underlying_symbol === contract.underlying && row.instrument_type === contract.optionType
+      && Number(row.lot_size) > 0)
+    .toSorted((a, b) => String(a.expiry_date).localeCompare(String(b.expiry_date)));
+  const sameOrNext = compatible.find((row) => String(row.expiry_date) >= contract.expiry) ?? compatible.at(-1);
+  return sameOrNext ? { lotSize: Number(sameOrNext.lot_size), source: 'instrument-underlying-expiry' } : null;
+}
+
+async function instrumentRows(cache) {
+  if (cache.instrumentRows) return cache.instrumentRows;
+  const response = await fetch(INSTRUMENTS_URL, { headers: { Accept: 'text/csv' } });
+  if (!response.ok) throw new Error(`Groww instrument CSV failed (${response.status})`);
+  cache.instrumentRows = parseInstrumentCsv(await response.text());
+  return cache.instrumentRows;
+}
+
 function groupByDate(rows) {
   const map = new Map();
   for (const row of rows) { const date = dateOf(row.timestamp); if (!map.has(date)) map.set(date, []); map.get(date).push(row); }
@@ -69,7 +108,12 @@ async function optionSelection(token, { symbol, date, spot, optionType, cache })
   const candidates = cache.contracts.get(contractsKey).map((value) => parseContract(value, symbol)).filter((row) => row?.optionType === optionType)
     .toSorted((a, b) => Math.abs(a.strike - spot) - Math.abs(b.strike - spot) || a.strike - b.strike);
   if (!candidates.length) return { status: 'DATA_MISSING', reason: `No ${optionType} stock-option contract` };
-  return { status: 'SELECTED', expiry, contract: candidates[0] };
+  const contract = { ...candidates[0], underlying: symbol, expiry };
+  if (!(contract.lotSize > 0)) {
+    const resolved = resolveInstrumentLotSize(await instrumentRows(cache), contract);
+    if (resolved) { contract.lotSize = resolved.lotSize; contract.lotSizeSource = resolved.source; }
+  }
+  return { status: 'SELECTED', expiry, contract };
 }
 
 function previousClose(days, date) {
