@@ -20,10 +20,11 @@ export function validateDirectionalCreditResult(document) {
     if (!VALID_STATUSES.has(row.status)) errors.push(`invalid status on ${row.date}: ${row.status}`);
     if (row.expiry && row.expiry <= row.date) errors.push(`expiry-day or expired structure on ${row.date}`);
     if (row.selection) {
-      const { shortCall, longCall, shortPut, longPut } = row.selection;
-      if (![shortCall, longCall, shortPut, longPut].every((leg) => leg?.symbol)) errors.push(`incomplete four-leg selection on ${row.date}`);
-      if (longCall?.strike - shortCall?.strike !== document.rules.wingWidthPoints) errors.push(`call wing width mismatch on ${row.date}`);
-      if (shortPut?.strike - longPut?.strike !== document.rules.wingWidthPoints) errors.push(`put wing width mismatch on ${row.date}`);
+      const { shortOption, longOption, direction } = row.selection;
+      if (![shortOption, longOption].every((leg) => leg?.symbol)) errors.push(`incomplete two-leg selection on ${row.date}`);
+      if (!['BULLISH', 'BEARISH'].includes(direction)) errors.push(`invalid spread direction on ${row.date}`);
+      if (shortOption?.optionType !== longOption?.optionType) errors.push(`option type mismatch on ${row.date}`);
+      if (Math.abs((longOption?.strike ?? 0) - (shortOption?.strike ?? 0)) !== document.rules.wingWidthPoints) errors.push(`wing width mismatch on ${row.date}`);
     }
     if (row.status === 'TRADE') {
       if (timestampTime(row.entryTime) !== document.rules.entryTime) errors.push(`incorrect entry time on ${row.date}`);
@@ -31,13 +32,13 @@ export function validateDirectionalCreditResult(document) {
       if (!Number.isFinite(row.entryCredit) || !Number.isFinite(row.exitDebit) || !Number.isFinite(row.pnlPerUnit)) errors.push(`invalid spread prices on ${row.date}`);
       if (Math.abs((row.entryCredit - row.exitDebit) - row.pnlPerUnit) > 1e-8) errors.push(`PnL mismatch on ${row.date}`);
       if (!(row.maximumLossPoints > 0)) errors.push(`invalid maximum loss on ${row.date}`);
-      for (const name of ['shortCall', 'longCall', 'shortPut', 'longPut']) {
+      for (const name of ['shortOption', 'longOption']) {
         if (!Number.isFinite(row.entryQuotes?.[name]) || !Number.isFinite(row.exitQuotes?.[name])) errors.push(`missing ${name} execution on ${row.date}`);
       }
       for (const scenario of ['normalized', 'stress0_5', 'stress1_0']) {
         const cost = row.costs?.[scenario];
         if (!Number.isFinite(cost?.netPnl)) errors.push(`missing ${scenario} cost result on ${row.date}`);
-        if (Object.keys(cost?.legs ?? {}).length !== 4) errors.push(`incomplete ${scenario} leg costs on ${row.date}`);
+        if (Object.keys(cost?.legs ?? {}).length !== 2) errors.push(`incomplete ${scenario} leg costs on ${row.date}`);
       }
     }
   }
@@ -73,5 +74,4 @@ if (process.argv[1]?.endsWith('directional-credit-integrity.mjs')) {
     process.exit(1);
   }
 }
-
 
