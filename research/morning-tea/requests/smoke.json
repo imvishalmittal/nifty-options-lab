@@ -1,6 +1,6 @@
 {
   "start": "2026-08-03",
   "end": "2026-08-21",
-  "requestedAt": "2026-08-30T16:31:00Z",
-  "purpose": "Retry Morning Tea smoke using refreshed manual Groww token"
+  "requestedAt": "2026-08-30T16:45:00Z",
+  "purpose": "Retry Morning Tea smoke after lot-size integrity repair"
 }
