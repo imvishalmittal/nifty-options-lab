@@ -1,6 +1,6 @@
 {
   "scope": "discovery-2020-2024",
   "partitionMode": "all",
-  "requestedAt": "2026-08-30T11:23:00Z",
-  "reason": "Run frozen directional credit discovery in one process using one Groww authentication"
+  "requestedAt": "2026-08-30T16:30:00Z",
+  "reason": "Retry frozen directional credit discovery using refreshed manual Groww token"
 }
