@@ -17,7 +17,22 @@ export function buildPartitions({ scope, customStart = '', customEnd = '', custo
     }
   };
 
-  const addYears = (startYear, endYear, finalEnd = null) => {\n    for (let year = startYear; year <= endYear; year += 1) {\n      partitions.push({\n        label: `${year}`,\n        start: `${year}-01-01`,\n        end: finalEnd && year === endYear ? finalEnd : `${year}-12-31`,\n        lot: 'auto',\n      });\n    }\n  };\n  const addRange = (startYear, startMonth, endYear, endMonth, finalEnd = null) => {\n    if (partitionMode === 'year') addYears(startYear, endYear, finalEnd);\n    else addMonths(startYear, startMonth, endYear, endMonth, finalEnd);\n  };\n\n  if (scope === 'discovery-2020-2024') addRange(2020, 1, 2024, 12);
+  const addYears = (startYear, endYear, finalEnd = null) => {
+    for (let year = startYear; year <= endYear; year += 1) {
+      partitions.push({
+        label: `${year}`,
+        start: `${year}-01-01`,
+        end: finalEnd && year === endYear ? finalEnd : `${year}-12-31`,
+        lot: 'auto',
+      });
+    }
+  };
+  const addRange = (startYear, startMonth, endYear, endMonth, finalEnd = null) => {
+    if (partitionMode === 'year') addYears(startYear, endYear, finalEnd);
+    else addMonths(startYear, startMonth, endYear, endMonth, finalEnd);
+  };
+
+  if (scope === 'discovery-2020-2024') addRange(2020, 1, 2024, 12);
   else if (scope === 'validation-2025') addRange(2025, 1, 2025, 12);
   else if (scope === 'holdout-2026') {
     const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', {
