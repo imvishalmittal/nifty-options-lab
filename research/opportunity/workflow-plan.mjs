@@ -28,7 +28,17 @@ export function buildPartitions({ scope, customStart = '', customEnd = '', custo
     }
   };
   const addRange = (startYear, startMonth, endYear, endMonth, finalEnd = null) => {
-    if (partitionMode === 'year') addYears(startYear, endYear, finalEnd);
+    if (partitionMode === 'all') {
+      const startMm = String(startMonth).padStart(2, '0');
+      const endMm = String(endMonth).padStart(2, '0');
+      const last = new Date(Date.UTC(endYear, endMonth, 0)).toISOString().slice(0, 10);
+      partitions.push({
+        label: `${startYear}-${endYear}`,
+        start: `${startYear}-${startMm}-01`,
+        end: finalEnd ?? last,
+        lot: 'auto',
+      });
+    } else if (partitionMode === 'year') addYears(startYear, endYear, finalEnd);
     else addMonths(startYear, startMonth, endYear, endMonth, finalEnd);
   };
 
