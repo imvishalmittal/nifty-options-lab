@@ -1,5 +1,5 @@
 {
   "scope": "discovery-2020-2024",
-  "requestedAt": "2026-08-30T01:55:00Z",
-  "reason": "Rerun frozen directional credit discovery after correcting the integrity checker from four condor legs to two spread legs"
+  "requestedAt": "2026-08-30T09:05:00Z",
+  "reason": "Rerun frozen directional credit discovery using the stored Groww access token to avoid TOTP endpoint rate limits"
 }
