@@ -59,7 +59,8 @@ export function resolveWorkflowRequest(env = process.env) {
       scope: env.INPUT_SCOPE,
       customStart: env.INPUT_CUSTOM_START ?? '',
       customEnd: env.INPUT_CUSTOM_END ?? '',
-      customLot: env.INPUT_CUSTOM_LOT ?? 65,\n      partitionMode: env.PARTITION_MODE ?? 'month',
+      customLot: env.INPUT_CUSTOM_LOT ?? 65,
+      partitionMode: env.PARTITION_MODE ?? 'month',
     };
   }
   if (!env.REQUEST_FILE || !fs.existsSync(env.REQUEST_FILE)) throw new Error('No workflow input or run-request file found');
@@ -68,7 +69,8 @@ export function resolveWorkflowRequest(env = process.env) {
     scope: request.scope,
     customStart: request.customStart ?? '',
     customEnd: request.customEnd ?? '',
-    customLot: request.customLot ?? 65,\n    partitionMode: env.PARTITION_MODE ?? request.partitionMode ?? 'month',
+    customLot: request.customLot ?? 65,
+    partitionMode: env.PARTITION_MODE ?? request.partitionMode ?? 'month',
   };
 }
 
