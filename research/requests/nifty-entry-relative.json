@@ -1,5 +1,5 @@
 {
   "scope": "discovery-2020-2024",
-  "requestedAt": "2026-08-25T12:22:11.890Z",
-  "purpose": "Entry-relative NIFTY premium-risk discovery rerun behind Groww authentication preflight; 2025 validation and 2026 holdout remain untouched"
+  "requestedAt": "2026-08-31T07:20:21Z",
+  "purpose": "Frozen five-variant discovery including the requested fixed 170 stop / 210 target comparator; 2025 validation and 2026 holdout remain untouched"
 }
