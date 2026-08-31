@@ -37,3 +37,16 @@ Cboe's benchmark condor methodology is useful as an external reference for delta
 5. Only after all gates pass, design a separate paper workflow. No existing paper workflow changes in this research PR.
 
 Discovery acceptance is frozen before viewing output: at least 1,000 sessions and 100 trades; no more than 5% missing sessions; normalized profit factor at least 1.20; 0.5-point stress profit factor at least 1.10; positive P&L and profit factor at least 1.00 under 1-point stress; at least four profitable stress years; no year contributing more than 65% of positive stress P&L; and stress drawdown no larger than 15 median defined-risk losses. Validation and holdout have separately precommitted minimum sample and stress gates in `iron-condor-gates.mjs`.
+
+
+## Final discovery outcome
+
+The frozen 2020–2024 discovery completed with 1,243 sessions and 269 trades. Missing-data rate was 4.907%, inside the predeclared 5% limit.
+
+| Scenario | Net P&L | Profit factor | Maximum drawdown |
+|---|---:|---:|---:|
+| Normal | −₹53,486.88 | 0.362 | ₹53,771.50 |
+| 0.5-point stress | −₹108,360.26 | 0.099 | ₹108,360.26 |
+| 1.0-point stress | −₹163,158.74 | 0.023 | ₹163,158.74 |
+
+There were 14 targets, 17 stops, and 238 time exits. All five discovery years were negative under stress. The strategy is **REJECTED**; 2025 validation and 2026 holdout were not run, and it is not in paper trading.

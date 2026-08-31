@@ -1,5 +1,17 @@
 # Intraday options research suite
 
+## Current outcome snapshot
+
+The detailed evidence ledger is `docs/STRATEGY_STATUS.md`. Current decisions are:
+
+- **Paper:** V2, V3-5, V3-10, V4, V5, V6, V7, and V8, as non-additive shadow outcomes.
+- **Rejected after completed testing:** NIFTY ₹180 V1 fixed stop/target, opening-range negative control, Batman, HAI 1:3:2, intraday iron condor, intraday iron butterfly, and directional defined-credit spread.
+- **Diagnostic:** Morning Tea 2025 one-minute proxy. The initial result was profitable only at zero slippage and failed both missing-data and original stress gates; a repaired diagnostic run is in progress.
+- **Unverified:** Quick Flip, Stocks-in-Play ORB, and the four isolated opportunity modules.
+- **Incomplete specification:** 30-minute breakout/ATM selling, Williams/EMA bear-call, monthly “Ramesh–Suresh”, and 0.08-delta smart-strangle ideas.
+
+No rejected, unverified, or incomplete strategy is in paper trading.
+
 The project keeps each video-derived idea as a separate hypothesis. Rules are frozen before results are inspected; strategies are not blended to rescue weak backtests.
 
 ## Validation policy
@@ -36,13 +48,13 @@ High win rate is not an acceptance criterion. Positive expectancy after costs, r
 
 ### Shared Groww research infrastructure
 
-All Groww-heavy GitHub Actions jobs use the repository-wide `groww-backtest-api` concurrency group with `queue: max`, so API jobs execute one at a time instead of racing a single token. Matrix data jobs use `max-parallel: 1`. Legacy runs started before this queue existed are not mixed with queued-methodology results.
+All Groww-heavy GitHub Actions jobs use the repository-wide `groww-backtest-api` concurrency group with `queue: max`, so API jobs execute one at a time instead of racing a single token. Matrix data jobs use `max-parallel: 1`. Legacy runs started before this queue existed are not mixed with post-queue methodology results.
 
 Stock-candle fetches already use retry/backoff and a pause between chunks. The option backtester additionally spaces Groww calls, records request/rate-limit diagnostics, and uses progressive strike selection to reduce historical API load.
 
 ## S1 — Quick Flip Scalper V1
 
-Status: **implemented for 5-minute confirmation; pre-open and closing-auction data defects corrected; fresh full-history rerun queued; 1m/3m confirmation pending**.
+Status: **UNVERIFIED — implemented for 5-minute confirmation; earlier outputs were invalidated by pre-open and closing-auction defects; a clean full-history rerun is required; 1m/3m confirmation remains a separate pending comparison**.
 
 Frozen rules:
 
@@ -84,7 +96,7 @@ Still unresolved and therefore not guessed:
 
 ## S3 — NIFTY ₹180 Premium Momentum V1
 
-Status: **actual Groww FNO pipeline implemented; execution/clock defects found by smoke testing and fixed; throttled cost-aware validation queued**.
+Status: **REJECTED — the completed 153-session, 72-trade test produced +₹199.84 after normal costs, but −₹4,477.22 at 0.5-point stress and −₹9,154.28 at 1-point stress; 11 sessions were missing**.
 
 Frozen baseline rules:
 
@@ -112,30 +124,26 @@ Groww historical FNO expiries, contracts, candles, volume and open interest are 
 
 ## S4 — Morning Tea stock-option strategy
 
-Status: **specification pending; do not backtest guessed rules**.
+Status: **DIAGNOSTIC — specification frozen and implemented; repaired 2025 one-minute-proxy run in progress**.
 
-Known rules:
+Frozen implementation:
 
-- F&O stocks rather than index options;
-- preselection from top F&O gainers/losers;
-- trading only from 09:15 to 09:30;
-- ATM options only;
-- price-action/open-low or open-high matching is important;
-- strict stop and stop trading after the morning opportunity.
+- rank the prior session's NIFTY losers without using current-session information;
+- apply deterministic open-match tolerance and tie-breaking;
+- map the qualifying stock setup to the specified ATM CE or PE;
+- require the option's 09:15 bullish-candle filter;
+- enter at 09:16;
+- stop at the option opening-candle low;
+- target 10% above entry;
+- exit any unresolved trade at 09:30;
+- resolve same-minute stop/target ambiguity as stop first;
+- use actual option candles, dated lot sizes, costs, and explicit slippage scenarios.
 
-Missing mechanical details:
-
-- observation time for ranking top gainers/losers;
-- exact open≈low/open≈high tolerance;
-- confirmation/entry trigger;
-- stop and target formula;
-- tie-breaking if multiple stocks qualify.
-
-These must be recovered from the source material before implementation.
+The initial 2025 output was profitable at zero slippage but failed the 2% missing-data gate and both original 0.5/1.0-point-per-leg stress cases. Historical TATAMOTORS lot-size provenance and supplementary 0.10/0.25 scenarios are diagnostic additions, not strategy-rule or acceptance-gate changes. See `docs/MORNING_TEA_SPEC.md`.
 
 ## S5 — Evidence-guided Stocks-in-Play ORB
 
-Status: **implemented as a separate literature-motivated hypothesis; fresh continuous-session historical study queued**.
+Status: **UNVERIFIED — implemented as a separate literature-motivated hypothesis, but no clean consolidated continuous-session result is documented**.
 
 This is deliberately not a rewrite of Quick Flip. Its rules were declared before performance was inspected:
 

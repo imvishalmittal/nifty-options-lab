@@ -15,6 +15,15 @@ The repository contains two user-facing paths:
 
 The hosted Sites build can lag GitHub `main`; source readiness and public deployment are separate states.
 
+## Strategy status at a glance
+
+- **Paper observation:** eight NIFTY ₹180-premium variants (V2 through V8) running as alternative shadow outcomes on two shared entry cohorts; no broker orders.
+- **Completed and rejected:** NIFTY ₹180 V1 fixed stop/target, opening-range negative control, defined-risk Batman, HAI 1:3:2 ratio, intraday iron condor, intraday iron butterfly, and directional defined-credit spread.
+- **Completed and rejected:** Morning Tea 2025 one-minute proxy also failed its frozen stress gates; integrity passed after historical lot-size repair, while 0.10/0.25 diagnostics were profitable but 0.5/1.0 were not.
+- **Unverified/incomplete:** Quick Flip, Stocks-in-Play ORB, four isolated opportunity modules, and four incompletely specified video-derived option ideas.
+
+See [Strategy status and evidence ledger](docs/STRATEGY_STATUS.md) for samples, P&L, profit factors, failure reasons, and the exact paper suite.
+
 ## Forward paper suite — V2 through V8
 
 V3 keeps the V2 entry family but changes stop management so risk begins reducing before a fixed ₹220 activation.
@@ -66,7 +75,7 @@ Filters include **year, month, CE/PE, strategy, and profit/loss**. Displayed col
 
 The ledger currently contains **110 integrity-passed V2 trades from 2025 Jan–Sep and Nov**. October and December 2025 remain excluded because their completeness gates failed.
 
-V3 is a separately named hypothesis. A 2025 actual-contract comparison of **5-point versus 10-point trail steps with a 20-point gap** runs through its own integrity-gated workflow. Results from V2 and V3 must not be pooled as if they are the same strategy.
+V3 is a separately named hypothesis. Its 5-point and 10-point trail outcomes are kept separate from V2 and from one another. Historical and forward rows must not be pooled as if they are the same strategy.
 
 ## Automation
 
@@ -78,7 +87,7 @@ Active GitHub Actions workflows are intentionally limited to:
 - `NIFTY Paper Smoke` — manually checks paper mechanics, Groww authentication, and a small historical-data request.
 - `Research - NIFTY ...` opportunity workflows — four isolated strategy backtests, their suite chain, and comparison report.
 
-Completed NIFTY 180, opening-range, Quick Flip, Stocks-in-Play, ledger-backfill, and diagnostic studies remain preserved as code, tests, documentation, accepted ledger data, and Git history. Their one-time Action entry points were removed after completion to keep the Actions page operationally focused. Groww-heavy active research jobs share a serialized API group to reduce rate-limit conflicts.
+Completed or superseded one-time studies remain preserved as code, tests, documentation, artifacts, and Git history. A preserved implementation is not automatically accepted evidence: Quick Flip and Stocks-in-Play remain unverified until a clean consolidated run is documented. Groww-heavy active research jobs share a serialized API group to reduce rate-limit conflicts.
 
 ## Methodology controls
 
@@ -128,7 +137,8 @@ Research workflows also run monthly integrity gates.
 
 ## Documentation
 
-- [Current strategy specification](docs/STRATEGY_SPEC.md)
+- [Strategy status and evidence ledger](docs/STRATEGY_STATUS.md)
+- [Current paper-family specification](docs/STRATEGY_SPEC.md)
 - [Stepped-trail research](docs/STEPPED_TRAIL_RESEARCH.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Safety and limitations](docs/SAFETY_AND_LIMITATIONS.md)

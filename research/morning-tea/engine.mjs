@@ -77,6 +77,8 @@ export function summarizeMorningTea(results) {
     winRate: trades.length ? wins / trades.length : 0,
     missingDataSessions: new Set(results.filter((row) => row.status === 'DATA_MISSING').map((row) => row.date)).size,
     normalNetPnl: sum('normalized'),
+    stress0_1NetPnl: sum('stress0_1'),
+    stress0_25NetPnl: sum('stress0_25'),
     stress0_5NetPnl: sum('stress0_5'),
     stress1_0NetPnl: sum('stress1_0'),
   };

@@ -3,6 +3,7 @@ import { calculateLongOptionRoundTripCosts } from '../groww-option-costs.mjs';
 import { MORNING_TEA_RULES, MORNING_TEA_UNIVERSE, evaluateLongOption, qualifiesOpeningMover, rankOpeningMovers, summarizeMorningTea } from './engine.mjs';
 
 const BASE_URL = 'https://api.groww.in/v1';
+const INSTRUMENTS_URL = 'https://growwapi-assets.groww.in/instruments/instrument.csv';
 let lastRequestAt = 0;
 let requestCount = 0;
 let retryCount = 0;
@@ -35,8 +36,59 @@ function normalize(raw = []) {
 }
 
 async function candles(token, segment, symbol, start, end) {
-  const payload = await get(token, '/historical/candles', { exchange: 'NSE', segment, groww_symbol: symbol, start_time: `${start} 09:15:00`, end_time: `${end} 15:30:00`, candle_interval: '1minute' });
-  return normalize(payload.candles ?? []);
+  const rows = [];
+  for (let chunkStart = start; chunkStart <= end;) {
+    const chunkEnd = addDays(chunkStart, 29) < end ? addDays(chunkStart, 29) : end;
+    const payload = await get(token, '/historical/candles', { exchange: 'NSE', segment, groww_symbol: symbol, start_time: `${chunkStart} 09:15:00`, end_time: `${chunkEnd} 15:30:00`, candle_interval: '1minute' });
+    rows.push(...(payload.candles ?? []));
+    chunkStart = addDays(chunkEnd, 1);
+  }
+  const normalized = normalize(rows);
+  return [...new Map(normalized.map((row) => [row.timestamp, row])).values()];
+}
+
+export function parseInstrumentCsv(text) {
+  const lines = String(text).trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const parseLine = (line) => {
+    const fields = []; let value = ''; let quoted = false;
+    for (let index = 0; index < line.length; index += 1) {
+      const char = line[index];
+      if (char === '"' && quoted && line[index + 1] === '"') { value += '"'; index += 1; }
+      else if (char === '"') quoted = !quoted;
+      else if (char === ',' && !quoted) { fields.push(value); value = ''; }
+      else value += char;
+    }
+    fields.push(value); return fields;
+  };
+  const headers = parseLine(lines[0]);
+  return lines.slice(1).map((line) => Object.fromEntries(headers.map((header, index) => [header, parseLine(line)[index] ?? ''])));
+}
+
+export function resolveHistoricalLotSize(contract, tradeDate) {
+  if (contract.underlying !== 'TATAMOTORS' || tradeDate < '2025-01-01' || tradeDate > '2025-10-13') return null;
+  // NSE's 2024 review set 550 through the June 2025 series; the July 2025 series moved to 800.
+  return { lotSize: tradeDate < '2025-07-01' ? 550 : 800, source: 'nse-historical-schedule-2025' };
+}
+
+export function resolveInstrumentLotSize(rows, contract) {
+  const exact = rows.find((row) => row.groww_symbol === contract.symbol);
+  const exactLot = Number(exact?.lot_size);
+  if (exactLot > 0) return { lotSize: exactLot, source: 'instrument-exact-contract' };
+  const compatible = rows.filter((row) => row.exchange === 'NSE' && row.segment === 'FNO'
+      && row.underlying_symbol === contract.underlying && row.instrument_type === contract.optionType
+      && Number(row.lot_size) > 0)
+    .toSorted((a, b) => String(a.expiry_date).localeCompare(String(b.expiry_date)));
+  const sameOrNext = compatible.find((row) => String(row.expiry_date) >= contract.expiry) ?? compatible.at(-1);
+  return sameOrNext ? { lotSize: Number(sameOrNext.lot_size), source: 'instrument-underlying-expiry' } : null;
+}
+
+async function instrumentRows(cache) {
+  if (cache.instrumentRows) return cache.instrumentRows;
+  const response = await fetch(INSTRUMENTS_URL, { headers: { Accept: 'text/csv' } });
+  if (!response.ok) throw new Error(`Groww instrument CSV failed (${response.status})`);
+  cache.instrumentRows = parseInstrumentCsv(await response.text());
+  return cache.instrumentRows;
 }
 
 function groupByDate(rows) {
@@ -69,7 +121,13 @@ async function optionSelection(token, { symbol, date, spot, optionType, cache })
   const candidates = cache.contracts.get(contractsKey).map((value) => parseContract(value, symbol)).filter((row) => row?.optionType === optionType)
     .toSorted((a, b) => Math.abs(a.strike - spot) - Math.abs(b.strike - spot) || a.strike - b.strike);
   if (!candidates.length) return { status: 'DATA_MISSING', reason: `No ${optionType} stock-option contract` };
-  return { status: 'SELECTED', expiry, contract: candidates[0] };
+  const contract = { ...candidates[0], underlying: symbol, expiry };
+  if (!(contract.lotSize > 0)) {
+    const resolved = resolveHistoricalLotSize(contract, date)
+      ?? resolveInstrumentLotSize(await instrumentRows(cache), contract);
+    if (resolved) { contract.lotSize = resolved.lotSize; contract.lotSizeSource = resolved.source; }
+  }
+  return { status: 'SELECTED', expiry, contract };
 }
 
 function previousClose(days, date) {
@@ -78,7 +136,7 @@ function previousClose(days, date) {
 }
 
 function costScenarios(trade, lotSize, date) {
-  return Object.fromEntries([['normalized', 0], ['stress0_5', 0.5], ['stress1_0', 1]].map(([key, slip]) => [key, calculateLongOptionRoundTripCosts({ entryPremium: trade.entry, exitPremium: trade.exit, lotSize, tradeDate: date, slippagePointsPerLeg: slip })]));
+  return Object.fromEntries([['normalized', 0], ['stress0_1', 0.1], ['stress0_25', 0.25], ['stress0_5', 0.5], ['stress1_0', 1]].map(([key, slip]) => [key, calculateLongOptionRoundTripCosts({ entryPremium: trade.entry, exitPremium: trade.exit, lotSize, tradeDate: date, slippagePointsPerLeg: slip })]));
 }
 
 export async function runMorningTea({ token, startDate, endDate }) {

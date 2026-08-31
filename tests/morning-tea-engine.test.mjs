@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { evaluateLongOption, qualifiesOpeningMover, rankOpeningMovers } from '../research/morning-tea/engine.mjs';
+import { parseInstrumentCsv, resolveHistoricalLotSize, resolveInstrumentLotSize } from '../research/morning-tea/groww-backtest.mjs';
 
 const candle = (time, open, high, low, close) => ({ timestamp: `2026-08-10T${time}:00+05:30`, open, high, low, close });
 
@@ -43,4 +44,38 @@ test('uses a ten-percent target and the 09:30 open for unresolved trades', () =>
   ]);
   assert.equal(timed.result, 'TIME');
   assert.equal(timed.exit, 106);
+});
+
+
+test('resolves an exact stock-option lot size from the official Groww instrument CSV', () => {
+  const rows = parseInstrumentCsv([
+    'exchange,groww_symbol,instrument_type,segment,underlying_symbol,expiry_date,lot_size',
+    'NSE,NSE-SBIN-25Aug26-1070-CE,CE,FNO,SBIN,2026-08-25,750',
+  ].join('\n'));
+  assert.deepEqual(resolveInstrumentLotSize(rows, {
+    symbol: 'NSE-SBIN-25Aug26-1070-CE', underlying: 'SBIN', optionType: 'CE', expiry: '2026-08-25',
+  }), { lotSize: 750, source: 'instrument-exact-contract' });
+});
+
+test('uses the nearest compatible expiry only when the exact historical contract is absent', () => {
+  const rows = parseInstrumentCsv([
+    'exchange,groww_symbol,instrument_type,segment,underlying_symbol,expiry_date,lot_size',
+    'NSE,NSE-SBIN-29Sep26-1070-CE,CE,FNO,SBIN,2026-09-29,750',
+    'NSE,NSE-SBIN-27Oct26-1070-PE,PE,FNO,SBIN,2026-10-27,750',
+  ].join('\n'));
+  assert.deepEqual(resolveInstrumentLotSize(rows, {
+    symbol: 'NSE-SBIN-25Aug26-1070-CE', underlying: 'SBIN', optionType: 'CE', expiry: '2026-08-25',
+  }), { lotSize: 750, source: 'instrument-underlying-expiry' });
+});
+
+test('uses the dated NSE Tata Motors lot schedule without leaking current lots backward', () => {
+  const contract = { underlying: 'TATAMOTORS' };
+  assert.deepEqual(resolveHistoricalLotSize(contract, '2025-06-30'), {
+    lotSize: 550, source: 'nse-historical-schedule-2025',
+  });
+  assert.deepEqual(resolveHistoricalLotSize(contract, '2025-07-01'), {
+    lotSize: 800, source: 'nse-historical-schedule-2025',
+  });
+  assert.equal(resolveHistoricalLotSize(contract, '2025-10-14'), null);
+  assert.equal(resolveHistoricalLotSize({ underlying: 'SBIN' }, '2025-06-30'), null);
 });

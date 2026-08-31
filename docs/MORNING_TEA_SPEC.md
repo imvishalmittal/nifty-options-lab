@@ -26,3 +26,21 @@ The source uses 30-second stock and option candles. Groww historical backtesting
 - Performance: >=100 trades, normal profit factor >=1.20, positive net P&L and profit factor >=1.05 at 1-point slippage, maximum drawdown smaller than total stressed profit, and at least four of five discovery years profitable at 1-point slippage.
 
 This is research only. It does not change or feed paper/live workflows, journals, schedules, or the dashboard.
+
+
+## Final evidence status — 31 August 2026
+
+The repaired 2025 one-minute-proxy diagnostic completed successfully:
+
+- 248 sessions, 281 signals, 226 trades, and 141 wins (62.39%);
+- 126 target exits, 57 stop exits, and 43 time exits;
+- one missing session (0.40%), so the <=2% integrity gate passed;
+- normal: +₹79,072.68, PF 1.521, maximum drawdown ₹21,917;
+- 0.10 point per leg: +₹52,870.40, PF 1.325, 9/12 profitable months;
+- 0.25 point per leg: +₹13,566.97, PF 1.075, 6/12 profitable months;
+- 0.50 point per leg: −₹51,938.74, PF 0.756, 4/12 profitable months;
+- 1.00 point per leg: −₹182,261.15, PF 0.384, 1/12 profitable months.
+
+Dated TATAMOTORS lot sizes repaired the prior integrity failure. The additional 0.10/0.25 scenarios are diagnostic only and do not replace the frozen 0/0.5/1.0 acceptance tests. Because the original 0.5- and 1-point stress cases remain negative and lack monthly robustness, the tested proxy is **REJECTED**. It does not advance to 2026 confirmation or paper trading.
+
+Evidence: https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33349456840

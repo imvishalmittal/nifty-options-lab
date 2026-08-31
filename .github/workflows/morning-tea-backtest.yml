@@ -23,6 +23,10 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: node --test tests/morning-tea-engine.test.mjs tests/groww-option-costs.test.mjs
+      - name: Resolve requested period
+        if: github.event_name == 'push'
+        run: |
+          node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync('research/morning-tea/requests/smoke.json','utf8'));fs.appendFileSync(process.env.GITHUB_ENV,'START_DATE='+r.start+'\\nEND_DATE='+r.end+'\\n')"
       - name: Resolve Groww access token
         env:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}

@@ -59,3 +59,10 @@ The separate `Research - chain NIFTY opportunity suite` workflow may advance an 
 - The repository cost helper provides a normalized comparison schedule and date-sensitive STT around April 2026. It is not a forensic reconstruction of every historical exchange-fee revision; gross per-unit and R results remain visible alongside normalized net results.
 - If NIFTY cash volume is unavailable, VWAP uses a causal typical-price average and records the fallback. Treat fallback-heavy results as evidence about a price-average pullback, not true exchange-volume VWAP.
 - No backtest proves future profitability. Multiple-strategy research increases selection bias, so discovery, validation, and holdout results must remain separate.
+
+
+## Current evidence status
+
+The four isolated modules—late breakout/retest, VWAP pullback, failed opening-range break, and afternoon compression breakout—remain **UNVERIFIED**. Their code and workflows are research scaffolding, not selected strategies. No clean consolidated artifact currently supports paper promotion, and none of these modules is in the paper workflow.
+
+The separate opening-range sweep/reversal negative control did complete: its best 15-minute variant produced +13.62R over 604 trades from 2020 through August 2026, but only +0.023R per trade and severe period instability (−16.08R in 2025 versus +19.25R in 2026). That frozen baseline is **REJECTED** and did not advance to an option overlay.
