@@ -26,3 +26,25 @@ The source uses 30-second stock and option candles. Groww historical backtesting
 - Performance: >=100 trades, normal profit factor >=1.20, positive net P&L and profit factor >=1.05 at 1-point slippage, maximum drawdown smaller than total stressed profit, and at least four of five discovery years profitable at 1-point slippage.
 
 This is research only. It does not change or feed paper/live workflows, journals, schedules, or the dashboard.
+
+
+## Evidence status — 31 August 2026
+
+The first full 2025 one-minute-proxy run is diagnostic evidence, not an accepted discovery result:
+
+- 248 sessions, 281 signals, and 208 trades;
+- 131 wins (62.98%);
+- 118 target exits, 50 stop exits, and 40 time exits;
+- +1.937 premium points of expectancy per trade;
+- normal: +₹83,106.92, profit factor 1.589, maximum drawdown ₹20,987;
+- 0.5 point per leg: −₹36,510.04, profit factor 0.813;
+- 1.0 point per leg: −₹155,437.98, profit factor 0.421;
+- 19 missing sessions (7.66%), above the 2% integrity limit.
+
+The apparent normal-case profit cannot be promoted because acceptance is conjunctive: missing-data integrity and the original stress gates also have to pass. Most missing sessions were caused by unavailable historical TATAMOTORS lot-size provenance in the current instrument master.
+
+A diagnostic rerun is repairing data integrity with dated TATAMOTORS lot sizes (550 through June 2025 and 800 from July through 13 October 2025) and reports supplementary 0.10 and 0.25-point-per-leg slippage scenarios. These additions do not alter the frozen ranking, opening-match tolerance, CE/PE mapping, bullish option-candle filter, 09:16 entry, opening-candle stop, 10% target, 09:30 exit, stop-first ambiguity rule, transaction costs, original 0/0.5/1.0 scenarios, or acceptance gates.
+
+Current run: https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33349456840
+
+Final status remains **DIAGNOSTIC** until the artifact is complete and every predeclared gate is evaluated.
