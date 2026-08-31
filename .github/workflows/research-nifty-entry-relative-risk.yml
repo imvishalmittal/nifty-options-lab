@@ -10,47 +10,9 @@ permissions: { contents: read }
 concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
 
 jobs:
-  plan:
-    runs-on: ubuntu-latest
-    outputs: { matrix: '${{ steps.matrix.outputs.result }}', count: '${{ steps.matrix.outputs.count }}' }
-    steps:
-      - uses: actions/checkout@v4
-      - id: matrix
-        env: { REQUEST_FILE: research/requests/nifty-entry-relative.json }
-        run: node research/opportunity/workflow-plan.mjs
-
-  auth-preflight:
-    needs: plan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22 }
-      - name: Wait for a healthy Groww authentication window
-        env:
-          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
-          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
-          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
-          GROWW_PREFER_TOTP: 'false'
-        run: |
-          for attempt in 1 2 3 4 5 6 7 8 9 10; do
-            if node scripts/resolve-groww-token.mjs; then
-              echo "Groww authentication preflight passed; cooling down before matrix execution"
-              sleep 90
-              exit 0
-            fi
-            if [ "$attempt" -eq 10 ]; then
-              exit 1
-            fi
-            echo "Groww authentication preflight attempt $attempt failed; waiting 60 seconds"
-            sleep 60
-          done
-
   backtest:
-    needs: [plan, auth-preflight]
-    strategy: { fail-fast: false, max-parallel: 1, matrix: '${{ fromJSON(needs.plan.outputs.matrix) }}' }
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -62,7 +24,7 @@ jobs:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
           GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
           GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
-          GROWW_PREFER_TOTP: 'false'
+          GROWW_PREFER_TOTP: 'true'
         run: |
           for attempt in 1 2 3 4 5; do
             if node scripts/resolve-groww-token.mjs; then
@@ -74,37 +36,15 @@ jobs:
             echo "Groww authentication attempt $attempt failed; waiting 60 seconds before retry"
             sleep 60
           done
-      - name: Backtest frozen entry-relative partition
+      - name: Backtest frozen five-year discovery period
         run: >-
           node research/groww-backtest-nifty-180-entry-relative.mjs
-          --start=${{ matrix.start }} --end=${{ matrix.end }} --out=result.json
+          --start=2020-01-01 --end=2024-12-31 --out=consolidated.json
       - name: Strict causal and rule integrity
-        run: node research/nifty-180-entry-relative-integrity.mjs --in=result.json --out=integrity.json
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: entry-relative-part-${{ matrix.label }}
-          path: |
-            result.json
-            integrity.json
-          retention-days: 90
-
-  consolidate:
-    if: ${{ !cancelled() }}
-    needs: [plan, backtest]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22 }
-      - uses: actions/download-artifact@v4
-        with: { pattern: 'entry-relative-part-*', path: artifacts }
-      - run: >-
-          node research/nifty-180-entry-relative-aggregate.mjs
-          --dir=artifacts --expected-count=${{ needs.plan.outputs.count }} --out=consolidated.json
-      - run: node research/nifty-180-entry-relative-integrity.mjs --in=consolidated.json --out=consolidated-integrity.json
+        run: node research/nifty-180-entry-relative-integrity.mjs --in=consolidated.json --out=consolidated-integrity.json
       - run: node research/nifty-180-entry-relative-gate.mjs --in=consolidated.json --out=gate.json
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: nifty-entry-relative-risk-discovery-2020-2024
           path: |
