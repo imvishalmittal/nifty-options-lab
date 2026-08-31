@@ -1,6 +1,6 @@
 {
   "start": "2025-01-01",
   "end": "2025-12-31",
-  "requestedAt": "2026-08-31T03:00:00Z",
-  "purpose": "Retry frozen Morning Tea 2025 discovery with API-safe candle chunks"
+  "requestedAt": "2026-08-31T04:30:00Z",
+  "purpose": "Diagnostic Morning Tea 2025 rerun with dated historical lots and 0.10/0.25 slippage scenarios"
 }
