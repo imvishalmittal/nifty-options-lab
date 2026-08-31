@@ -36,8 +36,15 @@ function normalize(raw = []) {
 }
 
 async function candles(token, segment, symbol, start, end) {
-  const payload = await get(token, '/historical/candles', { exchange: 'NSE', segment, groww_symbol: symbol, start_time: `${start} 09:15:00`, end_time: `${end} 15:30:00`, candle_interval: '1minute' });
-  return normalize(payload.candles ?? []);
+  const rows = [];
+  for (let chunkStart = start; chunkStart <= end;) {
+    const chunkEnd = addDays(chunkStart, 29) < end ? addDays(chunkStart, 29) : end;
+    const payload = await get(token, '/historical/candles', { exchange: 'NSE', segment, groww_symbol: symbol, start_time: `${chunkStart} 09:15:00`, end_time: `${chunkEnd} 15:30:00`, candle_interval: '1minute' });
+    rows.push(...(payload.candles ?? []));
+    chunkStart = addDays(chunkEnd, 1);
+  }
+  const normalized = normalize(rows);
+  return [...new Map(normalized.map((row) => [row.timestamp, row])).values()];
 }
 
 export function parseInstrumentCsv(text) {
