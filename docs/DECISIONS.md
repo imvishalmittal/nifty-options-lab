@@ -95,3 +95,22 @@ If the live session remains incomplete, a 15:40 IST recovery may replay the same
 ## ADR-019: Reuse market-data streams
 
 **Decision:** V5 runs on V4's candles and V6–V8 run on the base candles. Strategy expansion must not multiply Groww requests.
+
+
+## ADR-020: Maintain one evidence-status ledger
+
+**Decision:** `docs/STRATEGY_STATUS.md` is the status index for every reviewed strategy. Detailed specifications stay authoritative for rules, while the ledger records sample, outcome, gate decision, and promotion state.
+
+**Reason:** Implemented, profitable-at-zero-slippage, accepted, and paper-traded are different states. A single ledger prevents stale “queued” language and accidental promotion of rejected or invalid evidence.
+
+## ADR-021: Keep research and paper scopes explicit
+
+**Decision:** Only V2–V8 are in the current paper workflow. Rejected, diagnostic, unverified, and incompletely specified strategies remain research-only. Shadow-variant P&L is non-additive.
+
+**Reason:** Strategy count is not account exposure, and code presence is not evidence.
+
+## ADR-022: Supplementary slippage does not replace frozen gates
+
+**Decision:** Morning Tea may report 0.10 and 0.25-point-per-leg diagnostic scenarios to measure execution sensitivity, while retaining the original 0, 0.5, and 1.0 scenarios and every frozen acceptance gate.
+
+**Reason:** Additional diagnostics can explain where an edge disappears without rewriting the decision rule after results are known.
