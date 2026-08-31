@@ -19,7 +19,7 @@ The hosted Sites build can lag GitHub `main`; source readiness and public deploy
 
 - **Paper observation:** eight NIFTY ₹180-premium variants (V2 through V8) running as alternative shadow outcomes on two shared entry cohorts; no broker orders.
 - **Completed and rejected:** NIFTY ₹180 V1 fixed stop/target, opening-range negative control, defined-risk Batman, HAI 1:3:2 ratio, intraday iron condor, intraday iron butterfly, and directional defined-credit spread.
-- **Diagnostic in progress:** Morning Tea 2025 one-minute proxy, with historical lot-size repair and supplementary 0.10/0.25-point-per-leg execution scenarios.
+- **Completed and rejected:** Morning Tea 2025 one-minute proxy also failed its frozen stress gates; integrity passed after historical lot-size repair, while 0.10/0.25 diagnostics were profitable but 0.5/1.0 were not.
 - **Unverified/incomplete:** Quick Flip, Stocks-in-Play ORB, four isolated opportunity modules, and four incompletely specified video-derived option ideas.
 
 See [Strategy status and evidence ledger](docs/STRATEGY_STATUS.md) for samples, P&L, profit factors, failure reasons, and the exact paper suite.
