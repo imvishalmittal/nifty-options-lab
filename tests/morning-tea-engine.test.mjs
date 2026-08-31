@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { evaluateLongOption, qualifiesOpeningMover, rankOpeningMovers } from '../research/morning-tea/engine.mjs';
-import { parseInstrumentCsv, resolveInstrumentLotSize } from '../research/morning-tea/groww-backtest.mjs';
+import { parseInstrumentCsv, resolveHistoricalLotSize, resolveInstrumentLotSize } from '../research/morning-tea/groww-backtest.mjs';
 
 const candle = (time, open, high, low, close) => ({ timestamp: `2026-08-10T${time}:00+05:30`, open, high, low, close });
 
@@ -66,4 +66,16 @@ test('uses the nearest compatible expiry only when the exact historical contract
   assert.deepEqual(resolveInstrumentLotSize(rows, {
     symbol: 'NSE-SBIN-25Aug26-1070-CE', underlying: 'SBIN', optionType: 'CE', expiry: '2026-08-25',
   }), { lotSize: 750, source: 'instrument-underlying-expiry' });
+});
+
+test('uses the dated NSE Tata Motors lot schedule without leaking current lots backward', () => {
+  const contract = { underlying: 'TATAMOTORS' };
+  assert.deepEqual(resolveHistoricalLotSize(contract, '2025-06-30'), {
+    lotSize: 550, source: 'nse-historical-schedule-2025',
+  });
+  assert.deepEqual(resolveHistoricalLotSize(contract, '2025-07-01'), {
+    lotSize: 800, source: 'nse-historical-schedule-2025',
+  });
+  assert.equal(resolveHistoricalLotSize(contract, '2025-10-14'), null);
+  assert.equal(resolveHistoricalLotSize({ underlying: 'SBIN' }, '2025-06-30'), null);
 });
