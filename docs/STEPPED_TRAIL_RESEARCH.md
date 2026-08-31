@@ -36,3 +36,8 @@ The ₹20 favorable move therefore reaches **gross** breakeven. Net P/L at an en
 ## Research discipline
 
 The existing V2 engine and historical V2 artifacts remain unchanged. The 5-point and 10-point stepped variants are a new hypothesis and are evaluated separately so historical results remain reproducible.
+
+
+## Forward-observation status
+
+Both V3-5 and V3-10 are currently retained as shadow outcomes in the BASE paper cohort. V3-10 is also the exit overlay used by V5, V7, and V8. This is forward paper observation, not broker execution and not permission to combine variant P&L. The exact current suite and evidence boundary are documented in `docs/PAPER_V3_FORWARD_OBSERVATION.md` and `docs/STRATEGY_STATUS.md`.
