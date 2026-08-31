@@ -65,6 +65,12 @@ export function parseInstrumentCsv(text) {
   return lines.slice(1).map((line) => Object.fromEntries(headers.map((header, index) => [header, parseLine(line)[index] ?? ''])));
 }
 
+export function resolveHistoricalLotSize(contract, tradeDate) {
+  if (contract.underlying !== 'TATAMOTORS' || tradeDate < '2025-01-01' || tradeDate > '2025-10-13') return null;
+  // NSE's 2024 review set 550 through the June 2025 series; the July 2025 series moved to 800.
+  return { lotSize: tradeDate < '2025-07-01' ? 550 : 800, source: 'nse-historical-schedule-2025' };
+}
+
 export function resolveInstrumentLotSize(rows, contract) {
   const exact = rows.find((row) => row.groww_symbol === contract.symbol);
   const exactLot = Number(exact?.lot_size);
@@ -117,7 +123,8 @@ async function optionSelection(token, { symbol, date, spot, optionType, cache })
   if (!candidates.length) return { status: 'DATA_MISSING', reason: `No ${optionType} stock-option contract` };
   const contract = { ...candidates[0], underlying: symbol, expiry };
   if (!(contract.lotSize > 0)) {
-    const resolved = resolveInstrumentLotSize(await instrumentRows(cache), contract);
+    const resolved = resolveHistoricalLotSize(contract, date)
+      ?? resolveInstrumentLotSize(await instrumentRows(cache), contract);
     if (resolved) { contract.lotSize = resolved.lotSize; contract.lotSizeSource = resolved.source; }
   }
   return { status: 'SELECTED', expiry, contract };
@@ -129,7 +136,7 @@ function previousClose(days, date) {
 }
 
 function costScenarios(trade, lotSize, date) {
-  return Object.fromEntries([['normalized', 0], ['stress0_5', 0.5], ['stress1_0', 1]].map(([key, slip]) => [key, calculateLongOptionRoundTripCosts({ entryPremium: trade.entry, exitPremium: trade.exit, lotSize, tradeDate: date, slippagePointsPerLeg: slip })]));
+  return Object.fromEntries([['normalized', 0], ['stress0_1', 0.1], ['stress0_25', 0.25], ['stress0_5', 0.5], ['stress1_0', 1]].map(([key, slip]) => [key, calculateLongOptionRoundTripCosts({ entryPremium: trade.entry, exitPremium: trade.exit, lotSize, tradeDate: date, slippagePointsPerLeg: slip })]));
 }
 
 export async function runMorningTea({ token, startDate, endDate }) {
