@@ -66,27 +66,26 @@ The rejected label applies to the frozen tested rule set. It does not establish 
 | 2023 | 50 | −₹11,782.88 | −₹16,780.46 | −₹21,778.03 |
 | 2024 | 51 | −₹7,263.08 | −₹10,811.36 | −₹14,359.64 |
 
-## Diagnostic in progress
+## Completed diagnostic extension
 
-### Morning Tea stock-options proxy
+### Morning Tea stock-options proxy — rejected
 
-Frozen rules: rank the prior session's NIFTY losers, match the 09:15 stock opening candle, apply the specified CE/PE mapping and bullish option-candle filter, enter at 09:16, use the opening-candle stop, 10% target, 09:30 time exit, and stop-first handling for ambiguous bars.
+Frozen rules: point-in-time 09:15 ranking, top gainer→ATM call and top loser→ATM put, opening-candle filters, causal 09:16 entry, opening-option-candle stop, 10% target, 09:30 time exit, and stop-first handling for ambiguous bars.
 
-The first 2025 run produced useful but non-decision-grade evidence:
+The repaired 2025 diagnostic passed integrity after adding dated TATAMOTORS lot sizes:
 
-- 248 sessions, 281 signals, 208 trades
-- 62.98% win rate; 118 targets, 50 stops, 40 time exits
-- +1.937 option points per trade before lot sizing and costs
-- normal: +₹83,106.92, PF 1.589, maximum drawdown ₹20,987
-- 0.5 point per leg: −₹36,510.04, PF 0.813
-- 1.0 point per leg: −₹155,437.98, PF 0.421
-- 19 missing sessions, or 7.66%, which failed the 2% integrity gate
+- 248 sessions, 281 signals, 226 trades
+- 141 wins (62.39%); 126 targets, 57 stops, 43 time exits
+- 1 missing session (0.40%), within the 2% integrity limit
+- normal: +₹79,072.68, PF 1.521, maximum drawdown ₹21,917
+- 0.10 point per leg: +₹52,870.40, PF 1.325; 9/12 profitable months
+- 0.25 point per leg: +₹13,566.97, PF 1.075; 6/12 profitable months
+- 0.50 point per leg: −₹51,938.74, PF 0.756; 4/12 profitable months
+- 1.00 point per leg: −₹182,261.15, PF 0.384; 1/12 profitable months
 
-That run is **not accepted**: the normal case was profitable, but the original stress cases were not and missing-data integrity failed. Most missing sessions came from absent historical TATAMOTORS lot-size provenance.
+Integrity is now clean and the supplementary 0.10/0.25 cases are profitable. They do not replace the predeclared acceptance scenarios. The frozen rule set still fails 0.5-point and 1-point profitability and monthly robustness, so its final status is **REJECTED**. No 2026 confirmation run is justified and it is not added to paper trading.
 
-The current diagnostic rerun adds dated TATAMOTORS lot sizes and supplementary 0.10/0.25-point-per-leg scenarios. It does not change ranking, signal, entry, exit, costs, original 0/0.5/1.0 scenarios, or acceptance gates. Final status remains **DIAGNOSTIC** until the run completes and every gate is evaluated.
-
-Evidence: [current Morning Tea diagnostic run](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33349456840).
+Evidence: [repaired Morning Tea diagnostic run](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33349456840).
 
 ## Implemented or reviewed but unverified
 
