@@ -1,5 +1,5 @@
 {
   "scope": "discovery-2020-2024",
-  "requestedAt": "2026-08-31T07:29:00Z",
-  "purpose": "Frozen five-variant discovery including the requested fixed 170 stop / 210 target comparator; single fresh authentication; 2025 validation and 2026 holdout remain untouched"
+  "requestedAt": "2026-08-31T14:13:00Z",
+  "purpose": "Frozen definitive six-variant discovery including exact FIXED_160_220 current control and exact FIXED_170_210 requested comparator; single fresh authentication; 2025 validation and 2026 holdout remain untouched"
 }
