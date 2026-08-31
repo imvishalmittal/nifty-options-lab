@@ -28,23 +28,19 @@ The source uses 30-second stock and option candles. Groww historical backtesting
 This is research only. It does not change or feed paper/live workflows, journals, schedules, or the dashboard.
 
 
-## Evidence status — 31 August 2026
+## Final evidence status — 31 August 2026
 
-The first full 2025 one-minute-proxy run is diagnostic evidence, not an accepted discovery result:
+The repaired 2025 one-minute-proxy diagnostic completed successfully:
 
-- 248 sessions, 281 signals, and 208 trades;
-- 131 wins (62.98%);
-- 118 target exits, 50 stop exits, and 40 time exits;
-- +1.937 premium points of expectancy per trade;
-- normal: +₹83,106.92, profit factor 1.589, maximum drawdown ₹20,987;
-- 0.5 point per leg: −₹36,510.04, profit factor 0.813;
-- 1.0 point per leg: −₹155,437.98, profit factor 0.421;
-- 19 missing sessions (7.66%), above the 2% integrity limit.
+- 248 sessions, 281 signals, 226 trades, and 141 wins (62.39%);
+- 126 target exits, 57 stop exits, and 43 time exits;
+- one missing session (0.40%), so the <=2% integrity gate passed;
+- normal: +₹79,072.68, PF 1.521, maximum drawdown ₹21,917;
+- 0.10 point per leg: +₹52,870.40, PF 1.325, 9/12 profitable months;
+- 0.25 point per leg: +₹13,566.97, PF 1.075, 6/12 profitable months;
+- 0.50 point per leg: −₹51,938.74, PF 0.756, 4/12 profitable months;
+- 1.00 point per leg: −₹182,261.15, PF 0.384, 1/12 profitable months.
 
-The apparent normal-case profit cannot be promoted because acceptance is conjunctive: missing-data integrity and the original stress gates also have to pass. Most missing sessions were caused by unavailable historical TATAMOTORS lot-size provenance in the current instrument master.
+Dated TATAMOTORS lot sizes repaired the prior integrity failure. The additional 0.10/0.25 scenarios are diagnostic only and do not replace the frozen 0/0.5/1.0 acceptance tests. Because the original 0.5- and 1-point stress cases remain negative and lack monthly robustness, the tested proxy is **REJECTED**. It does not advance to 2026 confirmation or paper trading.
 
-A diagnostic rerun is repairing data integrity with dated TATAMOTORS lot sizes (550 through June 2025 and 800 from July through 13 October 2025) and reports supplementary 0.10 and 0.25-point-per-leg slippage scenarios. These additions do not alter the frozen ranking, opening-match tolerance, CE/PE mapping, bullish option-candle filter, 09:16 entry, opening-candle stop, 10% target, 09:30 exit, stop-first ambiguity rule, transaction costs, original 0/0.5/1.0 scenarios, or acceptance gates.
-
-Current run: https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33349456840
-
-Final status remains **DIAGNOSTIC** until the artifact is complete and every predeclared gate is evaluated.
+Evidence: https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33349456840
