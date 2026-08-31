@@ -9,7 +9,7 @@ All notable changes will be documented here.
 - added a consolidated strategy evidence ledger covering completed rejections, the Morning Tea diagnostic, unverified ideas, incomplete specifications, and the exact V2–V8 paper suite;
 - clarified that paper variants are non-additive shadow outcomes and that no workflow places broker orders;
 - replaced stale pending/queued descriptions with evidence-backed status;
-- recorded Morning Tea's preliminary 2025 metrics, missing-data failure, historical TATAMOTORS lot-size repair, and supplementary 0.10/0.25-point-per-leg diagnostics;
+- recorded the completed Morning Tea 2025 diagnostic: integrity repaired to 0.40% missing, profitable 0.10/0.25-point scenarios, failed frozen 0.5/1.0 stress gates, and final rejection;
 - refreshed the roadmap and architecture decisions around promotion gates and research/paper separation.
 
 ## [0.4.0] - 2026-08-20
