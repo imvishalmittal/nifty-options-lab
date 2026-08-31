@@ -12,7 +12,8 @@ export const ENTRY_RELATIVE_RULES = Object.freeze({
 });
 
 export const ENTRY_RELATIVE_VARIANTS = Object.freeze([
-  Object.freeze({ id: 'FIXED_170_210', kind: 'fixed_levels', label: 'Fixed ₹170 stop / ₹210 target' }),
+  Object.freeze({ id: 'FIXED_160_220', kind: 'fixed_levels', fixedStopPremium: 160, fixedTargetPremium: 220, label: 'Fixed ₹160 stop / ₹220 target' }),
+  Object.freeze({ id: 'FIXED_170_210', kind: 'fixed_levels', fixedStopPremium: 170, fixedTargetPremium: 210, label: 'Fixed ₹170 stop / ₹210 target' }),
   Object.freeze({ id: 'RELATIVE_FIXED_2R', kind: 'fixed', label: 'Entry-relative fixed 2R' }),
   Object.freeze({ id: 'RELATIVE_CONTINUOUS', kind: 'continuous', label: 'Entry-relative continuous trail' }),
   Object.freeze({ id: 'RELATIVE_STEP_5', kind: 'stepped', trailStepPoints: 5, label: 'Entry-relative 5-point stepped trail' }),
@@ -58,21 +59,22 @@ export function evaluateEntryRelativePosition(candles, signal, {
     };
   }
 
-  if (variant.kind === 'fixed_levels'
-      && !(entry > rules.fixedLevelStopPremium && entry < rules.fixedLevelTargetPremium)) {
+  const fixedStop = Number(variant.fixedStopPremium ?? rules.fixedLevelStopPremium);
+  const fixedTarget = Number(variant.fixedTargetPremium ?? rules.fixedLevelTargetPremium);
+  if (variant.kind === 'fixed_levels' && !(entry > fixedStop && entry < fixedTarget)) {
     return {
       rejected: true,
-      reason: 'Executable entry is outside the fixed 170-210 stop/target band',
+      reason: `Executable entry is outside the fixed ${fixedStop}-${fixedTarget} stop/target band`,
       entry,
       entryTime: entryBar.timestamp,
     };
   }
 
   const initialStop = variant.kind === 'fixed_levels'
-    ? rules.fixedLevelStopPremium
+    ? fixedStop
     : Number((entry - rules.initialRiskPoints).toFixed(2));
   const target = variant.kind === 'fixed_levels'
-    ? rules.fixedLevelTargetPremium
+    ? fixedTarget
     : Number((entry + rules.rewardPoints).toFixed(2));
   let activeStop = initialStop;
   let peakHigh = entry;

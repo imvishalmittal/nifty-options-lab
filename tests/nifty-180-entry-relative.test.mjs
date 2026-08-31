@@ -13,6 +13,19 @@ const bar = (clock, open, high, low, close) => ({
 });
 const variant = (id) => ENTRY_RELATIVE_VARIANTS.find((row) => row.id === id);
 
+test('fixed 160/220 control preserves the current exact levels', () => {
+  const candles = [
+    bar('09:30', 180, 190, 178, 185),
+    bar('09:31', 182, 225, 175, 215),
+  ];
+  const result = evaluateEntryRelativePosition(candles, candles[0], { variant: variant('FIXED_160_220') });
+  assert.equal(result.entry, 182);
+  assert.equal(result.initialStop, 160);
+  assert.equal(result.target, 220);
+  assert.equal(result.exit, 220);
+  assert.equal(result.result, 'TARGET');
+});
+
 test('fixed 170/210 comparator uses exact levels and stop-first ambiguity', () => {
   const candles = [
     bar('09:30', 180, 190, 178, 185),

@@ -8,12 +8,14 @@ This isolated discovery track tests the invariant identified during the 2026-08-
 - Fixed 2R target and continuous-trail activation are `entry + 40` premium points.
 - The existing `160 < entry < 220` eligibility band remains frozen so this test changes risk geometry rather than contract selection.
 
-Five predeclared exits are compared. The first four use the same trades: fixed 2R, continuous 20-point trail after +40, and 5/10-point stepped trails with a 20-point gap. The fifth is the separately requested fixed-level comparator:
+Six predeclared exits are compared. Four use executable-entry-relative geometry: fixed 2R, continuous 20-point trail after +40, and 5/10-point stepped trails with a 20-point gap. Two preserve exact premium levels for a like-for-like comparison:
+
+- current control: exactly ₹160 stop / ₹220 target, eligible only when `₹160 < entry < ₹220`;
+- requested comparator: exactly ₹170 stop / ₹210 target, eligible only when `₹170 < entry < ₹210`;
+
+For both fixed-level variants:
 
 - signal and next-bar execution remain unchanged;
-- stop is exactly ₹170;
-- target is exactly ₹210;
-- because those levels are meaningful only around the ₹180 reference, it is eligible only when `₹170 < entry < ₹210`;
 - same-minute stop/target ambiguity is scored stop first;
 - unresolved positions exit at the normal intraday session fallback.
 
