@@ -1,0 +1,72 @@
+name: Research - Quick Flip clean discovery
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/quick-flip-clean]
+    paths: [research/requests/quick-flip-clean.json]
+
+permissions: { contents: read }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+
+jobs:
+  discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Validate frozen Quick Flip engine
+        run: >-
+          node --test
+          tests/quick-flip-backtest.test.mjs
+          tests/quick-flip-data-quality.test.mjs
+          tests/strategy-robustness-report.test.mjs
+      - name: Resolve one fresh Groww access token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if node scripts/resolve-groww-token.mjs; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              exit 1
+            fi
+            echo "Groww authentication attempt $attempt failed; waiting 60 seconds"
+            sleep 60
+          done
+      - name: Fetch frozen 2020-2024 cash universe
+        run: >-
+          node research/groww-fetch-opening-range.mjs
+          --start=2020-01-01
+          --end=2024-12-31
+          --symbols=RELIANCE,HDFCBANK,ICICIBANK,SBIN,INFY,AXISBANK,KOTAKBANK,BAJFINANCE,BHARTIARTL,ITC,TCS,TATAMOTORS,LT,TATASTEEL,ONGC
+          --out=work/quick-flip-clean/cash-5m
+      - name: Run data-quality audit
+        run: |
+          mkdir -p outputs/quick-flip-clean
+          node research/quick-flip-data-quality.mjs work/quick-flip-clean/cash-5m/*.csv > outputs/quick-flip-clean/data-quality.json
+      - name: Run frozen discovery backtest
+        run: >-
+          node research/quick-flip-backtest.mjs
+          work/quick-flip-clean/cash-5m/*.csv
+          > outputs/quick-flip-clean/result.json
+      - name: Build clustered robustness evidence
+        run: >-
+          node research/strategy-robustness-report.mjs
+          outputs/quick-flip-clean/result.json
+          outputs/quick-flip-clean/robustness.json
+      - name: Preserve discovery evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quick-flip-clean-discovery-2020-2024
+          path: |
+            outputs/quick-flip-clean
+            work/quick-flip-clean/cash-5m/manifest.json
+          retention-days: 90
