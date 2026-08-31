@@ -31,7 +31,7 @@ jobs:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
           GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
           GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
-          GROWW_PREFER_TOTP: 'true'
+          GROWW_PREFER_TOTP: 'false'
         run: |
           for attempt in 1 2 3 4 5 6 7 8 9 10; do
             if node scripts/resolve-groww-token.mjs; then
@@ -62,7 +62,7 @@ jobs:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
           GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
           GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
-          GROWW_PREFER_TOTP: 'true'
+          GROWW_PREFER_TOTP: 'false'
         run: |
           for attempt in 1 2 3 4 5; do
             if node scripts/resolve-groww-token.mjs; then
