@@ -1,5 +1,17 @@
 # Intraday options research suite
 
+## Current outcome snapshot
+
+The detailed evidence ledger is `docs/STRATEGY_STATUS.md`. Current decisions are:
+
+- **Paper:** V2, V3-5, V3-10, V4, V5, V6, V7, and V8, as non-additive shadow outcomes.
+- **Rejected after completed testing:** NIFTY ₹180 V1 fixed stop/target, opening-range negative control, Batman, HAI 1:3:2, intraday iron condor, intraday iron butterfly, and directional defined-credit spread.
+- **Diagnostic:** Morning Tea 2025 one-minute proxy. The initial result was profitable only at zero slippage and failed both missing-data and original stress gates; a repaired diagnostic run is in progress.
+- **Unverified:** Quick Flip, Stocks-in-Play ORB, and the four isolated opportunity modules.
+- **Incomplete specification:** 30-minute breakout/ATM selling, Williams/EMA bear-call, monthly “Ramesh–Suresh”, and 0.08-delta smart-strangle ideas.
+
+No rejected, unverified, or incomplete strategy is in paper trading.
+
 The project keeps each video-derived idea as a separate hypothesis. Rules are frozen before results are inspected; strategies are not blended to rescue weak backtests.
 
 ## Validation policy
@@ -36,13 +48,13 @@ High win rate is not an acceptance criterion. Positive expectancy after costs, r
 
 ### Shared Groww research infrastructure
 
-All Groww-heavy GitHub Actions jobs use the repository-wide `groww-backtest-api` concurrency group with `queue: max`, so API jobs execute one at a time instead of racing a single token. Matrix data jobs use `max-parallel: 1`. Legacy runs started before this queue existed are not mixed with queued-methodology results.
+All Groww-heavy GitHub Actions jobs use the repository-wide `groww-backtest-api` concurrency group with `queue: max`, so API jobs execute one at a time instead of racing a single token. Matrix data jobs use `max-parallel: 1`. Legacy runs started before this queue existed are not mixed with not yet supported by a clean consolidated result-methodology results.
 
 Stock-candle fetches already use retry/backoff and a pause between chunks. The option backtester additionally spaces Groww calls, records request/rate-limit diagnostics, and uses progressive strike selection to reduce historical API load.
 
 ## S1 — Quick Flip Scalper V1
 
-Status: **implemented for 5-minute confirmation; pre-open and closing-auction data defects corrected; fresh full-history rerun queued; 1m/3m confirmation pending**.
+Status: **implemented for 5-minute confirmation; pre-open and closing-auction data defects corrected; fresh full-history rerun not yet supported by a clean consolidated result; 1m/3m confirmation pending**.
 
 Frozen rules:
 
@@ -84,7 +96,7 @@ Still unresolved and therefore not guessed:
 
 ## S3 — NIFTY ₹180 Premium Momentum V1
 
-Status: **actual Groww FNO pipeline implemented; execution/clock defects found by smoke testing and fixed; throttled cost-aware validation queued**.
+Status: **actual Groww FNO pipeline implemented; execution/clock defects found by smoke testing and fixed; throttled cost-aware validation not yet supported by a clean consolidated result**.
 
 Frozen baseline rules:
 
@@ -135,7 +147,7 @@ These must be recovered from the source material before implementation.
 
 ## S5 — Evidence-guided Stocks-in-Play ORB
 
-Status: **implemented as a separate literature-motivated hypothesis; fresh continuous-session historical study queued**.
+Status: **implemented as a separate literature-motivated hypothesis; fresh continuous-session historical study not yet supported by a clean consolidated result**.
 
 This is deliberately not a rewrite of Quick Flip. Its rules were declared before performance was inspected:
 
