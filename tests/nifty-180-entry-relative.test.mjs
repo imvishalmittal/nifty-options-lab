@@ -13,6 +13,26 @@ const bar = (clock, open, high, low, close) => ({
 });
 const variant = (id) => ENTRY_RELATIVE_VARIANTS.find((row) => row.id === id);
 
+test('fixed 170/210 comparator uses exact levels and stop-first ambiguity', () => {
+  const candles = [
+    bar('09:30', 180, 190, 178, 185),
+    bar('09:31', 182, 215, 168, 205),
+  ];
+  const result = evaluateEntryRelativePosition(candles, candles[0], { variant: variant('FIXED_170_210') });
+  assert.equal(result.entry, 182);
+  assert.equal(result.initialStop, 170);
+  assert.equal(result.target, 210);
+  assert.equal(result.exit, 170);
+  assert.equal(result.result, 'INITIAL_STOP');
+});
+
+test('fixed 170/210 comparator rejects an entry outside its stop-target band', () => {
+  const candles = [bar('09:30', 180, 190, 178, 185), bar('09:31', 212, 215, 205, 210)];
+  const result = evaluateEntryRelativePosition(candles, candles[0], { variant: variant('FIXED_170_210') });
+  assert.equal(result.rejected, true);
+  assert.match(result.reason, /170-210/);
+});
+
 test('stop and fixed 2R target are derived from the executable entry', () => {
   const candles = [
     bar('09:30', 180, 190, 178, 185),
@@ -86,7 +106,7 @@ test('integrity rejects a fixed stop masquerading as entry-relative risk', () =>
   });
   const report = validateEntryRelativeResult({ strategy: 'nifty-180-entry-relative-risk', variants: emptyVariants });
   assert.equal(report.valid, false);
-  assert(report.errors.some((error) => error.includes('entry - 20')));
+  assert(report.errors.some((error) => error.includes('frozen rule')));
 });
 
 test('discovery gate cannot promote entry-relative variants automatically', () => {

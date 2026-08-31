@@ -18,8 +18,13 @@ export function validateEntryRelativeResult(document) {
       dates.add(row.date);
       if (!(row.entryTime > row.signalTime)) errors.push(`${variant.id} ${row.date}: entry is not after signal`);
       if (!(row.exitTime >= row.entryTime)) errors.push(`${variant.id} ${row.date}: exit precedes entry`);
-      if (!close(row.initialStop, row.entry - 20)) errors.push(`${variant.id} ${row.date}: initial stop is not entry - 20`);
-      if (!close(row.target, row.entry + 40)) errors.push(`${variant.id} ${row.date}: target is not entry + 40`);
+      const expectedStop = variant.kind === 'fixed_levels' ? 170 : row.entry - 20;
+      const expectedTarget = variant.kind === 'fixed_levels' ? 210 : row.entry + 40;
+      if (!close(row.initialStop, expectedStop)) errors.push(`${variant.id} ${row.date}: initial stop does not match frozen rule`);
+      if (!close(row.target, expectedTarget)) errors.push(`${variant.id} ${row.date}: target does not match frozen rule`);
+      if (variant.kind === 'fixed_levels' && !(row.entry > 170 && row.entry < 210)) {
+        errors.push(`${variant.id} ${row.date}: entry is outside fixed 170-210 band`);
+      }
       if (!close(row.stopHistory?.[0]?.stop, row.initialStop)) errors.push(`${variant.id} ${row.date}: initial stop history mismatch`);
       if (!Number.isFinite(row.costs?.normalized?.netPnl)
           || !Number.isFinite(row.costs?.stress0_5?.netPnl)

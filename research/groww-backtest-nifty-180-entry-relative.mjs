@@ -177,6 +177,7 @@ export async function backtestEntryRelative({
     methodology: {
       signalAndContractSelection: 'Frozen ₹180 selector and completed 09:30-09:45 crossing; next-bar entry',
       eligibilityBand: '160 < executable entry < 220',
+      fixedLevelComparator: '170 stop / 210 target; eligible only when 170 < executable entry < 210',
       initialStop: 'entry - 20 points',
       fixedTargetAndContinuousActivation: 'entry + 40 points',
       stopOrdering: 'active stop first on ambiguous one-minute bars',

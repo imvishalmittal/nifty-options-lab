@@ -4,12 +4,15 @@ export const ENTRY_RELATIVE_RULES = Object.freeze({
   entryCeilingPremium: 220,
   initialRiskPoints: 20,
   rewardPoints: 40,
+  fixedLevelStopPremium: 170,
+  fixedLevelTargetPremium: 210,
   trailGapPoints: 20,
   signalCutoff: '09:45',
   sessionExit: '15:29',
 });
 
 export const ENTRY_RELATIVE_VARIANTS = Object.freeze([
+  Object.freeze({ id: 'FIXED_170_210', kind: 'fixed_levels', label: 'Fixed ₹170 stop / ₹210 target' }),
   Object.freeze({ id: 'RELATIVE_FIXED_2R', kind: 'fixed', label: 'Entry-relative fixed 2R' }),
   Object.freeze({ id: 'RELATIVE_CONTINUOUS', kind: 'continuous', label: 'Entry-relative continuous trail' }),
   Object.freeze({ id: 'RELATIVE_STEP_5', kind: 'stepped', trailStepPoints: 5, label: 'Entry-relative 5-point stepped trail' }),
@@ -55,8 +58,22 @@ export function evaluateEntryRelativePosition(candles, signal, {
     };
   }
 
-  const initialStop = Number((entry - rules.initialRiskPoints).toFixed(2));
-  const target = Number((entry + rules.rewardPoints).toFixed(2));
+  if (variant.kind === 'fixed_levels'
+      && !(entry > rules.fixedLevelStopPremium && entry < rules.fixedLevelTargetPremium)) {
+    return {
+      rejected: true,
+      reason: 'Executable entry is outside the fixed 170-210 stop/target band',
+      entry,
+      entryTime: entryBar.timestamp,
+    };
+  }
+
+  const initialStop = variant.kind === 'fixed_levels'
+    ? rules.fixedLevelStopPremium
+    : Number((entry - rules.initialRiskPoints).toFixed(2));
+  const target = variant.kind === 'fixed_levels'
+    ? rules.fixedLevelTargetPremium
+    : Number((entry + rules.rewardPoints).toFixed(2));
   let activeStop = initialStop;
   let peakHigh = entry;
   let troughLow = entry;
@@ -92,7 +109,7 @@ export function evaluateEntryRelativePosition(candles, signal, {
       };
     }
 
-    if (variant.kind === 'fixed' && candle.high >= target) {
+    if ((variant.kind === 'fixed' || variant.kind === 'fixed_levels') && candle.high >= target) {
       peakHigh = Math.max(peakHigh, target);
       troughLow = Math.min(troughLow, candle.open);
       return {

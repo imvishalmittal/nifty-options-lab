@@ -56,7 +56,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - name: Validate isolated entry-relative engine
-        run: node --test tests/nifty-180-entry-relative.test.mjs tests/groww-backtest-causal.test.mjs
+        run: node --test tests/nifty-180-entry-relative.test.mjs tests/groww-backtest-nifty-180.test.mjs
       - name: Resolve Groww access token
         env:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
