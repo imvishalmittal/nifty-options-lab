@@ -10,15 +10,40 @@ permissions: { contents: read }
 concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
 
 jobs:
-  backtest:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.months.outputs.matrix }}
+    steps:
+      - id: months
+        shell: bash
+        run: |
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const include = [];
+          for (let year = 2020; year <= 2024; year += 1) {
+            for (let month = 1; month <= 12; month += 1) {
+              const key = `${year}-${String(month).padStart(2, '0')}`;
+              const end = new Date(Date.UTC(year, month, 0)).getUTCDate();
+              include.push({ month: key, start: `${key}-01`, end: `${key}-${end}` });
+            }
+          }
+          console.log(`matrix=${JSON.stringify({ include })}`);
+          NODE
+
+  shard:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
-      - name: Validate isolated entry-relative engine
-        run: node --test tests/nifty-180-entry-relative.test.mjs tests/groww-backtest-nifty-180.test.mjs
+      - name: Validate isolated entry-relative engine and shard merger
+        run: node --test tests/nifty-180-entry-relative.test.mjs tests/groww-backtest-nifty-180.test.mjs tests/merge-nifty-180-entry-relative-shards.test.mjs
       - name: Resolve Groww access token
         env:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
@@ -36,13 +61,37 @@ jobs:
             echo "Groww authentication attempt $attempt failed; waiting 60 seconds before retry"
             sleep 60
           done
-      - name: Backtest frozen five-year discovery period
+      - name: Backtest frozen monthly discovery shard
         run: >-
           node research/groww-backtest-nifty-180-entry-relative.mjs
-          --start=2020-01-01 --end=2024-12-31 --out=consolidated.json
+          --start=${{ matrix.start }} --end=${{ matrix.end }} --out=shard-${{ matrix.month }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nifty-entry-relative-shard-${{ matrix.month }}
+          path: shard-${{ matrix.month }}.json
+          retention-days: 90
+
+  finalize:
+    needs: shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: nifty-entry-relative-shard-*
+          path: shards
+          merge-multiple: true
+      - name: Merge and verify all 60 frozen monthly shards
+        run: >-
+          node research/merge-nifty-180-entry-relative-shards.mjs
+          --in=shards --start=2020-01-01 --end=2024-12-31 --out=consolidated.json
       - name: Strict causal and rule integrity
         run: node research/nifty-180-entry-relative-integrity.mjs --in=consolidated.json --out=consolidated-integrity.json
-      - run: node research/nifty-180-entry-relative-gate.mjs --in=consolidated.json --out=gate.json
+      - name: Apply frozen discovery gates
+        run: node research/nifty-180-entry-relative-gate.mjs --in=consolidated.json --out=gate.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
