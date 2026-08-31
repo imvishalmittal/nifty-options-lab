@@ -1,5 +1,5 @@
 {
   "scope": "discovery-2020-2024",
-  "requestedAt": "2026-08-31T14:13:00Z",
-  "purpose": "Frozen definitive six-variant discovery including exact FIXED_160_220 current control and exact FIXED_170_210 requested comparator; single fresh authentication; 2025 validation and 2026 holdout remain untouched"
+  "requestedAt": "2026-08-31T21:04:00Z",
+  "purpose": "Operational retry of frozen definitive six-variant discovery after the hosted six-hour ceiling; sequential calendar-month shards, exact FIXED_160_220 and FIXED_170_210 rules unchanged; complete-coverage merge and final gates required; 2025 validation and 2026 holdout remain untouched"
 }
