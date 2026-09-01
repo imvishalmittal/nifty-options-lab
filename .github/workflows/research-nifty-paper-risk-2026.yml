@@ -1,0 +1,91 @@
+name: Research - NIFTY matched paper-risk 2026 diagnostic
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/entry-relative-risk]
+    paths: [research/requests/nifty-paper-risk-2026.json]
+
+permissions: { contents: read }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.months.outputs.matrix }}
+    steps:
+      - id: months
+        shell: bash
+        run: |
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const include = [];
+          for (let month = 1; month <= 8; month += 1) {
+            const key = `2026-${String(month).padStart(2, '0')}`;
+            const end = month === 8 ? 31 : new Date(Date.UTC(2026, month, 0)).getUTCDate();
+            include.push({ month: key, start: `${key}-01`, end: `${key}-${end}` });
+          }
+          console.log(`matrix=${JSON.stringify({ include })}`);
+          NODE
+
+  shard:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Validate frozen engines and comparison
+        run: node --test tests/nifty-180-entry-relative.test.mjs tests/nifty-180-paper-risk-comparison.test.mjs tests/groww-backtest-nifty-180.test.mjs tests/merge-nifty-180-entry-relative-shards.test.mjs
+      - name: Resolve Groww access token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Backtest frozen 2026 monthly shard
+        run: >-
+          node research/groww-backtest-nifty-180-entry-relative.mjs
+          --start=${{ matrix.start }} --end=${{ matrix.end }} --out=shard-${{ matrix.month }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nifty-paper-risk-2026-shard-${{ matrix.month }}
+          path: shard-${{ matrix.month }}.json
+          retention-days: 90
+
+  finalize:
+    needs: shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: nifty-paper-risk-2026-shard-*
+          path: shards
+          merge-multiple: true
+      - name: Merge all eight frozen monthly shards
+        run: >-
+          node research/merge-nifty-180-entry-relative-shards.mjs
+          --in=shards --start=2026-01-01 --end=2026-08-31 --out=consolidated.json
+      - name: Strict causal and rule integrity
+        run: node research/nifty-180-entry-relative-integrity.mjs --in=consolidated.json --out=consolidated-integrity.json
+      - name: Compare matched paper families
+        run: node research/compare-nifty-180-paper-risk-families.mjs --in=consolidated.json --out=comparison.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nifty-paper-risk-diagnostic-2026
+          path: |
+            consolidated.json
+            consolidated-integrity.json
+            comparison.json
+          retention-days: 90
