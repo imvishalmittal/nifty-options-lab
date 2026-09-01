@@ -43,7 +43,7 @@ Variant meanings:
 
 Important accounting rule: variants are counterfactual outcomes, not independent accounts. Do not add their P&L together. V9–V11 use the same signal but have the narrower ₹170–₹210 executable-entry band, so sessions outside that band are explicitly ineligible for that cohort. All trades are intraday and no position is held overnight.
 
-The latest published paper session is 31 August 2026. The BASE thread closed a CE signal; the NIFTY-confirmed thread recorded no trade. V9–V11 start prospectively on 1 September 2026 and are not backfilled into earlier paper dates. See `public/paper/sessions.json` for the auditable session ledger.
+The latest published paper session is 1 September 2026. It was a valid no-trade session for both threads: authentication and contract discovery succeeded, but the completed signal was outside the executable band. V9–V11 started prospectively on that date and are not backfilled into earlier paper dates. See `public/paper/sessions.json` for the auditable session ledger.
 
 ## Completed backtests
 
@@ -78,6 +78,27 @@ The definitive NIFTY ₹180 entry-risk discovery merged 60 monthly shards with v
 
 Every variant failed normalized PF, stress profitability, 1-point PF, yearly stress, and clustered-bootstrap lower-bound gates, except that the 5-point trail was marginally positive at normal costs. Maximum absolute year contribution was 22.9%–33.9%, safely below the 50% concentration ceiling, so concentration was not the reason for rejection. The exact ₹170/₹210 comparator materially reduced the current control's normal loss and drawdown, but remained unprofitable and became worse under either slippage stress. Evidence: [repaired run 33439891121](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33439891121).
 
+## 2026 matched paper-risk diagnostic — terminal
+
+The frozen 1 January–31 August 2026 diagnostic compared the four prospective ₹170-family exits with their exact ₹160-family counterparts. All eight monthly shards and final integrity checks completed in [run 33476628683](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33476628683).
+
+All 76 executable entries were between ₹175.30 and ₹198.00. Therefore the live-policy cohorts (`160 < entry < 220` versus `170 < entry < 210`) and strict common-entry cohorts were identical. Cohort selection contributed exactly zero to every difference below; each paired difference is caused only by stop/exit geometry.
+
+| Pair | Variant | Win rate | Normal P&L / PF / drawdown | 0.5-point P&L / PF / drawdown | 1-point P&L / PF / drawdown | Positive months normal / 0.5 / 1.0 |
+|---|---|---:|---:|---:|---:|---:|
+| Continuous | V2 ₹160 | 32.89% | −₹171,739.75 / 0.545 / ₹180,507.91 | −₹194,475.35 / 0.505 / ₹202,918.67 | −₹217,210.95 / 0.468 / ₹225,329.43 | 1 / 1 / 1 of 8 |
+| Continuous | V9 ₹170 | 31.58% | −₹55,139.49 / 0.748 / ₹91,393.17 | −₹77,875.10 / 0.668 / ₹101,590.67 | −₹100,610.70 / 0.599 / ₹111,788.17 | 2 / 2 / 2 of 8 |
+| Step 5 | V3-5 ₹160 | 28.95% | −₹66,351.33 / 0.679 / ₹104,514.18 | −₹89,086.94 / 0.600 / ₹114,711.68 | −₹111,822.54 / 0.533 / ₹124,909.17 | 3 / 3 / 2 of 8 |
+| Step 5 | V10-5 ₹170 | 26.32% | −₹71,068.77 / 0.611 / ₹82,229.55 | −₹93,804.37 / 0.530 / ₹93,804.37 | −₹116,539.97 / 0.461 / ₹116,539.97 | 2 / 2 / 2 of 8 |
+| Step 10 | V3-10 ₹160 | 28.95% | −₹99,074.00 / 0.609 / ₹135,563.43 | −₹121,809.60 / 0.548 / ₹145,760.93 | −₹144,545.21 / 0.494 / ₹155,958.43 | 2 / 2 / 1 of 8 |
+| Step 10 | V10-10 ₹170 | 25.00% | −₹88,169.29 / 0.549 / ₹94,503.41 | −₹110,904.89 / 0.479 / ₹116,914.17 | −₹133,640.49 / 0.419 / ₹139,324.93 | 2 / 2 / 2 of 8 |
+| Fixed 2R | V6 ₹160 | 21.05% | −₹241,059.61 / 0.467 / ₹253,884.50 | −₹263,795.21 / 0.439 / ₹276,295.26 | −₹286,530.82 / 0.413 / ₹298,706.02 | 1 / 1 / 1 of 8 |
+| Fixed 2R | V11 ₹170 | 26.32% | −₹87,294.90 / 0.657 / ₹94,405.15 | −₹110,030.50 / 0.594 / ₹116,039.78 | −₹132,766.11 / 0.539 / ₹138,450.54 | 1 / 1 / 1 of 8 |
+
+On the strict matched cohort, narrow-minus-wide normal P&L was +₹116,600.26 for V9 versus V2, −₹4,717.43 for V10-5 versus V3-5, +₹10,904.71 for V10-10 versus V3-10, and +₹153,764.71 for V11 versus V6. The same differences persisted under both stresses because paired entries, fills, units, and slippage costs were identical.
+
+Integrity passed: all eight Jan–Aug artifacts merged; every paired date, contract, signal time, entry time, and executable fill matched. The source covered 164 trading dates, producing 76 trades and 77 valid no-trade dates. Eleven dates were data-missing (one in March and ten in July), so this is incomplete diagnostic evidence as well as not an untouched holdout. No variant was promoted or removed automatically; V2–V11 prospective paper observation remains unchanged and non-additive.
+
 The rejected label applies to the frozen tested rule set. It does not establish that every possible strategy in the same broad family is unprofitable.
 
 ### Directional credit-spread yearly robustness
@@ -107,9 +128,21 @@ The repaired 2025 diagnostic passed integrity after adding dated TATAMOTORS lot 
 - 0.50 point per leg: −₹51,938.74, PF 0.756; 4/12 profitable months
 - 1.00 point per leg: −₹182,261.15, PF 0.384; 1/12 profitable months
 
-Integrity is now clean and the supplementary 0.10/0.25 cases are profitable. They do not replace the predeclared acceptance scenarios. The frozen rule set still fails 0.5-point and 1-point profitability and monthly robustness, so its final status is **REJECTED**. No 2026 confirmation run is justified and it is not added to paper trading.
+Integrity is clean and the supplementary 2025 0.10/0.25 cases were profitable. They did not replace the predeclared acceptance scenarios, and the frozen rule set failed 0.5-point and 1-point profitability and monthly robustness.
 
-Evidence: [repaired Morning Tea diagnostic run](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33349456840).
+The separate Jan–28 August 2026 validation also completed with 163 sessions, 178 signals, 143 trades, 54.55% wins, no missing sessions, and 65 targets / 40 stops / 38 time exits:
+
+| Scenario | Net P&L | PF | Maximum drawdown |
+|---|---:|---:|---:|
+| Historical prices | +₹10,959 | 1.147 | ₹17,933 |
+| 0.10 point per leg | −₹6,146 | 0.926 | ₹21,361 |
+| 0.25 point per leg | −₹31,802 | 0.672 | ₹33,321 |
+| 0.50 point per leg | −₹74,563 | 0.408 | ₹75,757 |
+| 1.00 point per leg | −₹160,084 | 0.166 | ₹160,629 |
+
+Only 3/8 months were profitable at 0.25-point stress; largest-winner concentration was 4.1%. Sample size, data integrity, and concentration passed, but both decision PF thresholds, positive 0.25-point P&L, and monthly stability failed. Final status is **REJECTED** and Morning Tea is not added to paper trading.
+
+Evidence: [repaired 2025 diagnostic](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33349456840) and [2026 validation](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33357725341).
 
 ## Implemented or reviewed but unverified
 
@@ -141,6 +174,7 @@ Unverified and incomplete ideas are not paper traded and must not be represented
 ## Detailed references
 
 - `docs/STRATEGY_SPEC.md` — NIFTY premium-entry baseline
+- `docs/PAPER_RISK_2026_DIAGNOSTIC.md` — frozen 2026 matched-risk protocol
 - `docs/MORNING_TEA_SPEC.md` — frozen Morning Tea rules and gates
 - `docs/OPENING_RANGE_BASELINE_RESULTS.md` — negative-control results
 - `docs/IRON_CONDOR_RESEARCH.md` — iron-condor design

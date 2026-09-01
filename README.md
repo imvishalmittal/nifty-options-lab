@@ -11,20 +11,22 @@ A conservative NIFTY options research and paper-trading lab built around determi
 The repository contains two user-facing paths:
 
 1. **Legacy learning dashboard (V0.1)** at `/` — manual/screenshot-based chart-fact learning UI.
-2. **Paper/research dashboard** at `/paper` — historical V2 rows plus forward paper rows and stepped-trail outcome fields.
+2. **Paper/research dashboard** at `/paper` — historical V2 rows plus prospective V2–V11 paper outcomes and stepped-trail fields.
 
 The hosted Sites build can lag GitHub `main`; source readiness and public deployment are separate states.
 
 ## Strategy status at a glance
 
-- **Paper observation:** eight NIFTY ₹180-premium variants (V2 through V8) running as alternative shadow outcomes on two shared entry cohorts; no broker orders.
+- **Paper observation:** twelve NIFTY ₹180-premium outcomes (V2 through V11, including V3/V10 step alternatives) running as non-additive shadows on shared signals; no broker orders.
 - **Completed and rejected:** NIFTY ₹180 V1 fixed stop/target, opening-range negative control, defined-risk Batman, HAI 1:3:2 ratio, intraday iron condor, intraday iron butterfly, and directional defined-credit spread.
-- **Completed and rejected:** Morning Tea 2025 one-minute proxy also failed its frozen stress gates; integrity passed after historical lot-size repair, while 0.10/0.25 diagnostics were profitable but 0.5/1.0 were not.
-- **Unverified/incomplete:** Quick Flip, Stocks-in-Play ORB, four isolated opportunity modules, and four incompletely specified video-derived option ideas.
+- **Completed and rejected:** Morning Tea one-minute proxy failed its frozen execution gates in both the repaired 2025 diagnostic and the Jan–Aug 2026 validation.
+- **Completed and rejected:** Quick Flip clean discovery and the six-variant 2020–2024 entry-risk discovery.
+- **Terminal diagnostic:** the Jan–Aug 2026 V2/V9, V3/V10 and V6/V11 matched comparison was negative for every variant at normal costs and both stresses. It does not alter prospective paper observation.
+- **Unverified/incomplete:** Stocks-in-Play ORB, four isolated opportunity modules, and four incompletely specified video-derived option ideas.
 
 See [Strategy status and evidence ledger](docs/STRATEGY_STATUS.md) for samples, P&L, profit factors, failure reasons, and the exact paper suite.
 
-## Forward paper suite — V2 through V8
+## Forward paper suite — V2 through V11
 
 V3 keeps the V2 entry family but changes stop management so risk begins reducing before a fixed ₹220 activation.
 
@@ -36,7 +38,7 @@ V3 keeps the V2 entry family but changes stop management so risk begins reducing
 | Selection reference | ITM CE/PE premium closest to ₹180 at 09:25, using progressive bounded search |
 | Signal window | Completed 1-minute crossing above ₹180 from 09:30 until before 09:45 |
 | Entry | Next executable 1-minute bar open; entry must be > ₹160 and < ₹220 |
-| Starting stop | ₹160 |
+| Starting stop | ₹160 for V2–V8; ₹170 for the V9–V11 cohort |
 | Trail gap | 20 premium points |
 | Paper trail step | 10 premium points |
 | Research comparison | 5-point step vs 10-point step, both with the same 20-point gap |
@@ -50,7 +52,7 @@ V3 keeps the V2 entry family but changes stop management so risk begins reducing
 
 V2 remains preserved as a historical strategy version. Its 110 validated 2025 ledger rows are not rewritten to pretend they used V3 mechanics.
 
-The forward session now runs eight mutually exclusive shadow outcomes from two shared entry cohorts:
+The forward session now records twelve named counterfactual outcomes from shared signals. V9–V11 participate only when the executable entry is strictly between ₹170 and ₹210 and began prospectively on 1 September 2026; they are not backfilled.
 
 | Variant | Frozen forward hypothesis |
 | --- | --- |
@@ -62,8 +64,12 @@ The forward session now runs eight mutually exclusive shadow outcomes from two s
 | V6 | Same base entry, ₹160 stop, fixed conservative 2R target |
 | V7 | Same base entry and V3-10 trail, plus a causal 15-bar failure exit |
 | V8 | Same base entry and V3-10 trail, with initial stop at the higher of ₹160 or entry minus 20 points |
+| V9 | V2 mirror with ₹170 initial stop and continuous trail activation at ₹210 |
+| V10-5 | V3-5 mirror with ₹170 initial stop and entry-anchored 5-point steps |
+| V10-10 | V3-10 mirror with ₹170 initial stop and entry-anchored 10-point steps |
+| V11 | V6 mirror using ₹170 as the fixed-2R initial stop |
 
-These are alternative simulations of the same opportunities. Their P/L must never be added together as one account result. V5 adds no market-data requests because it shares the V4 candle stream; V6–V8 share the base candle stream.
+These are alternative simulations of the same opportunities. Their P/L must never be added together as one account result. V5 adds no market-data requests because it shares the V4 candle stream; V6–V11 share the base candle stream.
 
 ## Paper dashboard
 
@@ -82,12 +88,12 @@ V3 is a separately named hypothesis. Its 5-point and 10-point trail outcomes are
 Active GitHub Actions workflows are intentionally limited to:
 
 - `CI` — lint, build, rendered-site tests, and strategy regression tests.
-- `NIFTY Paper Session` — weekday continuous paper suite starting at about **09:20 IST**, producing V2–V8 shadow outcomes.
+- `NIFTY Paper Session` — weekday continuous paper suite starting at about **09:20 IST**, producing V2–V11 shadow outcomes.
 - `NIFTY Paper Post-Close Recovery` — at **15:40 IST**, causally replays only an incomplete data/infrastructure session, verifies it, and persists it without overwriting a terminal live outcome.
 - `NIFTY Paper Smoke` — manually checks paper mechanics, Groww authentication, and a small historical-data request.
 - `Research - NIFTY ...` opportunity workflows — four isolated strategy backtests, their suite chain, and comparison report.
 
-Completed or superseded one-time studies remain preserved as code, tests, documentation, artifacts, and Git history. A preserved implementation is not automatically accepted evidence: Quick Flip and Stocks-in-Play remain unverified until a clean consolidated run is documented. Groww-heavy active research jobs share a serialized API group to reduce rate-limit conflicts.
+Completed or superseded one-time studies remain preserved as code, tests, documentation, artifacts, and Git history. Quick Flip and the six-variant entry-risk discovery are terminally rejected; Stocks-in-Play remains unverified until clean consolidated evidence is documented. Groww-heavy research jobs share a serialized API group to reduce rate-limit conflicts.
 
 ## Methodology controls
 
@@ -97,6 +103,7 @@ Completed or superseded one-time studies remain preserved as code, tests, docume
 - Invalid, partial, authentication-failed, rate-limited, CI-failed, or integrity-failed artifacts are not accepted as evidence.
 - V3 is explicitly versioned rather than retroactively modifying V2 results.
 - The 5-vs-10 comparison is predeclared; selection should consider the full clean sample, costs, drawdown, and robustness rather than one known trade.
+- Historical V2–V11 comparisons report both actual participation bands and a strict common-entry cohort, so cohort selection is not confused with exit-rule performance.
 - Live-money automation remains out of scope until historical and forward paper evidence are credible.
 
 ## Repository map
