@@ -6,6 +6,10 @@ All notable changes will be documented here.
 
 ### Documentation
 
+- reconciled Stocks-in-Play, the four opportunity modules, afternoon-compression validation, and the Williams bear-call replication against their archived artifacts;
+- removed five false “unverified” entries and recorded their terminal rejection evidence;
+- recorded Williams/EMA bear-call as inconclusive after one 2025 trade and zero post-publication trades;
+- removed duplicate historical reruns from the research backlog;
 - reconciled the consolidated evidence ledger with the prospective V2–V11 paper suite;
 - added the frozen Jan–Aug 2026 matched-risk protocol and terminal V2/V9, V3/V10, and V6/V11 comparison;
 - recorded that all 76 entries belonged to both live-policy bands, making live-policy and strict common-entry results identical and isolating exit-rule effects;
