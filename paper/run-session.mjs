@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import {
-  PAPER_RULES, PAPER_VARIANTS, initialPosition, lotsAffordable,
+  PAPER_RULES, PAPER_VARIANTS, PAPER_VARIANT_LABELS, initialPosition, lotsAffordable,
   nearestExpiry, nextBarEntry, processCompletedBar, selectSide, sessionExit, timeOf,
+  variantEligible,
 } from './paper-engine.mjs';
 import { candleAt, completedCandles, createGrowwPaperClient, indiaParts, sleep, waitUntil } from './groww-paper-client.mjs';
 import { selectPaperContracts } from './paper-contract-selection.mjs';
@@ -23,15 +24,15 @@ function appendTrades(rows) {
   payload.trades = Array.isArray(payload.trades) ? payload.trades : [];
   const existing = new Set(payload.trades.map(paperKey));
   for (const row of rows) { const key = paperKey(row); if (!existing.has(key)) { payload.trades.push(row); existing.add(key); } }
-  payload.meta = { ...payload.meta, capital: PAPER_RULES.capital, trailGapPoints: PAPER_RULES.trailGap, paperMode: true, paperStrategies: ['V2', 'V3-5', 'V3-10', 'V6', 'V7', 'V8'], lastPaperSession: rows[0]?.date ?? payload.meta.lastPaperSession };
+  payload.meta = { ...payload.meta, capital: PAPER_RULES.capital, trailGapPoints: PAPER_RULES.trailGap, paperMode: true, paperStrategies: PAPER_VARIANT_LABELS, lastPaperSession: rows[0]?.date ?? payload.meta.lastPaperSession };
   fs.writeFileSync(JOURNAL, JSON.stringify(payload, null, 2));
 }
 function positionStatus(position) { return { activeStop: Number(position.activeStop.toFixed(2)), targetPremium: position.targetPremium, peakPremium: Number(position.peakHigh.toFixed(2)), barsProcessed: position.barsProcessed, pendingTimeExitFrom: position.pendingTimeExitFrom, stopLossAdjustments: Math.max(0, position.stopHistory.length - 1), exit: position.exit }; }
 function buildRow({ position, date, expiry, chosen, lots }) {
   if (!position.exit) throw new Error(`${position.variant.id} has no executable exit`);
   const units = lots * PAPER_RULES.lotSize; const pnl = optionCosts(position.entry, position.exit.price, units, date); const mfe = position.peakHigh - position.entry; const variant = position.variant;
-  const startTarget = variant.kind === 'fixed_target' ? position.targetPremium : variant.kind === 'v2' ? PAPER_RULES.trailActivation : Number((position.entry + PAPER_RULES.trailGap).toFixed(2));
-  const row = { source: 'PAPER', strategy: variant.strategy, strategyVersion: variant.strategyVersion, date, indexStockName: 'NIFTY 50', weeklyExpiry: expiry, lots, callType: chosen.side, strikePrice: chosen.strike, startTarget, startStopLoss: position.initialStop, endStopLoss: Number(position.activeStop.toFixed(2)), entryTime: timeOf(position.entryTime), exitTime: timeOf(position.exit.time), stopLossAdjustments: Math.max(0, position.stopHistory.length - 1), totalPnl: Number(pnl.net.toFixed(2)), entryPremium: position.entry, peakPremium: Number(position.peakHigh.toFixed(2)), maxFavorableMove: Number(mfe.toFixed(2)), breakevenReached: mfe >= PAPER_RULES.trailGap, trailGapPoints: PAPER_RULES.trailGap, exitPremium: position.exit.price, exitReason: position.exit.result, grossPnl: Number(pnl.gross.toFixed(2)), charges: Number(pnl.charges.toFixed(2)) };
+  const startTarget = variant.kind === 'fixed_target' ? position.targetPremium : variant.trailActivationPremium ?? (variant.kind === 'v2' ? PAPER_RULES.trailActivation : Number((position.entry + PAPER_RULES.trailGap).toFixed(2)));
+  const row = { source: 'PAPER', strategy: variant.strategy, strategyVersion: variant.strategyVersion, cohort: variant.cohort ?? '160/220', date, indexStockName: 'NIFTY 50', weeklyExpiry: expiry, lots, callType: chosen.side, strikePrice: chosen.strike, startTarget, startStopLoss: position.initialStop, endStopLoss: Number(position.activeStop.toFixed(2)), entryTime: timeOf(position.entryTime), exitTime: timeOf(position.exit.time), stopLossAdjustments: Math.max(0, position.stopHistory.length - 1), totalPnl: Number(pnl.net.toFixed(2)), entryPremium: position.entry, peakPremium: Number(position.peakHigh.toFixed(2)), maxFavorableMove: Number(mfe.toFixed(2)), breakevenReached: position.activeStop >= position.entry, trailGapPoints: PAPER_RULES.trailGap, exitPremium: position.exit.price, exitReason: position.exit.result, grossPnl: Number(pnl.gross.toFixed(2)), charges: Number(pnl.charges.toFixed(2)) };
   if (variant.kind === 'v3' || variant.kind === 'v3_time') row.trailStepPoints = variant.trailStep;
   if (variant.targetMultiple) row.targetMultiple = variant.targetMultiple;
   if (variant.failureBars) { row.failureBars = variant.failureBars; row.minimumFavorableMove = variant.minFavorableMove; }
@@ -61,7 +62,8 @@ async function main() {
   }
   if (!entryInfo || !chosen) { writeStatus({ date, status: 'NO_TRADE', reason: 'No valid ₹180 crossing before 09:45', selectionAudit }); return; }
   const lots = lotsAffordable(entryInfo.entry); if (lots < 1) { writeStatus({ date, status: 'NO_TRADE', reason: '₹60k capital cannot fund one lot', entry: entryInfo.entry, selectionAudit }); return; }
-  const positions = Object.fromEntries(PAPER_VARIANTS.map((variant) => [variant.id, initialPosition({ entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, variant })])); const processed = new Set();
+  const activeVariants = PAPER_VARIANTS.filter((variant) => variantEligible(entryInfo.entry, variant));
+  const positions = Object.fromEntries(activeVariants.map((variant) => [variant.id, initialPosition({ entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, variant })])); const processed = new Set();
   writeStatus({ date, status: 'OPEN', selectionAudit, side: chosen.side, strike: chosen.strike, lots, entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, variants: Object.fromEntries(Object.entries(positions).map(([id, position]) => [id, positionStatus(position)])) });
   while (Object.values(positions).some((position) => !position.exit)) {
     const now = indiaParts().time; const candles = completedCandles(await fetchCandles('FNO', chosen.symbol, date, timeOf(entryInfo.entryBar.timestamp), now), now);
@@ -71,6 +73,6 @@ async function main() {
     writeStatus({ date, status: 'OPEN', selectionAudit, side: chosen.side, strike: chosen.strike, lots, entry: entryInfo.entry, entryTime: entryInfo.entryBar.timestamp, variants: Object.fromEntries(Object.entries(positions).map(([id, position]) => [id, positionStatus(position)])) }); await sleep(30000);
   }
   if (Object.values(positions).some((position) => !position.exit)) { writeStatus({ date, status: 'ERROR', reason: 'At least one strategy has no executable exit', selectionAudit }); return; }
-  const rows = PAPER_VARIANTS.map((variant) => buildRow({ position: positions[variant.id], date, expiry, chosen, lots })); appendTrades(rows); writeStatus({ date, status: 'CLOSED', selectionAudit, trades: rows }); console.log(JSON.stringify(rows, null, 2));
+  const rows = activeVariants.map((variant) => buildRow({ position: positions[variant.id], date, expiry, chosen, lots })); appendTrades(rows); writeStatus({ date, status: 'CLOSED', selectionAudit, ineligibleStrategies: PAPER_VARIANTS.filter((variant) => !variantEligible(entryInfo.entry, variant)).map((variant) => variant.id), trades: rows }); console.log(JSON.stringify(rows, null, 2));
 }
 main().catch((error) => { console.error(error.stack || error.message); writeStatus({ status: 'FAILED', reason: error.message }); process.exitCode = 1; });

@@ -40,7 +40,7 @@ export function applyReplay({ result, integrity, root = '.' }) {
   if (alreadyApplied) return { applied: false, reason: 'replay already applied' };
   if (currentBase.date !== result.date || currentConfirmed.date !== result.date) throw new Error('Replay date does not match current paper status files');
   if (!allowed.has(currentBase.status) || !allowed.has(currentConfirmed.status)) throw new Error('Refusing to replace a terminal live paper outcome');
-  appendRows(path.join(root, 'public/paper/trades.json'), result.base.trades, ['V2', 'V3-5', 'V3-10', 'V6', 'V7', 'V8']);
+  appendRows(path.join(root, 'public/paper/trades.json'), result.base.trades, ['V2', 'V3-5', 'V3-10', 'V6', 'V7', 'V8', 'V9', 'V10-5', 'V10-10', 'V11']);
   appendRows(path.join(root, 'public/paper/v4-trades.json'), result.confirmed.trades, ['V4', 'V5']);
   fs.writeFileSync(baseStatusPath, `${JSON.stringify(statusFor(result, 'BASE'), null, 2)}\n`);
   fs.writeFileSync(confirmedStatusPath, `${JSON.stringify(statusFor(result, 'CONFIRMED'), null, 2)}\n`);

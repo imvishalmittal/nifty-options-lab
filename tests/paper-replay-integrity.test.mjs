@@ -18,6 +18,10 @@ function fixture() {
     trade('V3 ten', 'V3', { trailStepPoints: 10 }), trade('V6 strategy', 'V6'),
     trade('V7 strategy', 'V7', { trailStepPoints: 10 }),
     trade('V8 strategy', 'V8', { trailStepPoints: 10, startStopLoss: 165 }),
+    trade('V9 strategy', 'V9', { startStopLoss: 170 }),
+    trade('V10 five', 'V10', { trailStepPoints: 5, startStopLoss: 170 }),
+    trade('V10 ten', 'V10', { trailStepPoints: 10, startStopLoss: 170 }),
+    trade('V11 strategy', 'V11', { startStopLoss: 170 }),
   ];
   const confirmedTrades = [
     trade('V4 strategy', 'V4', { niftySignalTime: '09:30' }),
@@ -34,7 +38,7 @@ function fixture() {
 test('replay integrity validates cohort, causality, accounting, and relative V8 stop', () => {
   const integrity = verifyReplay(fixture());
   assert.equal(integrity.passed, true);
-  assert.equal(integrity.tradeCount, 8);
+  assert.equal(integrity.tradeCount, 12);
 });
 
 test('replay integrity rejects a same-bar entry', () => {
@@ -53,7 +57,7 @@ test('verified replay applies once and never overwrites a live terminal outcome'
   write('trades.json', { meta: {}, trades: [] }); write('v4-trades.json', { meta: {}, trades: [] });
   const result = fixture(); const integrity = verifyReplay(result);
   assert.equal(applyReplay({ result, integrity, root }).applied, true);
-  assert.equal(JSON.parse(fs.readFileSync(path.join(root, 'public/paper/trades.json'))).trades.length, 6);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(root, 'public/paper/trades.json'))).trades.length, 10);
   assert.equal(applyReplay({ result, integrity, root }).applied, false);
 
   write('session-status.json', { date: '2026-08-26', status: 'CLOSED' });

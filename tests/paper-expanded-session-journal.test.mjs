@@ -9,12 +9,14 @@ test('session journal keeps variant P/L separate instead of presenting an additi
       { strategyVersion: 'V2', totalPnl: 100 },
       { strategyVersion: 'V3', trailStepPoints: 10, totalPnl: 80 },
       { strategyVersion: 'V6', totalPnl: 120 },
+      { strategyVersion: 'V10', trailStepPoints: 5, totalPnl: 90 },
     ],
   }, 'BASE');
-  assert.deepEqual(row.strategyVersions, ['V2', 'V3-5', 'V3-10', 'V6', 'V7', 'V8']);
+  assert.deepEqual(row.strategyVersions, ['V2', 'V3-5', 'V3-10', 'V6', 'V7', 'V8', 'V9', 'V10-5', 'V10-10', 'V11']);
   assert.deepEqual(row.strategyOutcomes.V2, { tradeCount: 1, totalPnl: 100 });
   assert.deepEqual(row.strategyOutcomes['V3-10'], { tradeCount: 1, totalPnl: 80 });
   assert.deepEqual(row.strategyOutcomes.V6, { tradeCount: 1, totalPnl: 120 });
+  assert.deepEqual(row.strategyOutcomes['V10-5'], { tradeCount: 1, totalPnl: 90 });
 });
 
 test('confirmed thread declares both V4 and V5', () => {

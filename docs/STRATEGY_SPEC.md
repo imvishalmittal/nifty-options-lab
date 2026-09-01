@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document keeps strategy versions explicit so historical results and forward paper trades remain auditable. The original learning dashboard is V0.1, V2/V3 preserve the historical entry family, and V4–V8 are frozen forward-paper hypotheses.
+This document keeps strategy versions explicit so historical results and forward paper trades remain auditable. The original learning dashboard is V0.1, V2/V3 preserve the historical entry family, V4–V8 are the original forward-paper hypotheses, and V9–V11 are the separately tagged ₹170/₹210 comparison cohort beginning 1 September 2026.
 
 No strategy version places broker orders.
 
@@ -108,6 +108,15 @@ There is no overnight carry. If no stop exits the position, use the final availa
 
 Every stop, target, and failure decision uses completed candles. A decision derived from a candle becomes executable no earlier than the next bar unless it is a stop/target that existed before that candle.
 
+## V9–V11 — ₹170/₹210 comparison cohort
+
+These variants reuse the same selected contract, completed ₹180 signal, next-bar entry, lot sizing, candle stream, stop-first ambiguity rule, costs, and session exit as BASE. They participate only when the executable entry is strictly above ₹170 and strictly below ₹210. They do not rewrite or backfill V2–V8 paper history.
+
+- **V9 — ₹170/₹210 continuous trail:** initial stop ₹170. No tightening occurs before a completed-bar peak reaches ₹210. From ₹210 onward, the active stop is the completed peak minus 20 points, effective on the next bar.
+- **V10-5 — ₹170/₹210 5-point stepped trail:** initial stop ₹170. At a completed peak of ₹210 the proposed stop becomes ₹190; it then advances in 5-point steps with a 20-point gap, effective next bar.
+- **V10-10 — ₹170/₹210 10-point stepped trail:** the same rule with 10-point steps.
+- **V11 — ₹170-stop fixed 2R:** V6 logic with initial stop ₹170 and target `entry + 2 × (entry − 170)`. This compares fixed 2R under the two initial-stop regimes; its target is not forced to ₹210.
+
 ## Position sizing
 
 Forward paper capital is ₹60,000.
@@ -131,8 +140,8 @@ Paper/ledger P&L uses modeled option transaction charges with date-sensitive STT
 - Prefer the variant only after reviewing complete clean evidence, costs, drawdown, losing streaks, temporal consistency, and sensitivity; do not choose from one known winner.
 - Integrity-failed periods remain excluded.
 - Forward paper observations must be tagged with their strategy version.
-- V2–V8 are alternative shadow outcomes; never add their P/L as one-account profit.
-- Freeze all eight variants for the observation window. Regime fields such as day, entry time, expiry day, EMA alignment, and ADX are diagnostics rather than new filters during this run.
+- V2–V11 are alternative shadow outcomes; never add their P/L as one-account profit.
+- Freeze all variants for their declared observation windows. Regime fields such as day, entry time, expiry day, EMA alignment, and ADX are diagnostics rather than new filters during this run.
 
 ## Prohibited behavior
 
