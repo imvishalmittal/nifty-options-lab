@@ -5,6 +5,43 @@ export const REMAINING_OPTION_SELLING_RULES = Object.freeze({
   lifecycle: Object.freeze({ targetDebitRatio: 0.5, stopDebitRatio: 2 }),
 });
 
+function normalCdf(value) {
+  const sign = value < 0 ? -1 : 1;
+  const x = Math.abs(value) / Math.sqrt(2);
+  const t = 1 / (1 + 0.3275911 * x);
+  const erf = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t
+    - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+  return 0.5 * (1 + sign * erf);
+}
+
+function optionPrice({ optionType, spot, strike, years, rate, volatility }) {
+  const root = Math.sqrt(years);
+  const d1 = (Math.log(spot / strike) + (rate + volatility ** 2 / 2) * years) / (volatility * root);
+  const d2 = d1 - volatility * root;
+  if (optionType === 'CE') return spot * normalCdf(d1) - strike * Math.exp(-rate * years) * normalCdf(d2);
+  return strike * Math.exp(-rate * years) * normalCdf(-d2) - spot * normalCdf(-d1);
+}
+
+export function reconstructOptionDelta({ optionType, premium, spot, strike, daysToExpiry, rate = 0.06 }) {
+  if (!['CE', 'PE'].includes(optionType)
+    || ![premium, spot, strike, daysToExpiry].every(Number.isFinite)
+    || premium <= 0 || spot <= 0 || strike <= 0 || daysToExpiry <= 0) return null;
+  const years = daysToExpiry / 365;
+  const discountedStrike = strike * Math.exp(-rate * years);
+  const intrinsic = optionType === 'CE' ? Math.max(0, spot - discountedStrike) : Math.max(0, discountedStrike - spot);
+  if (premium < intrinsic - 0.01) return null;
+  let low = 0.01;
+  let high = 5;
+  for (let index = 0; index < 80; index += 1) {
+    const middle = (low + high) / 2;
+    if (optionPrice({ optionType, spot, strike, years, rate, volatility: middle }) < premium) low = middle;
+    else high = middle;
+  }
+  const volatility = (low + high) / 2;
+  const d1 = (Math.log(spot / strike) + (rate + volatility ** 2 / 2) * years) / (volatility * Math.sqrt(years));
+  return { delta: optionType === 'CE' ? normalCdf(d1) : normalCdf(d1) - 1, impliedVolatility: volatility, rate };
+}
+
 export function wilderRsi(closes, period = 14) {
   if (!Array.isArray(closes) || closes.length <= period) return null;
   let gain = 0;
