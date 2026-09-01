@@ -74,14 +74,24 @@ export function evaluateCreditLifecycle({ entryCredit, observations, targetDebit
   if (!(entryCredit > 0)) return { status: 'NO_TRADE', reason: 'Entry package is not a credit' };
   const target = entryCredit * targetDebitRatio;
   const stop = entryCredit * stopDebitRatio;
-  for (const row of observations) {
+  for (let index = 0; index < observations.length; index += 1) {
+    const row = observations[index];
     if (row.isFinal) return { status: 'EXIT', reason: 'TIME', timestamp: row.timestamp, debit: row.openDebit };
     if (row.isSessionOpen && row.openDebit >= stop) return { status: 'EXIT', reason: 'STOP', timestamp: row.timestamp, debit: row.openDebit };
     if (row.isSessionOpen && row.openDebit <= target) return { status: 'EXIT', reason: 'TARGET', timestamp: row.timestamp, debit: row.openDebit };
     const stopTouched = row.highDebit >= stop;
     const targetTouched = row.lowDebit <= target;
     if (!stopTouched && !targetTouched) continue;
-    return { status: 'EXIT', reason: stopTouched ? 'STOP' : 'TARGET', timestamp: row.timestamp, debit: stopTouched ? stop : target, ambiguous: stopTouched && targetTouched };
+    const next = observations[index + 1];
+    if (!next) return { status: 'DATA_MISSING', reason: 'Next synchronized fill unavailable after threshold' };
+    return {
+      status: 'EXIT',
+      reason: stopTouched ? 'STOP' : 'TARGET',
+      timestamp: next.timestamp,
+      thresholdTimestamp: row.timestamp,
+      debit: next.openDebit,
+      ambiguous: stopTouched && targetTouched,
+    };
   }
   return { status: 'DATA_MISSING', reason: 'No valid terminal observation' };
 }
