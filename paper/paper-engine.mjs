@@ -18,8 +18,8 @@ export const PAPER_VARIANTS = Object.freeze([
   Object.freeze({ id: 'V7', strategy: 'NIFTY ₹180 15-Minute Failure Exit V7', strategyVersion: 'V7', kind: 'v3_time', trailStep: 10, failureBars: 15, minFavorableMove: 10 }),
   Object.freeze({ id: 'V8', strategy: 'NIFTY ₹180 Capped-Risk Stepped Trail V8', strategyVersion: 'V8', kind: 'v3', trailStep: 10, initialRiskPoints: 20 }),
   Object.freeze({ id: 'V9', strategy: 'NIFTY ₹180 170/210 Momentum Trail V9', strategyVersion: 'V9', kind: 'v2', entryFloor: 170, entryCeiling: 210, initialStopPremium: 170, trailActivationPremium: 210, cohort: '170/210' }),
-  Object.freeze({ id: 'V10_5', strategy: 'NIFTY ₹180 170/210 Stepped Trail V10', strategyVersion: 'V10', kind: 'v3', trailStep: 5, entryFloor: 170, entryCeiling: 210, initialStopPremium: 170, trailActivationPremium: 210, cohort: '170/210' }),
-  Object.freeze({ id: 'V10_10', strategy: 'NIFTY ₹180 170/210 Stepped Trail V10', strategyVersion: 'V10', kind: 'v3', trailStep: 10, entryFloor: 170, entryCeiling: 210, initialStopPremium: 170, trailActivationPremium: 210, cohort: '170/210' }),
+  Object.freeze({ id: 'V10_5', strategy: 'NIFTY ₹180 170/210 Stepped Trail V10', strategyVersion: 'V10', kind: 'v3', trailStep: 5, entryFloor: 170, entryCeiling: 210, initialStopPremium: 170, cohort: '170/210' }),
+  Object.freeze({ id: 'V10_10', strategy: 'NIFTY ₹180 170/210 Stepped Trail V10', strategyVersion: 'V10', kind: 'v3', trailStep: 10, entryFloor: 170, entryCeiling: 210, initialStopPremium: 170, cohort: '170/210' }),
   Object.freeze({ id: 'V11', strategy: 'NIFTY ₹180 170-Stop Fixed 2R V11', strategyVersion: 'V11', kind: 'fixed_target', targetMultiple: 2, entryFloor: 170, entryCeiling: 210, initialStopPremium: 170, cohort: '170/210' }),
 ]);
 
