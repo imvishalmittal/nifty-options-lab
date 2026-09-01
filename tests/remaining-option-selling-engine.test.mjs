@@ -49,10 +49,15 @@ test('delta condor picks closest listed targets with farther OTM hedges', () => 
 test('same-bar target and stop ambiguity resolves stop first', () => {
   const result = evaluateCreditLifecycle({
     entryCredit: 10,
-    observations: [{ timestamp: '2024-01-01T10:00:00+05:30', lowDebit: 4, highDebit: 21, openDebit: 10 }],
+    observations: [
+      { timestamp: '2024-01-01T10:00:00+05:30', lowDebit: 4, highDebit: 21, openDebit: 10 },
+      { timestamp: '2024-01-01T10:01:00+05:30', lowDebit: 9, highDebit: 11, openDebit: 11 },
+    ],
   });
   assert.equal(result.reason, 'STOP');
   assert.equal(result.ambiguous, true);
+  assert.equal(result.timestamp, '2024-01-01T10:01:00+05:30');
+  assert.equal(result.debit, 11);
 });
 
 test('overnight gaps execute at session open', () => {
