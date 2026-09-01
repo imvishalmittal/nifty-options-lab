@@ -5,7 +5,7 @@
       "BASE",
       "V4"
     ],
-    "updatedAt": "2026-08-31T06:29:19.389Z"
+    "updatedAt": "2026-09-01T04:04:37.869Z"
   },
   "sessions": [
     {
@@ -722,6 +722,82 @@
       "side": null,
       "strike": null,
       "entry": null,
+      "entryTime": null,
+      "signalSource": null,
+      "tradeCount": 0,
+      "totalPnl": null,
+      "strategyOutcomes": {}
+    },
+    {
+      "date": "2026-09-01",
+      "thread": "BASE",
+      "strategyVersions": [
+        "V2",
+        "V3-5",
+        "V3-10",
+        "V6",
+        "V7",
+        "V8",
+        "V9",
+        "V10-5",
+        "V10-10",
+        "V11"
+      ],
+      "status": "NO_TRADE",
+      "reason": "Entry outside 160-220 band",
+      "updatedAt": "2026-09-01T04:02:14.939Z",
+      "spot925": 24039.4,
+      "expiry": "2026-09-01",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-01Sep26-23850-CE",
+        "strike": 23850,
+        "optionType": "CE",
+        "premium": 188.65
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-01Sep26-24200-PE",
+        "strike": 24200,
+        "optionType": "PE",
+        "premium": 171.25
+      },
+      "side": null,
+      "strike": null,
+      "entry": 220.8,
+      "entryTime": null,
+      "signalSource": null,
+      "tradeCount": 0,
+      "totalPnl": null,
+      "strategyOutcomes": {}
+    },
+    {
+      "date": "2026-09-01",
+      "thread": "V4",
+      "strategyVersions": [
+        "V4",
+        "V5"
+      ],
+      "status": "NO_TRADE",
+      "reason": "Entry outside 160-220 band",
+      "updatedAt": "2026-09-01T04:04:37.869Z",
+      "spot925": 24039.4,
+      "expiry": "2026-09-01",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-01Sep26-23850-CE",
+        "strike": 23850,
+        "optionType": "CE",
+        "premium": 188.65
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-01Sep26-24200-PE",
+        "strike": 24200,
+        "optionType": "PE",
+        "premium": 171.25
+      },
+      "side": null,
+      "strike": null,
+      "entry": 224,
       "entryTime": null,
       "signalSource": null,
       "tradeCount": 0,
