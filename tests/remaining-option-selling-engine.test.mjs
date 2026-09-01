@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   evaluateCreditLifecycle,
   findOpeningRangeBreak,
+  reconstructOptionDelta,
   selectAtmCreditSpread,
   selectIronCondorByDelta,
   summarizeScenario,
@@ -44,6 +45,14 @@ test('delta condor picks closest listed targets with farther OTM hedges', () => 
   ];
   const result = selectIronCondorByDelta(contracts, { shortCallDelta: 0.10, shortPutDelta: -0.12, longCallDelta: 0.05, longPutDelta: -0.06 });
   assert.deepEqual([result.shortCall.symbol, result.longCall.symbol, result.shortPut.symbol, result.longPut.symbol], ['SC', 'LC', 'SP', 'LP']);
+});
+
+test('reconstructs signed call and put deltas from causal premiums', () => {
+  const call = reconstructOptionDelta({ optionType: 'CE', premium: 5.876, spot: 100, strike: 100, daysToExpiry: 30, rate: 0.06 });
+  const put = reconstructOptionDelta({ optionType: 'PE', premium: 5.384, spot: 100, strike: 100, daysToExpiry: 30, rate: 0.06 });
+  assert.ok(call.delta > 0.5 && call.delta < 0.6);
+  assert.ok(put.delta < -0.4 && put.delta > -0.5);
+  assert.ok(Math.abs(call.impliedVolatility - 0.5) < 0.02);
 });
 
 test('same-bar target and stop ambiguity resolves stop first', () => {
