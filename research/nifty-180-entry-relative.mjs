@@ -18,6 +18,14 @@ export const ENTRY_RELATIVE_VARIANTS = Object.freeze([
   Object.freeze({ id: 'RELATIVE_CONTINUOUS', kind: 'continuous', label: 'Entry-relative continuous trail' }),
   Object.freeze({ id: 'RELATIVE_STEP_5', kind: 'stepped', trailStepPoints: 5, label: 'Entry-relative 5-point stepped trail' }),
   Object.freeze({ id: 'RELATIVE_STEP_10', kind: 'stepped', trailStepPoints: 10, label: 'Entry-relative 10-point stepped trail' }),
+  Object.freeze({ id: 'PAPER_160_V2', kind: 'continuous_absolute', fixedStopPremium: 160, trailActivationPremium: 220, entryFloorPremium: 160, entryCeilingPremium: 220, label: 'Paper V2 — ₹160 stop / ₹220 continuous activation' }),
+  Object.freeze({ id: 'PAPER_160_V3_5', kind: 'stepped_absolute_stop', fixedStopPremium: 160, trailStepPoints: 5, entryFloorPremium: 160, entryCeilingPremium: 220, label: 'Paper V3-5 — ₹160 stop / entry-anchored 5-point trail' }),
+  Object.freeze({ id: 'PAPER_160_V3_10', kind: 'stepped_absolute_stop', fixedStopPremium: 160, trailStepPoints: 10, entryFloorPremium: 160, entryCeilingPremium: 220, label: 'Paper V3-10 — ₹160 stop / entry-anchored 10-point trail' }),
+  Object.freeze({ id: 'PAPER_160_V6', kind: 'fixed_2r_absolute', fixedStopPremium: 160, entryFloorPremium: 160, entryCeilingPremium: 220, label: 'Paper V6 — ₹160 stop / fixed 2R' }),
+  Object.freeze({ id: 'PAPER_170_V9', kind: 'continuous_absolute', fixedStopPremium: 170, trailActivationPremium: 210, entryFloorPremium: 170, entryCeilingPremium: 210, label: 'Paper V9 — ₹170 stop / ₹210 continuous activation' }),
+  Object.freeze({ id: 'PAPER_170_V10_5', kind: 'stepped_absolute_stop', fixedStopPremium: 170, trailStepPoints: 5, entryFloorPremium: 170, entryCeilingPremium: 210, label: 'Paper V10-5 — ₹170 stop / entry-anchored 5-point trail' }),
+  Object.freeze({ id: 'PAPER_170_V10_10', kind: 'stepped_absolute_stop', fixedStopPremium: 170, trailStepPoints: 10, entryFloorPremium: 170, entryCeilingPremium: 210, label: 'Paper V10-10 — ₹170 stop / entry-anchored 10-point trail' }),
+  Object.freeze({ id: 'PAPER_170_V11', kind: 'fixed_2r_absolute', fixedStopPremium: 170, entryFloorPremium: 170, entryCeilingPremium: 210, label: 'Paper V11 — ₹170 stop / fixed 2R' }),
 ]);
 
 function timeOf(timestamp) {
@@ -50,10 +58,12 @@ export function evaluateEntryRelativePosition(candles, signal, {
   const entryBar = candles[signalIndex + 1];
   if (timeOf(entryBar.timestamp) >= rules.signalCutoff) return null;
   const entry = Number(entryBar.open);
-  if (!(entry > rules.entryFloorPremium && entry < rules.entryCeilingPremium)) {
+  const entryFloor = variant.entryFloorPremium ?? rules.entryFloorPremium;
+  const entryCeiling = variant.entryCeilingPremium ?? rules.entryCeilingPremium;
+  if (!(entry > entryFloor && entry < entryCeiling)) {
     return {
       rejected: true,
-      reason: 'Executable entry is outside the frozen 160-220 eligibility band',
+      reason: `Executable entry is outside the frozen ${entryFloor}-${entryCeiling} eligibility band`,
       entry,
       entryTime: entryBar.timestamp,
     };
@@ -70,11 +80,13 @@ export function evaluateEntryRelativePosition(candles, signal, {
     };
   }
 
-  const initialStop = variant.kind === 'fixed_levels'
+  const initialStop = variant.fixedStopPremium != null
     ? fixedStop
     : Number((entry - rules.initialRiskPoints).toFixed(2));
   const target = variant.kind === 'fixed_levels'
     ? fixedTarget
+    : variant.kind === 'fixed_2r_absolute'
+      ? Number((entry + 2 * (entry - initialStop)).toFixed(2))
     : Number((entry + rules.rewardPoints).toFixed(2));
   let activeStop = initialStop;
   let peakHigh = entry;
@@ -111,7 +123,7 @@ export function evaluateEntryRelativePosition(candles, signal, {
       };
     }
 
-    if ((variant.kind === 'fixed' || variant.kind === 'fixed_levels') && candle.high >= target) {
+    if ((variant.kind === 'fixed' || variant.kind === 'fixed_levels' || variant.kind === 'fixed_2r_absolute') && candle.high >= target) {
       peakHigh = Math.max(peakHigh, target);
       troughLow = Math.min(troughLow, candle.open);
       return {
@@ -137,9 +149,10 @@ export function evaluateEntryRelativePosition(candles, signal, {
     troughLow = Math.min(troughLow, candle.low);
 
     let proposedStop = activeStop;
-    if (variant.kind === 'continuous' && peakHigh >= target) {
+    if ((variant.kind === 'continuous' || variant.kind === 'continuous_absolute')
+        && peakHigh >= (variant.trailActivationPremium ?? target)) {
       proposedStop = Math.max(initialStop, peakHigh - rules.trailGapPoints);
-    } else if (variant.kind === 'stepped') {
+    } else if (variant.kind === 'stepped' || variant.kind === 'stepped_absolute_stop') {
       proposedStop = steppedStop({
         entry,
         peakHigh,
@@ -154,7 +167,7 @@ export function evaluateEntryRelativePosition(candles, signal, {
       stopHistory.push({
         effectiveFrom: candles[index + 1]?.timestamp ?? candle.timestamp,
         stop: activeStop,
-        reason: variant.kind === 'continuous' ? 'continuous-trailing' : 'stepped-trailing',
+        reason: variant.kind.startsWith('continuous') ? 'continuous-trailing' : 'stepped-trailing',
         sourceBar: candle.timestamp,
         sourcePeak: peakHigh,
       });
