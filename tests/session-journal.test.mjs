@@ -17,7 +17,7 @@ test('compactPaperSession preserves a NO_TRADE session without inventing a trade
   }, 'BASE');
 
   assert.equal(row.thread, 'BASE');
-  assert.deepEqual(row.strategyVersions, ['V2', 'V3-5', 'V3-10', 'V6', 'V7', 'V8']);
+  assert.deepEqual(row.strategyVersions, ['V2', 'V3-5', 'V3-10', 'V6', 'V7', 'V8', 'V9', 'V10-5', 'V10-10', 'V11']);
   assert.equal(row.status, 'NO_TRADE');
   assert.equal(row.tradeCount, 0);
   assert.equal(row.totalPnl, null);

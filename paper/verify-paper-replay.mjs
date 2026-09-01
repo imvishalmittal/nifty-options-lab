@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import { PAPER_RULES } from './paper-engine.mjs';
+import { PAPER_RULES, PAPER_VARIANTS } from './paper-engine.mjs';
 
 function arg(name, fallback = null) {
   const prefix = `--${name}=`;
@@ -16,7 +16,8 @@ export function verifyReplay(result) {
   check('ce-bracketed', result?.selectionAudit?.ce?.bracketed && result.selectionAudit.ce.selected);
   check('pe-bracketed', result?.selectionAudit?.pe?.bracketed && result.selectionAudit.pe.selected);
   check('threads-terminal', ['CLOSED', 'NO_TRADE'].includes(result?.base?.status) && ['CLOSED', 'NO_TRADE'].includes(result?.confirmed?.status));
-  const expectedBase = result?.base?.status === 'CLOSED' ? 6 : 0;
+  const ineligible = new Set(result?.base?.ineligibleStrategies ?? []);
+  const expectedBase = result?.base?.status === 'CLOSED' ? PAPER_VARIANTS.filter((variant) => !ineligible.has(variant.id)).length : 0;
   const expectedConfirmed = result?.confirmed?.status === 'CLOSED' ? 2 : 0;
   check('base-trade-count', result?.base?.trades?.length === expectedBase, `expected=${expectedBase}`);
   check('confirmed-trade-count', result?.confirmed?.trades?.length === expectedConfirmed, `expected=${expectedConfirmed}`);
@@ -28,6 +29,8 @@ export function verifyReplay(result) {
   check('entry-band', trades.every((row) => row.entryPremium > PAPER_RULES.initialStop && row.entryPremium < PAPER_RULES.trailActivation));
   const v8 = trades.find((row) => row.strategyVersion === 'V8');
   check('v8-relative-stop', !v8 || v8.startStopLoss === Number(Math.max(PAPER_RULES.initialStop, v8.entryPremium - 20).toFixed(2)));
+  const narrow = trades.filter((row) => ['V9', 'V10', 'V11'].includes(row.strategyVersion));
+  check('170-210-cohort', narrow.every((row) => row.entryPremium > 170 && row.entryPremium < 210 && row.startStopLoss === 170));
   const keys = trades.map((row) => `${row.date}|${row.strategy}|${row.trailStepPoints ?? ''}`);
   check('unique-trades', new Set(keys).size === keys.length);
   return { passed: checks.every((row) => row.passed), checks, tradeCount: trades.length };

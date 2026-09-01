@@ -2,7 +2,7 @@ import fs from 'node:fs';
 
 import {
   PAPER_RULES, PAPER_VARIANTS, initialPosition, lotsAffordable, nearestExpiry, nextBarEntry,
-  processCompletedBar, selectSide, sessionExit, timeOf,
+  processCompletedBar, selectSide, sessionExit, timeOf, variantEligible,
 } from './paper-engine.mjs';
 import { candleAt, createGrowwPaperClient } from './groww-paper-client.mjs';
 import { selectPaperContracts } from './paper-contract-selection.mjs';
@@ -41,16 +41,16 @@ function simulate({ variants, entry, entryBar, candles, createPosition, processB
 function baseRow({ position, date, expiry, chosen, lots }) {
   const variant = position.variant; const units = lots * PAPER_RULES.lotSize;
   const pnl = optionCosts(position.entry, position.exit.price, units, date); const mfe = position.peakHigh - position.entry;
-  const startTarget = variant.kind === 'fixed_target' ? position.targetPremium : variant.kind === 'v2'
-    ? PAPER_RULES.trailActivation : Number((position.entry + PAPER_RULES.trailGap).toFixed(2));
+  const startTarget = variant.kind === 'fixed_target' ? position.targetPremium : variant.trailActivationPremium
+    ?? (variant.kind === 'v2' ? PAPER_RULES.trailActivation : Number((position.entry + PAPER_RULES.trailGap).toFixed(2)));
   const row = {
-    source: 'PAPER_REPLAY', strategy: variant.strategy, strategyVersion: variant.strategyVersion, date,
+    source: 'PAPER_REPLAY', strategy: variant.strategy, strategyVersion: variant.strategyVersion, cohort: variant.cohort ?? '160/220', date,
     indexStockName: 'NIFTY 50', weeklyExpiry: expiry, lots, callType: chosen.side, strikePrice: chosen.strike,
     startTarget, startStopLoss: position.initialStop, endStopLoss: Number(position.activeStop.toFixed(2)),
     entryTime: timeOf(position.entryTime), exitTime: timeOf(position.exit.time),
     stopLossAdjustments: Math.max(0, position.stopHistory.length - 1), totalPnl: Number(pnl.net.toFixed(2)),
     entryPremium: position.entry, peakPremium: Number(position.peakHigh.toFixed(2)), maxFavorableMove: Number(mfe.toFixed(2)),
-    breakevenReached: mfe >= PAPER_RULES.trailGap, trailGapPoints: PAPER_RULES.trailGap,
+    breakevenReached: position.activeStop >= position.entry, trailGapPoints: PAPER_RULES.trailGap,
     exitPremium: position.exit.price, exitReason: position.exit.result,
     grossPnl: Number(pnl.gross.toFixed(2)), charges: Number(pnl.charges.toFixed(2)), reconstructed: true,
   };
@@ -96,14 +96,16 @@ export function replayBase({ date, expiry, ce, pe, callCandles, putCandles }) {
   if (entry.rejected) return noTrade('Entry outside 160-220 band');
   const lots = lotsAffordable(entry.entry);
   if (lots < 1) return noTrade('₹60k capital cannot fund one lot');
-  const positions = simulate({ variants: PAPER_VARIANTS, entry: entry.entry, entryBar: entry.entryBar, candles: chosenCandles, createPosition: initialPosition, processBar: processCompletedBar });
+  const activeVariants = PAPER_VARIANTS.filter((variant) => variantEligible(entry.entry, variant));
+  const positions = simulate({ variants: activeVariants, entry: entry.entry, entryBar: entry.entryBar, candles: chosenCandles, createPosition: initialPosition, processBar: processCompletedBar });
   const complete = Object.values(positions).every((position) => position.exit);
   return {
     status: complete ? 'CLOSED' : 'INCOMPLETE_REPLAY', complete,
     reason: complete ? null : 'Selected trade remains open and 15:29 candle is unavailable',
     signalTime: timeOf(signal.signal.timestamp), side: signal.side, strike: contract.strike,
     entry: entry.entry, entryTime: timeOf(entry.entryBar.timestamp), lots,
-    trades: complete ? PAPER_VARIANTS.map((variant) => baseRow({ position: positions[variant.id], date, expiry, chosen: { ...contract, side: signal.side }, lots })) : [],
+    ineligibleStrategies: PAPER_VARIANTS.filter((variant) => !variantEligible(entry.entry, variant)).map((variant) => variant.id),
+    trades: complete ? activeVariants.map((variant) => baseRow({ position: positions[variant.id], date, expiry, chosen: { ...contract, side: signal.side }, lots })) : [],
   };
 }
 

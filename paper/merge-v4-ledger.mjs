@@ -26,7 +26,7 @@ for (const row of Array.isArray(v4.trades) ? v4.trades : []) {
   }
 }
 const paperStrategies = new Set(Array.isArray(main.meta?.paperStrategies) ? main.meta.paperStrategies : []);
-for (const value of ['V2', 'V3-5', 'V3-10', 'V4', 'V5', 'V6', 'V7', 'V8']) paperStrategies.add(value);
+for (const value of ['V2', 'V3-5', 'V3-10', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10-5', 'V10-10', 'V11']) paperStrategies.add(value);
 main.meta = { ...main.meta, paperMode: true, paperStrategies: [...paperStrategies] };
 fs.writeFileSync(MAIN, JSON.stringify(main, null, 2));
 

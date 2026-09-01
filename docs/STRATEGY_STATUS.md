@@ -21,6 +21,7 @@ The scheduled paper workflow observes the NIFTY weekly-option premium-entry fami
 | Thread | Variants | Shared entry | Difference measured |
 |---|---|---|---|
 | BASE | V2, V3-5, V3-10, V6, V7, V8 | Select nearest weekly ITM CE and PE near ₹180 at 09:25; completed cross above ₹180 from 09:30 to before 09:45; enter next bar if premium is above ₹160 and below ₹220 | Exit/risk overlays |
+| 170/210 comparison | V9, V10-5, V10-10, V11 | Reuse the BASE contract and signal; participate only when executable entry is strictly between ₹170 and ₹210 | ₹170 stop with ₹210-activated continuous/stepped trails, plus fixed 2R |
 | NIFTY-confirmed | V4, V5 | Same option setup, with matching NIFTY confirmation and fail-fast below ₹180 | V2 versus V3-10 exit after confirmed entry |
 
 Variant meanings:
@@ -35,10 +36,14 @@ Variant meanings:
 | V6 | Fixed conservative 2R exit |
 | V7 | V3-10 plus a causal 15-bar failure exit |
 | V8 | V3-10 with initial stop max(₹160, entry minus 20 points) |
+| V9 | ₹170 initial stop; continuous 20-point trail activates at ₹210 |
+| V10-5 | ₹170 initial stop; 5-point stepped 20-point-gap trail begins at ₹210 |
+| V10-10 | ₹170 initial stop; 10-point stepped 20-point-gap trail begins at ₹210 |
+| V11 | Fixed 2R using ₹170 as initial stop |
 
-Important accounting rule: variants are counterfactual outcomes on the same entry cohort. Do not add their P&L together or interpret them as eight independent accounts. The ledger records one outcome per variant so exits can be compared fairly. All trades are intraday and no position is held overnight.
+Important accounting rule: variants are counterfactual outcomes, not independent accounts. Do not add their P&L together. V9–V11 use the same signal but have the narrower ₹170–₹210 executable-entry band, so sessions outside that band are explicitly ineligible for that cohort. All trades are intraday and no position is held overnight.
 
-The latest published paper session is 28 August 2026. The BASE thread closed a PE signal; the NIFTY-confirmed thread recorded no trade. See `public/paper/sessions.json` for the auditable session ledger.
+The latest published paper session is 31 August 2026. The BASE thread closed a CE signal; the NIFTY-confirmed thread recorded no trade. V9–V11 start prospectively on 1 September 2026 and are not backfilled into earlier paper dates. See `public/paper/sessions.json` for the auditable session ledger.
 
 ## Completed backtests
 

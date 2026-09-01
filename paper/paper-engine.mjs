@@ -17,7 +17,13 @@ export const PAPER_VARIANTS = Object.freeze([
   Object.freeze({ id: 'V6', strategy: 'NIFTY ₹180 Fixed 2R V6', strategyVersion: 'V6', kind: 'fixed_target', targetMultiple: 2 }),
   Object.freeze({ id: 'V7', strategy: 'NIFTY ₹180 15-Minute Failure Exit V7', strategyVersion: 'V7', kind: 'v3_time', trailStep: 10, failureBars: 15, minFavorableMove: 10 }),
   Object.freeze({ id: 'V8', strategy: 'NIFTY ₹180 Capped-Risk Stepped Trail V8', strategyVersion: 'V8', kind: 'v3', trailStep: 10, initialRiskPoints: 20 }),
+  Object.freeze({ id: 'V9', strategy: 'NIFTY ₹180 170/210 Momentum Trail V9', strategyVersion: 'V9', kind: 'v2', entryFloor: 170, entryCeiling: 210, initialStopPremium: 170, trailActivationPremium: 210, cohort: '170/210' }),
+  Object.freeze({ id: 'V10_5', strategy: 'NIFTY ₹180 170/210 Stepped Trail V10', strategyVersion: 'V10', kind: 'v3', trailStep: 5, entryFloor: 170, entryCeiling: 210, initialStopPremium: 170, trailActivationPremium: 210, cohort: '170/210' }),
+  Object.freeze({ id: 'V10_10', strategy: 'NIFTY ₹180 170/210 Stepped Trail V10', strategyVersion: 'V10', kind: 'v3', trailStep: 10, entryFloor: 170, entryCeiling: 210, initialStopPremium: 170, trailActivationPremium: 210, cohort: '170/210' }),
+  Object.freeze({ id: 'V11', strategy: 'NIFTY ₹180 170-Stop Fixed 2R V11', strategyVersion: 'V11', kind: 'fixed_target', targetMultiple: 2, entryFloor: 170, entryCeiling: 210, initialStopPremium: 170, cohort: '170/210' }),
 ]);
+
+export const PAPER_VARIANT_LABELS = Object.freeze(PAPER_VARIANTS.map((variant) => variant.trailStep ? `${variant.strategyVersion}-${variant.trailStep}` : variant.strategyVersion));
 
 export function timeOf(timestamp) { return String(timestamp).match(/T(\d{2}:\d{2})/)?.[1] ?? null; }
 export function parseOption(symbol) {
@@ -102,9 +108,15 @@ export function nextBarEntry(candles, signal, rules = PAPER_RULES) {
   return { entry, entryBar };
 }
 export function lotsAffordable(entryPremium, rules = PAPER_RULES) { return entryPremium > 0 ? Math.floor(rules.capital / (entryPremium * rules.lotSize)) : 0; }
+export function variantEligible(entry, variant, rules = PAPER_RULES) {
+  const floor = variant.entryFloor ?? rules.initialStop;
+  const ceiling = variant.entryCeiling ?? rules.trailActivation;
+  return entry > floor && entry < ceiling;
+}
 export function initialPosition({ entry, entryTime, variant, rules = PAPER_RULES }) {
   if (!variant) throw new Error('paper variant is required');
-  const initialStop = Number((variant.initialRiskPoints ? Math.max(rules.initialStop, entry - variant.initialRiskPoints) : rules.initialStop).toFixed(2));
+  const fixedStop = variant.initialStopPremium ?? rules.initialStop;
+  const initialStop = Number((variant.initialRiskPoints ? Math.max(fixedStop, entry - variant.initialRiskPoints) : fixedStop).toFixed(2));
   const targetPremium = variant.kind === 'fixed_target' ? Number((entry + variant.targetMultiple * (entry - initialStop)).toFixed(2)) : null;
   return {
     variant, entry, entryTime, initialStop, activeStop: initialStop, targetPremium,
@@ -115,8 +127,14 @@ export function initialPosition({ entry, entryTime, variant, rules = PAPER_RULES
 }
 export function proposedStop(position, variant, rules = PAPER_RULES) {
   const floor = position.initialStop ?? rules.initialStop;
-  if (variant.kind === 'v2') return position.peakHigh < rules.trailActivation ? floor : Math.max(floor, position.peakHigh - rules.trailGap);
+  const activation = variant.trailActivationPremium ?? rules.trailActivation;
+  if (variant.kind === 'v2') return position.peakHigh < activation ? floor : Math.max(floor, position.peakHigh - rules.trailGap);
   if (variant.kind === 'v3' || variant.kind === 'v3_time') {
+    if (variant.trailActivationPremium) {
+      if (position.peakHigh < activation) return floor;
+      const steps = Math.floor((position.peakHigh - activation + 1e-9) / variant.trailStep);
+      return Math.max(floor, activation + steps * variant.trailStep - rules.trailGap);
+    }
     const steps = Math.floor((Math.max(0, position.peakHigh - position.entry) + 1e-9) / variant.trailStep);
     return steps < 1 ? floor : Math.max(floor, position.entry + steps * variant.trailStep - rules.trailGap);
   }

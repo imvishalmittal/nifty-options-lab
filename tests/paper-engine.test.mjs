@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PAPER_RULES, PAPER_VARIANTS, firstSignal, initialPosition, lotsAffordable, nextBarEntry, premiumBracket, processCompletedBar, selectSide } from '../paper/paper-engine.mjs';
+import { PAPER_RULES, PAPER_VARIANTS, firstSignal, initialPosition, lotsAffordable, nextBarEntry, premiumBracket, processCompletedBar, selectSide, variantEligible } from '../paper/paper-engine.mjs';
 
 const c = (timestamp, open, high, low, close) => ({ timestamp, open, high, low, close });
 const variant = (id) => PAPER_VARIANTS.find((row) => row.id === id);
@@ -9,10 +9,46 @@ function position(id, entry = 184.15, entryTime = '2026-08-17T09:31:00+05:30') {
   return initialPosition({ entry, entryTime, variant: variant(id) });
 }
 
-test('base paper observation variants are the six predeclared alternatives', () => {
-  assert.deepEqual(PAPER_VARIANTS.map((row) => row.id), ['V2', 'V3_5', 'V3_10', 'V6', 'V7', 'V8']);
+test('paper observation keeps the six existing variants and four 170/210 comparators', () => {
+  assert.deepEqual(PAPER_VARIANTS.map((row) => row.id), ['V2', 'V3_5', 'V3_10', 'V6', 'V7', 'V8', 'V9', 'V10_5', 'V10_10', 'V11']);
   assert.equal(variant('V3_5').trailStep, 5);
   assert.equal(variant('V3_10').trailStep, 10);
+});
+
+test('170/210 cohort is eligible only for executable entries strictly inside its band', () => {
+  assert.equal(variantEligible(180, variant('V9')), true);
+  assert.equal(variantEligible(170, variant('V9')), false);
+  assert.equal(variantEligible(210, variant('V9')), false);
+  assert.equal(variantEligible(215, variant('V2')), true);
+});
+
+test('V9 uses a 170 stop and activates the continuous trail at 210', () => {
+  let p = position('V9', 180);
+  assert.equal(p.initialStop, 170);
+  p = processCompletedBar(p, c('2026-09-01T09:31:00+05:30', 180, 209.99, 175, 205));
+  assert.equal(p.activeStop, 170);
+  p = processCompletedBar(p, c('2026-09-01T09:32:00+05:30', 205, 214, 180, 212));
+  assert.equal(p.activeStop, 194);
+});
+
+test('V10-5 and V10-10 wait for 210 then step from the same absolute anchor', () => {
+  let v105 = position('V10_5', 180); let v1010 = position('V10_10', 180);
+  const below = c('2026-09-01T09:31:00+05:30', 180, 209.99, 175, 205);
+  v105 = processCompletedBar(v105, below); v1010 = processCompletedBar(v1010, below);
+  assert.equal(v105.activeStop, 170); assert.equal(v1010.activeStop, 170);
+  const activated = c('2026-09-01T09:32:00+05:30', 205, 216, 180, 212);
+  v105 = processCompletedBar(v105, activated); v1010 = processCompletedBar(v1010, activated);
+  assert.equal(v105.activeStop, 195);
+  assert.equal(v1010.activeStop, 190);
+});
+
+test('V11 applies V6 fixed 2R logic from the 170 stop', () => {
+  let p = position('V11', 180);
+  assert.equal(p.initialStop, 170);
+  assert.equal(p.targetPremium, 200);
+  p = processCompletedBar(p, c('2026-09-01T09:31:00+05:30', 180, 202, 175, 200));
+  assert.equal(p.exit.result, 'FIXED_TARGET');
+  assert.equal(p.exit.price, 200);
 });
 
 test('V6 uses a conservative fixed 2R target and checks stop first', () => {

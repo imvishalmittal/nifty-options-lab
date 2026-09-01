@@ -30,10 +30,20 @@ test('base replay uses causal next-bar entry and closes every declared variant',
   assert.equal(result.signalTime, '09:30');
   assert.equal(result.entryTime, '09:31');
   assert.equal(result.entry, 185);
-  assert.equal(result.trades.length, 6);
+  assert.equal(result.trades.length, 10);
   assert.ok(result.trades.every((row) => row.source === 'PAPER_REPLAY' && row.reconstructed));
   assert.equal(result.trades.find((row) => row.strategyVersion === 'V2').exitReason, 'INITIAL_STOP');
   assert.equal(result.trades.find((row) => row.strategyVersion === 'V8').startStopLoss, 165);
+  assert.equal(result.trades.find((row) => row.strategyVersion === 'V9').startStopLoss, 170);
+  assert.equal(result.trades.find((row) => row.strategyVersion === 'V11').startTarget, 215);
+});
+
+test('base replay records 170/210 variants as ineligible when entry exceeds 210', () => {
+  const expensive = callCandles.map((row) => row.timestamp.includes('09:31') ? { ...row, open: 211, high: 215, low: 180, close: 212 } : row);
+  const result = replayBase({ date: '2026-08-26', expiry: '2026-09-01', ce, pe, callCandles: expensive, putCandles });
+  assert.equal(result.status, 'CLOSED');
+  assert.equal(result.trades.length, 6);
+  assert.deepEqual(result.ineligibleStrategies, ['V9', 'V10_5', 'V10_10', 'V11']);
 });
 
 test('confirmed replay requires NIFTY range confirmation and uses next-bar entry', () => {

@@ -7,7 +7,7 @@ type CallType = "CE" | "PE";
 type PnlFilter = "ALL" | "PROFIT" | "LOSS";
 type SortDir = "asc" | "desc";
 type Source = "BACKTEST" | "PAPER";
-type StrategyMode = "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8";
+type StrategyMode = "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V11";
 type DataSource = "proxy" | "published" | null;
 type SessionThread = "BASE" | "V4";
 
@@ -38,7 +38,10 @@ const V5 = "NIFTY ₹180 NIFTY-Confirmed Stepped Trail V5";
 const V6 = "NIFTY ₹180 Fixed 2R V6";
 const V7 = "NIFTY ₹180 15-Minute Failure Exit V7";
 const V8 = "NIFTY ₹180 Capped-Risk Stepped Trail V8";
-const strategyNames: Record<StrategyMode, string> = { V2, V3, V4, V5, V6, V7, V8 };
+const V9 = "NIFTY ₹180 170/210 Momentum Trail V9";
+const V10 = "NIFTY ₹180 170/210 Stepped Trail V10";
+const V11 = "NIFTY ₹180 170-Stop Fixed 2R V11";
+const strategyNames: Record<StrategyMode, string> = { V2, V3, V4, V5, V6, V7, V8, V9, V10, V11 };
 
 const columns: Array<{ key: SortKey; label: string }> = [
   { key: "rowNo", label: "#" }, { key: "date", label: "Date" }, { key: "indexStockName", label: "Index / Stock" },
@@ -171,14 +174,14 @@ export default function PaperLedger() {
   const allDates = useMemo(() => [...rows.map((r) => r.date), ...sessions.map((s) => s.date)], [rows, sessions]);
   const years = useMemo(() => Array.from(new Set(allDates.map((date) => date.slice(0, 4)))).sort().reverse(), [allDates]);
   const months = useMemo(() => Array.from(new Set(allDates.filter((date) => year === "ALL" || date.startsWith(`${year}-`)).map((date) => date.slice(0, 7)))).sort().reverse(), [allDates, year]);
-  const trailSteps = useMemo(() => Array.from(new Set(rows.filter((r) => r.strategy === V3).map((r) => r.trailStepPoints).filter((v): v is number => v !== undefined))).sort((a,b) => a-b), [rows]);
+  const trailSteps = useMemo(() => Array.from(new Set(rows.filter((r) => r.strategy === strategyName(strategyMode)).map((r) => r.trailStepPoints).filter((v): v is number => v !== undefined))).sort((a,b) => a-b), [rows, strategyMode]);
   const effectiveTrailStep = trailSteps.includes(Number(trailStep)) ? Number(trailStep) : (trailSteps[0] ?? 5);
 
   const displayed = useMemo(() => {
     const wantedStrategy = strategyName(strategyMode);
     const base = rows.map((trade, index) => ({ trade, originalRow: index + 1 })).filter(({ trade }) => {
       if (trade.strategy !== wantedStrategy) return false;
-      if (strategyMode === "V3" && trade.trailStepPoints !== effectiveTrailStep) return false;
+      if ((strategyMode === "V3" || strategyMode === "V10") && trade.trailStepPoints !== effectiveTrailStep) return false;
       if (year !== "ALL" && !trade.date.startsWith(`${year}-`)) return false;
       if (month !== "ALL" && !trade.date.startsWith(month)) return false;
       if (callType !== "ALL" && trade.callType !== callType) return false;
@@ -204,20 +207,20 @@ export default function PaperLedger() {
 
   const ranked = latestSession ? rankedContracts(latestSession) : [];
   const primary = ranked[0] ?? null; const backup = ranked[1] ?? null;
-  const outcomeKey = strategyMode === "V3" ? `V3-${effectiveTrailStep}` : strategyMode;
+  const outcomeKey = strategyMode === "V3" || strategyMode === "V10" ? `${strategyMode}-${effectiveTrailStep}` : strategyMode;
   const selectedOutcome = latestSession?.strategyOutcomes?.[outcomeKey];
   const selectedSessionTrade = latestSession ? rows.find((trade) => trade.date === latestSession.date && trade.strategy === strategyName(strategyMode)
-    && (strategyMode !== "V3" || trade.trailStepPoints === effectiveTrailStep)) : null;
+    && (strategyMode !== "V3" && strategyMode !== "V10" || trade.trailStepPoints === effectiveTrailStep)) : null;
   const resolvedOutcome = selectedOutcome ?? (selectedSessionTrade ? { tradeCount: 1, totalPnl: selectedSessionTrade.totalPnl } : undefined);
 
   return <section className={styles.ledger} id="trade-ledger">
     <div className={styles.heading}><div><p className={styles.eyebrow}>Backtest + live paper journal</p><h2>Trade ledger</h2>
-      <p>Compare all eight predeclared paper variants. Session outcomes are journalled even when no trade is taken, so NO_TRADE and data-boundary days remain visible.</p></div>
+      <p>Compare the original ₹160/₹220 family with the new ₹170/₹210 paper cohort. Session outcomes are journalled even when no trade is taken, so NO_TRADE and data-boundary days remain visible.</p></div>
       <div className={styles.status}><span className={loadState === "ok" ? styles.ok : styles.warn} />{loadState === "loading" ? "Loading…" : loadState === "error" ? "Journal unavailable" : `${dataSource === "proxy" ? "Live GitHub journal" : "Published snapshot"} · Updated ${lastUpdated}`}</div></div>
 
     <div className={styles.filters}>
-      <label><span>Strategy</span><select value={strategyMode} onChange={(e) => setStrategyMode(e.target.value as StrategyMode)}><option value="V2">V2 · Momentum trail</option><option value="V3">V3 · Stepped trail</option><option value="V4">V4 · NIFTY-confirmed fail-fast</option><option value="V5">V5 · Confirmed + stepped</option><option value="V6">V6 · Fixed 2R</option><option value="V7">V7 · 15-minute failure exit</option><option value="V8">V8 · Capped-risk stepped trail</option></select></label>
-      {strategyMode === "V3" && <label><span>Stepped points</span><select value={String(effectiveTrailStep)} onChange={(e) => setTrailStep(e.target.value)}>{trailSteps.map((v) => <option key={v} value={String(v)}>{num.format(v)} pts</option>)}</select></label>}
+      <label><span>Strategy</span><select value={strategyMode} onChange={(e) => setStrategyMode(e.target.value as StrategyMode)}><option value="V2">V2 · 160/220 momentum trail</option><option value="V3">V3 · 160-based stepped trail</option><option value="V4">V4 · NIFTY-confirmed fail-fast</option><option value="V5">V5 · Confirmed + stepped</option><option value="V6">V6 · 160-stop fixed 2R</option><option value="V7">V7 · 15-minute failure exit</option><option value="V8">V8 · Capped-risk stepped trail</option><option value="V9">V9 · 170/210 momentum trail</option><option value="V10">V10 · 170/210 stepped trail</option><option value="V11">V11 · 170-stop fixed 2R</option></select></label>
+      {(strategyMode === "V3" || strategyMode === "V10") && <label><span>Stepped points</span><select value={String(effectiveTrailStep)} onChange={(e) => setTrailStep(e.target.value)}>{trailSteps.map((v) => <option key={v} value={String(v)}>{num.format(v)} pts</option>)}</select></label>}
       <label><span>Year</span><select value={year} onChange={(e) => { setYear(e.target.value); setMonth("ALL"); }}><option value="ALL">All years</option>{years.map((v) => <option key={v}>{v}</option>)}</select></label>
       <label><span>Month</span><select value={month} onChange={(e) => setMonth(e.target.value)}><option value="ALL">All months</option>{months.map((v) => <option key={v} value={v}>{new Date(`${v}-01T00:00:00`).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</option>)}</select></label>
       <label><span>Call type</span><select value={callType} onChange={(e) => setCallType(e.target.value as "ALL" | CallType)}><option value="ALL">All</option><option value="CE">CE</option><option value="PE">PE</option></select></label>
@@ -225,7 +228,7 @@ export default function PaperLedger() {
     </div>
 
     {latestSession ? <div className={styles.sessionCard}>
-      <div className={styles.sessionHeader}><div><span>Latest journalled session</span><strong>{latestSession.date} · {strategyMode === "V3" ? `V3-${effectiveTrailStep}` : strategyMode}</strong></div><span className={`${styles.sessionBadge} ${statusTone(latestSession.status)}`}>{latestSession.status}</span></div>
+      <div className={styles.sessionHeader}><div><span>Latest journalled session</span><strong>{latestSession.date} · {strategyMode === "V3" || strategyMode === "V10" ? `${strategyMode}-${effectiveTrailStep}` : strategyMode}</strong></div><span className={`${styles.sessionBadge} ${statusTone(latestSession.status)}`}>{latestSession.status}</span></div>
       <div className={styles.sessionGrid}>
         <div><span>Weekly expiry</span><strong>{latestSession.expiry ?? "—"}</strong></div>
         <div><span>NIFTY 09:25</span><strong>{latestSession.spot925 === null || latestSession.spot925 === undefined ? "—" : num.format(latestSession.spot925)}</strong></div>
@@ -243,6 +246,6 @@ export default function PaperLedger() {
       {displayed.map(({ trade, originalRow }, i) => <tr key={`${trade.date}-${trade.callType}-${trade.strikePrice}-${trade.strategy}-${trade.trailStepPoints ?? 0}-${originalRow}`}><td>{i+1}</td><td>{trade.date}</td><td>{trade.indexStockName}</td><td>{trade.weeklyExpiry}</td><td>{trade.lots}</td><td><span className={`${styles.optionBadge} ${trade.callType === "CE" ? styles.ce : styles.pe}`}>{trade.callType}</span></td><td>{num.format(trade.strikePrice)}</td><td>{premium(trade.entryPremium)}</td><td>{premium(trade.peakPremium)}</td><td>{premium(trade.maxFavorableMove)}</td><td>{trade.trailStepPoints === undefined ? "—" : `${num.format(trade.trailStepPoints)} pts`}</td><td>{trade.trailGapPoints === undefined ? "—" : `${num.format(trade.trailGapPoints)} pts`}</td><td>{trade.breakevenReached === undefined ? "—" : trade.breakevenReached ? "Yes" : "No"}</td><td>₹{num.format(trade.startTarget)}</td><td>₹{num.format(trade.startStopLoss)}</td><td>₹{num.format(trade.endStopLoss)}</td><td>{trade.entryTime || "—"}</td><td>{trade.exitTime || "—"}</td><td>{premium(trade.exitPremium)}</td><td>{trade.exitReason || "—"}</td><td>{trade.stopLossAdjustments}</td><td className={(trade.grossPnl ?? 0) >= 0 ? styles.profit : styles.loss}>{pnl(trade.grossPnl)}</td><td>{trade.charges === undefined ? "—" : `₹${money.format(trade.charges)}`}</td><td className={trade.totalPnl >= 0 ? styles.profit : styles.loss}>{pnl(trade.totalPnl)}</td></tr>)}
       {!displayed.length && <tr><td className={styles.empty} colSpan={24}>No validated trades are available for this strategy/step selection. Check the session card above for NO_TRADE or data-quality outcomes.</td></tr>}
     </tbody></table></div>
-    <p className={styles.footnote}>Paper/research mode only. V2–V8 are alternative simulations, never additive account profit. Session outcomes are retained even when no trade is placed. No broker order is placed.</p>
+    <p className={styles.footnote}>Paper/research mode only. V2–V11 are counterfactual alternatives, never additive account profit. The ₹170/₹210 cohort begins 1 September 2026 and is not retroactively added to earlier paper sessions. No broker order is placed.</p>
   </section>;
 }
