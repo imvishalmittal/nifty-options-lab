@@ -1,0 +1,73 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {
+  evaluateCreditLifecycle,
+  findOpeningRangeBreak,
+  selectAtmCreditSpread,
+  selectIronCondorByDelta,
+  summarizeScenario,
+  wilderRsi,
+} from '../research/remaining-option-selling-engine.mjs';
+
+test('opening range requires 30 causal bars and uses completed five-minute close', () => {
+  const bars = Array.from({ length: 30 }, (_, index) => ({
+    timestamp: `2024-01-01T09:${String(15 + index).padStart(2, '0')}:00+05:30`,
+    high: 101,
+    low: 99,
+  }));
+  const result = findOpeningRangeBreak(bars, [
+    { timestamp: '2024-01-01T09:45:00+05:30', close: 100 },
+    { timestamp: '2024-01-01T09:50:00+05:30', close: 102 },
+  ]);
+  assert.equal(result.status, 'SIGNAL');
+  assert.equal(result.direction, 'UP');
+  assert.equal(result.confirmationTimestamp, '2024-01-01T09:50:00+05:30');
+});
+
+test('ATM credit spread requires the exact 300-point listed hedge', () => {
+  const contracts = [
+    { symbol: 'P100', optionType: 'PE', strike: 100 },
+    { symbol: 'P-200', optionType: 'PE', strike: -200 },
+    { symbol: 'P-100', optionType: 'PE', strike: -100 },
+  ];
+  const result = selectAtmCreditSpread(contracts, 110, 'UP');
+  assert.equal(result.short.symbol, 'P100');
+  assert.equal(result.long.symbol, 'P-200');
+});
+
+test('delta condor picks closest listed targets with farther OTM hedges', () => {
+  const contracts = [
+    { symbol: 'SC', optionType: 'CE', strike: 110, delta: 0.11 },
+    { symbol: 'LC', optionType: 'CE', strike: 120, delta: 0.051 },
+    { symbol: 'SP', optionType: 'PE', strike: 90, delta: -0.119 },
+    { symbol: 'LP', optionType: 'PE', strike: 80, delta: -0.061 },
+  ];
+  const result = selectIronCondorByDelta(contracts, { shortCallDelta: 0.10, shortPutDelta: -0.12, longCallDelta: 0.05, longPutDelta: -0.06 });
+  assert.deepEqual([result.shortCall.symbol, result.longCall.symbol, result.shortPut.symbol, result.longPut.symbol], ['SC', 'LC', 'SP', 'LP']);
+});
+
+test('same-bar target and stop ambiguity resolves stop first', () => {
+  const result = evaluateCreditLifecycle({
+    entryCredit: 10,
+    observations: [{ timestamp: '2024-01-01T10:00:00+05:30', lowDebit: 4, highDebit: 21, openDebit: 10 }],
+  });
+  assert.equal(result.reason, 'STOP');
+  assert.equal(result.ambiguous, true);
+});
+
+test('overnight gaps execute at session open', () => {
+  const result = evaluateCreditLifecycle({
+    entryCredit: 10,
+    observations: [{ timestamp: '2024-01-02T09:15:00+05:30', isSessionOpen: true, openDebit: 22, lowDebit: 4, highDebit: 25 }],
+  });
+  assert.equal(result.reason, 'STOP');
+  assert.equal(result.debit, 22);
+});
+
+test('Wilder RSI and scenario summary are deterministic', () => {
+  assert.equal(wilderRsi(Array.from({ length: 16 }, (_, index) => index + 1)), 100);
+  const summary = summarizeScenario([10, -5, 20, -10]);
+  assert.equal(summary.netPnl, 15);
+  assert.equal(summary.profitFactor, 2);
+  assert.equal(summary.maximumDrawdown, 10);
+});
