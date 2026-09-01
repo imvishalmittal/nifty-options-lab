@@ -1,0 +1,11 @@
+{
+  "requestedAt": "2026-09-01T17:35:03Z",
+  "stage": "discovery",
+  "strategy": "opening-range-atm-credit-spread",
+  "period": {
+    "startDate": "2020-01-01",
+    "endDate": "2024-12-31"
+  },
+  "protocol": "docs/REMAINING_OPTION_SELLING_PROTOCOL.md",
+  "frozenCommit": "551b2f89298b12b7cf6728c12cf4b5a152148246"
+}

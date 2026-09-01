@@ -1,0 +1,87 @@
+name: Research - Weekly NIFTY 0.08-delta smart condor
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/remaining-option-selling]
+    paths: [research/requests/weekly-smart-condor.json]
+
+permissions: { contents: read }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.months.outputs.matrix }}
+    steps:
+      - id: months
+        run: |
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const include = [];
+          for (let year = 2020; year <= 2024; year += 1) {
+            for (let month = 1; month <= 12; month += 1) {
+              const key = `${year}-${String(month).padStart(2, '0')}`;
+              include.push({ month: key, start: `${key}-01`, end: `${key}-${new Date(Date.UTC(year, month, 0)).getUTCDate()}` });
+            }
+          }
+          console.log(`matrix=${JSON.stringify({ include })}`);
+          NODE
+
+  shard:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Validate frozen engine
+        run: node --test tests/remaining-option-selling-engine.test.mjs tests/groww-delta-condor-backtest.test.mjs tests/delta-condor-pipeline.test.mjs tests/groww-option-costs.test.mjs
+      - name: Resolve Groww token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run frozen monthly shard
+        run: >-
+          node research/groww-delta-condor-backtest.mjs --mode=weekly-smart
+          --start=${{ matrix.start }} --end=${{ matrix.end }}
+          --out=weekly-smart-condor-${{ matrix.month }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: weekly-smart-condor-${{ matrix.month }}
+          path: weekly-smart-condor-${{ matrix.month }}.json
+          retention-days: 90
+
+  finalize:
+    needs: shard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: weekly-smart-condor-*
+          path: shards
+          merge-multiple: true
+      - run: node research/merge-delta-condor-shards.mjs --in=shards --mode=weekly-smart --start=2020-01-01 --end=2024-12-31 --out=consolidated.json
+      - run: node research/delta-condor-integrity.mjs --in=consolidated.json --mode=weekly-smart --out=integrity.json
+      - run: node research/delta-condor-gates.mjs --in=consolidated.json --out=gate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weekly-smart-condor-discovery-2020-2024
+          path: |
+            consolidated.json
+            integrity.json
+            gate.json
+          retention-days: 90
+      - run: node research/delta-condor-gates.mjs --in=consolidated.json --out=gate.json --enforce=true
