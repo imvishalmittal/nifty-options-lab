@@ -1,6 +1,6 @@
 # Strategy status and evidence ledger
 
-Last updated: 31 August 2026
+Last updated: 1 September 2026
 
 This is the repository's single status index for strategies that were reviewed, implemented, backtested, rejected, or placed in paper observation. Detailed frozen rules remain in the individual specifications; this file records outcomes and promotion status.
 
@@ -53,6 +53,25 @@ Amounts below include the repository's normal cost model. “0.5” and “1.0�
 | Intraday iron condor | 2020–2024, 1,243 sessions, 269 trades | −₹53,486.88, PF 0.362 | −₹108,360.26, PF 0.099 | −₹163,158.74, PF 0.023 | **REJECTED** — all five stress years negative |
 | Intraday iron butterfly | 2020–2024, 1,243 sessions, 146 trades | −₹33,333.00, PF 0.269 | −₹64,218.01, PF 0.069 | −₹95,103.02, PF 0.017 | **REJECTED** — no targets and all five stress years negative |
 | Directional defined-credit spread | 2020–2024, 1,243 sessions, 227 trades | −₹13,714.46, PF 0.873 | −₹37,802.77, PF 0.681 | −₹61,891.08, PF 0.523 | **REJECTED** — every profitability and yearly-stress gate failed |
+| Quick Flip Scalper V1 clean discovery | 2020–2024, 7,277 trades | −349.84R, PF 0.935 | Not modeled by frozen protocol | Not modeled by frozen protocol | **REJECTED** — negative before costs; PF, profitability, yearly-stability, clustered-confidence, and data-quality gates failed |
+| NIFTY ₹180 six-variant entry-risk discovery | 2020–2024, 1,243 sessions, 641 shared entries per variant | Best: +₹5,366.43, PF 1.003 (5-point stepped) | Best: −₹188,114.69 | Best: −₹381,595.80 | **REJECTED** — no variant passed; no 2025/2026 run |
+
+### Remaining strategy research — terminal verdicts
+
+Quick Flip's clean discovery produced 7,277 trades, a 25.48% win rate, −349.84R total (−0.0481R/trade), PF 0.935, 388.54R maximum drawdown, 1/5 profitable years, and 20/60 profitable months. Its clustered 95% mean-R interval was −0.0946 to +0.0003. Largest gross-positive-symbol concentration was 7.56%, which passed, but the audit found 75 invalid days across 6/15 symbols and two structural breaks. Evidence: [run 33370182911](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33370182911).
+
+The definitive NIFTY ₹180 entry-risk discovery merged 60 monthly shards with valid causal/rule integrity: 1,243 sessions, 641 shared entries per variant, 12 missing days, one ambiguous day handled stop-first, and no retry beyond the recovered infrastructure shard. Normal / 0.5-point / 1-point results were:
+
+| Frozen variant | Win rate | Normal P&L / PF / drawdown | 0.5-point P&L | 1-point P&L / PF / drawdown | Positive normal months |
+|---|---:|---:|---:|---:|---:|
+| Fixed ₹160 / ₹220 current control | 39.00% | −₹238,856.17 / 0.915 / ₹400,948.39 | −₹432,337.29 | −₹625,818.41 / 0.794 / ₹734,109.63 | 25/60 |
+| Fixed ₹170 / ₹210 requested comparator | 35.41% | −₹28,472.94 / 0.983 / ₹151,989.58 | −₹221,954.05 | −₹415,435.17 / 0.784 / ₹474,728.85 | 26/60 |
+| Entry-relative fixed 2R | 34.63% | −₹11,187.52 / 0.996 / ₹299,859.99 | −₹204,668.64 | −₹398,149.76 / 0.860 / ₹586,366.80 | 28/60 |
+| Entry-relative continuous trail | 34.63% | −₹89,030.54 / 0.966 / ₹379,518.42 | −₹282,511.66 | −₹475,992.78 / 0.833 / ₹667,778.54 | 30/60 |
+| Entry-relative 5-point stepped trail | 33.85% | +₹5,366.43 / 1.003 / ₹191,274.93 | −₹188,114.69 | −₹381,595.80 / 0.800 / ₹491,529.24 | 33/60 |
+| Entry-relative 10-point stepped trail | 30.11% | −₹90,177.66 / 0.950 / ₹271,101.38 | −₹283,658.78 | −₹477,139.90 / 0.770 / ₹572,405.58 | 28/60 |
+
+Every variant failed normalized PF, stress profitability, 1-point PF, yearly stress, and clustered-bootstrap lower-bound gates, except that the 5-point trail was marginally positive at normal costs. Maximum absolute year contribution was 22.9%–33.9%, safely below the 50% concentration ceiling, so concentration was not the reason for rejection. The exact ₹170/₹210 comparator materially reduced the current control's normal loss and drawdown, but remained unprofitable and became worse under either slippage stress. Evidence: [repaired run 33439891121](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33439891121).
 
 The rejected label applies to the frozen tested rule set. It does not establish that every possible strategy in the same broad family is unprofitable.
 
@@ -91,7 +110,6 @@ Evidence: [repaired Morning Tea diagnostic run](https://github.com/imvishalmitta
 
 | Strategy family | Current state | What is missing |
 |---|---|---|
-| Quick Flip Scalper V1 | **UNVERIFIED** | Earlier outputs were invalidated by pre-open/closing-auction defects; a clean consolidated rerun is required |
 | Stocks-in-Play ORB | **UNVERIFIED** | Underlying-selection hypothesis is implemented, but no clean final outcome is documented |
 | Late breakout and retest | **UNVERIFIED** | Research module exists; no accepted consolidated result |
 | VWAP pullback continuation | **UNVERIFIED** | Research module exists; no accepted consolidated result |
