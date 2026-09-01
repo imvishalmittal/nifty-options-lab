@@ -62,6 +62,49 @@ export function wilderRsi(closes, period = 14) {
   return 100 - (100 / (1 + (averageGain / averageLoss)));
 }
 
+export function firstSessionsAfterExpiries(sessionDates, expiries) {
+  const sessions = [...new Set(sessionDates)].sort();
+  const expirySet = [...new Set(expiries)].sort();
+  const output = [];
+  for (let index = 0; index < expirySet.length - 1; index += 1) {
+    const previousExpiry = expirySet[index];
+    const nextExpiry = expirySet[index + 1];
+    const entryDate = sessions.find((date) => date > previousExpiry && date < nextExpiry);
+    if (entryDate) output.push({ previousExpiry, entryDate, expiry: nextExpiry });
+  }
+  return output;
+}
+
+export function completedDailyClosesBefore(candles, timestamp) {
+  const currentDate = timestamp.slice(0, 10);
+  const byDate = new Map();
+  for (const row of candles) {
+    const date = row.timestamp.slice(0, 10);
+    if (date >= currentDate) continue;
+    byDate.set(date, row.close);
+  }
+  return [...byDate.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, close]) => close);
+}
+
+export function completedWeeklyClosesBefore(candles, timestamp) {
+  const currentDate = timestamp.slice(0, 10);
+  const currentDay = new Date(`${currentDate}T00:00:00Z`);
+  const currentMonday = new Date(currentDay);
+  currentMonday.setUTCDate(currentDay.getUTCDate() - ((currentDay.getUTCDay() + 6) % 7));
+  const currentWeek = currentMonday.toISOString().slice(0, 10);
+  const byWeek = new Map();
+  for (const row of candles) {
+    const date = row.timestamp.slice(0, 10);
+    if (date >= currentDate) continue;
+    const day = new Date(`${date}T00:00:00Z`);
+    const monday = new Date(day);
+    monday.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7));
+    const week = monday.toISOString().slice(0, 10);
+    if (week < currentWeek) byWeek.set(week, row.close);
+  }
+  return [...byWeek.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, close]) => close);
+}
+
 function timeOf(timestamp) { return timestamp.slice(11, 16); }
 
 export function findOpeningRangeBreak(oneMinuteBars, fiveMinuteBars, rules = REMAINING_OPTION_SELLING_RULES.breakout) {
