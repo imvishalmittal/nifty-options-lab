@@ -1,6 +1,6 @@
 # Strategy status and evidence ledger
 
-Last updated: 1 September 2026
+Last updated: 2 September 2026
 
 This is the repository's single status index for strategies that were reviewed, implemented, backtested, rejected, or placed in paper observation. Detailed frozen rules remain in the individual specifications; this file records outcomes and promotion status.
 
@@ -59,7 +59,7 @@ Amounts below include the repository's normal cost model. “0.5” and “1.0�
 | Intraday iron butterfly | 2020–2024, 1,243 sessions, 146 trades | −₹33,333.00, PF 0.269 | −₹64,218.01, PF 0.069 | −₹95,103.02, PF 0.017 | **REJECTED** — no targets and all five stress years negative |
 | Directional defined-credit spread | 2020–2024, 1,243 sessions, 227 trades | −₹13,714.46, PF 0.873 | −₹37,802.77, PF 0.681 | −₹61,891.08, PF 0.523 | **REJECTED** — every profitability and yearly-stress gate failed |
 | Quick Flip Scalper V1 clean discovery | 2020–2024, 7,277 trades | −349.84R, PF 0.935 | Not modeled by frozen protocol | Not modeled by frozen protocol | **REJECTED** — negative before costs; PF, profitability, yearly-stability, clustered-confidence, and data-quality gates failed |
-| NIFTY ₹180 six-variant entry-risk discovery | 2020–2024, 1,243 sessions, 641 shared entries per variant | Best: +₹5,366.43, PF 1.003 (5-point stepped) | Best: −₹188,114.69 | Best: −₹381,595.80 | **REJECTED** — no variant passed; no 2025/2026 run |
+| NIFTY ₹180 six-variant entry-risk discovery | 2020–2024, 1,243 sessions, 641 shared entries per variant | Best: +₹5,366.43, PF 1.003 (5-point stepped) | Best: −₹188,114.69 | Best: −₹381,595.80 | **REJECTED** — no variant passed; no 2025/2026 run |\n| 30-minute opening-range ATM credit spread | 2020–2024, 1,243 sessions, 41 trades | +₹6,232.93, PF 1.245 | +₹1,638.90, PF 1.061 | −₹2,921.42, PF 0.898 | **REJECTED** — insufficient sample, negative 1-point stress, clustered-confidence and concentration failures |
 
 ### Remaining strategy research — terminal verdicts
 
@@ -170,6 +170,26 @@ Only 3/8 months were profitable at 0.25-point stress; largest-winner concentrati
 
 Evidence: [repaired 2025 diagnostic](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33349456840) and [2026 validation](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33357725341).
 
+## Assumption-explicit 30-minute opening-range credit spread — rejected
+
+The frozen hypothesis used the first 30-minute NIFTY cash range, a completed five-minute close outside that range, causal next-minute entry, an ATM directional credit spread with an exact 300-point hedge, a 50% credit target, a 2×-credit stop, and a 15:15 exit. This was a bounded-risk research interpretation, not an exact video replication.
+
+All 60 discovery shards, consolidation, and causal/structural integrity completed in [run 33538652084](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33538652084).
+
+- Sessions: 1,243
+- Signals/trades: 42 / 41
+- Win rate: 65.85%
+- Targets/stops/time exits: 10 / 4 / 27
+- Normal: +₹6,232.93, PF 1.245, maximum drawdown ₹12,332.48
+- 0.5 point per leg: +₹1,638.90, PF 1.061, maximum drawdown ₹13,282.02
+- 1 point per leg: −₹2,921.42, PF 0.898, maximum drawdown ₹14,231.56
+- Positive normal years: 3/5; positive normal active months: 27/41
+- Clustered monthly bootstrap lower 95% bound: −₹416.58
+- Largest positive-year concentration: 53.53%
+- Data-missing sessions: 8/1,243 (0.64%); integrity passed
+
+It passed normal and 0.5-point profitability/PF, yearly stability, active-month stability, missing-data, and integrity gates. It failed the minimum 100-trade sample, 1-point profitability, clustered-confidence, and 50% concentration gates. Discovery is therefore **REJECTED**; 2025 and 2026 remain sealed and it is not added to paper trading.
+
 ## Remaining research boundaries
 
 No fully specified, implemented strategy is waiting for its first clean backtest.
@@ -177,7 +197,7 @@ No fully specified, implemented strategy is waiting for its first clean backtest
 | Strategy family | Current state | What remains |
 |---|---|---|
 | Williams %R plus 5/15/50 EMA bear-call spread | **INCONCLUSIVE** | One 2025 trade and zero post-publication trades; no promotion or parameter tuning |
-| 30-minute breakout with ATM option selling | **INCOMPLETE SPEC** | Source rules do not fully define selection, timing, risk, and exit behavior |
+| 30-minute breakout with ATM option selling | **REJECTED** | Assumption-explicit defined-risk discovery completed; 41 trades, failed sample, 1-point stress, clustered-confidence, and concentration gates |
 | Monthly “Ramesh–Suresh” strangle/iron condor | **INCOMPLETE SPEC** | Entry timing and stop/adjustment rules are incomplete |
 | Smart strangle near 0.08 delta | **INCOMPLETE SPEC** | Educational strike-selection idea lacks complete entry, stop, adjustment, and exit rules |
 
