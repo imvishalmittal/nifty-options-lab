@@ -113,8 +113,8 @@ Every stop, target, and failure decision uses completed candles. A decision deri
 These variants reuse the same selected contract, completed ₹180 signal, next-bar entry, lot sizing, candle stream, stop-first ambiguity rule, costs, and session exit as BASE. They participate only when the executable entry is strictly above ₹170 and strictly below ₹210. They do not rewrite or backfill V2–V8 paper history.
 
 - **V9 — ₹170/₹210 continuous trail:** initial stop ₹170. No tightening occurs before a completed-bar peak reaches ₹210. From ₹210 onward, the active stop is the completed peak minus 20 points, effective on the next bar.
-- **V10-5 — ₹170/₹210 5-point stepped trail:** initial stop ₹170. At a completed peak of ₹210 the proposed stop becomes ₹190; it then advances in 5-point steps with a 20-point gap, effective next bar.
-- **V10-10 — ₹170/₹210 10-point stepped trail:** the same rule with 10-point steps.
+- **V10-5 — ₹170/₹210 5-point stepped trail:** initial stop ₹170. This preserves V3-5's entry-anchored mechanics: each completed 5-point step above the actual entry proposes a stop 20 points below that stepped peak, never below ₹170, effective next bar. It does not wait for ₹210.
+- **V10-10 — ₹170/₹210 10-point stepped trail:** the same entry-anchored rule with 10-point steps. It does not wait for ₹210.
 - **V11 — ₹170-stop fixed 2R:** V6 logic with initial stop ₹170 and target `entry + 2 × (entry − 170)`. This compares fixed 2R under the two initial-stop regimes; its target is not forced to ₹210.
 
 ## Position sizing

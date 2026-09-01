@@ -31,15 +31,12 @@ test('V9 uses a 170 stop and activates the continuous trail at 210', () => {
   assert.equal(p.activeStop, 194);
 });
 
-test('V10-5 and V10-10 wait for 210 then step from the same absolute anchor', () => {
+test('V10-5 and V10-10 preserve V3 entry-anchored stepping with a 170 stop floor', () => {
   let v105 = position('V10_5', 180); let v1010 = position('V10_10', 180);
-  const below = c('2026-09-01T09:31:00+05:30', 180, 209.99, 175, 205);
-  v105 = processCompletedBar(v105, below); v1010 = processCompletedBar(v1010, below);
-  assert.equal(v105.activeStop, 170); assert.equal(v1010.activeStop, 170);
-  const activated = c('2026-09-01T09:32:00+05:30', 205, 216, 180, 212);
-  v105 = processCompletedBar(v105, activated); v1010 = processCompletedBar(v1010, activated);
-  assert.equal(v105.activeStop, 195);
-  assert.equal(v1010.activeStop, 190);
+  const firstMove = c('2026-09-01T09:31:00+05:30', 180, 196, 175, 195);
+  v105 = processCompletedBar(v105, firstMove); v1010 = processCompletedBar(v1010, firstMove);
+  assert.equal(v105.activeStop, 175);
+  assert.equal(v1010.activeStop, 170);
 });
 
 test('V11 applies V6 fixed 2R logic from the 170 stop', () => {
