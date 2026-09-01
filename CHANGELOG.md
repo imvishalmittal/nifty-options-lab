@@ -6,7 +6,10 @@ All notable changes will be documented here.
 
 ### Documentation
 
-- added a consolidated strategy evidence ledger covering completed rejections, the Morning Tea diagnostic, unverified ideas, incomplete specifications, and the exact V2–V8 paper suite;
+- reconciled the consolidated evidence ledger with the prospective V2–V11 paper suite;
+- added the frozen Jan–Aug 2026 matched-risk protocol and terminal V2/V9, V3/V10, and V6/V11 comparison;
+- recorded that all 76 entries belonged to both live-policy bands, making live-policy and strict common-entry results identical and isolating exit-rule effects;
+- recorded full normal, 0.5-point, and 1-point P&L, PF, drawdown, monthly stability, integrity, and data-missing evidence without changing paper state;
 - clarified that paper variants are non-additive shadow outcomes and that no workflow places broker orders;
 - replaced stale pending/queued descriptions with evidence-backed status;
 - recorded the completed Morning Tea 2025 diagnostic: integrity repaired to 0.40% missing, profitable 0.10/0.25-point scenarios, failed frozen 0.5/1.0 stress gates, and final rejection;

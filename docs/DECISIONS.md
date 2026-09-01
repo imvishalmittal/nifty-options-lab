@@ -76,7 +76,7 @@ If the live session remains incomplete, a 15:40 IST recovery may replay the same
 
 **Decision:** Do not claim public `/paper` is current merely because GitHub `main` is current. Verify the Sites deployment separately.
 
-## ADR-015: Freeze an eight-variant forward suite
+## ADR-015: Preserve the original eight-variant forward suite
 
 **Decision:** Run V2, V3-5, V3-10, V4, V5, V6, V7, and V8 as alternative paper simulations for the observation window. Do not add their P/L.
 
@@ -105,7 +105,7 @@ If the live session remains incomplete, a 15:40 IST recovery may replay the same
 
 ## ADR-021: Keep research and paper scopes explicit
 
-**Decision:** Only V2–V8 are in the current paper workflow. Rejected, diagnostic, unverified, and incompletely specified strategies remain research-only. Shadow-variant P&L is non-additive.
+**Decision:** The current paper workflow contains V2–V11, including the prospective ₹170/₹210 comparison cohort added on 1 September 2026. Rejected, diagnostic, unverified, and incompletely specified strategies remain research-only. Shadow-variant P&L is non-additive.
 
 **Reason:** Strategy count is not account exposure, and code presence is not evidence.
 
@@ -114,3 +114,21 @@ If the live session remains incomplete, a 15:40 IST recovery may replay the same
 **Decision:** Morning Tea may report 0.10 and 0.25-point-per-leg diagnostic scenarios to measure execution sensitivity, while retaining the original 0, 0.5, and 1.0 scenarios and every frozen acceptance gate.
 
 **Reason:** Additional diagnostics can explain where an edge disappears without rewriting the decision rule after results are known.
+
+## ADR-023: Add the ₹170/₹210 cohort prospectively
+
+**Decision:** V9, V10-5, V10-10, and V11 reuse the BASE signal and executable fill but participate only when `170 < entry < 210`. Their ₹170 stop and corresponding continuous, stepped, or fixed-2R exit rules begin on 1 September 2026 and are not backfilled.
+
+**Reason:** Prospective versioning preserves the existing V2–V8 journal while measuring the user's narrower-risk hypothesis on the same market-data stream.
+
+## ADR-024: Separate cohort selection from exit geometry
+
+**Decision:** Historical comparisons must report both each family's actual participation band and a strict `170 < entry < 210` common-entry cohort with identical date, contract, signal, and fill.
+
+**Reason:** A P&L difference caused by taking different trades is not evidence that one stop or exit rule is better.
+
+## ADR-025: Historical diagnostic evidence cannot mutate paper state
+
+**Decision:** The Jan–Aug 2026 matched-risk result is diagnostic, not an untouched holdout. It cannot automatically promote, remove, or rewrite V2–V11 paper variants, even when its result is terminal.
+
+**Reason:** The period was examined after the paper mechanics were designed, and 11 trading dates were data-missing. Prospective paper evidence must remain separate and auditable.
