@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   evaluateCreditLifecycle,
+  completedDailyClosesBefore,
+  completedWeeklyClosesBefore,
+  firstSessionsAfterExpiries,
   findOpeningRangeBreak,
   reconstructOptionDelta,
   selectAtmCreditSpread,
@@ -53,6 +56,28 @@ test('reconstructs signed call and put deltas from causal premiums', () => {
   assert.ok(call.delta > 0.5 && call.delta < 0.6);
   assert.ok(put.delta < -0.4 && put.delta > -0.5);
   assert.ok(Math.abs(call.impliedVolatility - 0.5) < 0.02);
+});
+
+test('weekly schedule selects the first actual session after each expiry', () => {
+  const schedule = firstSessionsAfterExpiries(
+    ['2024-01-25', '2024-01-29', '2024-01-30', '2024-02-01', '2024-02-02'],
+    ['2024-01-25', '2024-02-01', '2024-02-08'],
+  );
+  assert.deepEqual(schedule, [
+    { previousExpiry: '2024-01-25', entryDate: '2024-01-29', expiry: '2024-02-01' },
+    { previousExpiry: '2024-02-01', entryDate: '2024-02-02', expiry: '2024-02-08' },
+  ]);
+});
+
+test('RSI inputs exclude the in-progress entry day and use completed weeks', () => {
+  const candles = [
+    { timestamp: '2024-01-04T15:29:00+05:30', close: 10 },
+    { timestamp: '2024-01-05T15:29:00+05:30', close: 11 },
+    { timestamp: '2024-01-08T15:29:00+05:30', close: 12 },
+    { timestamp: '2024-01-09T09:44:00+05:30', close: 99 },
+  ];
+  assert.deepEqual(completedDailyClosesBefore(candles, '2024-01-09T09:44:00+05:30'), [10, 11, 12]);
+  assert.deepEqual(completedWeeklyClosesBefore(candles, '2024-01-09T09:44:00+05:30'), [11]);
 });
 
 test('same-bar target and stop ambiguity resolves stop first', () => {
