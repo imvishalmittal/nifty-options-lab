@@ -59,7 +59,8 @@ Amounts below include the repository's normal cost model. “0.5” and “1.0�
 | Intraday iron butterfly | 2020–2024, 1,243 sessions, 146 trades | −₹33,333.00, PF 0.269 | −₹64,218.01, PF 0.069 | −₹95,103.02, PF 0.017 | **REJECTED** — no targets and all five stress years negative |
 | Directional defined-credit spread | 2020–2024, 1,243 sessions, 227 trades | −₹13,714.46, PF 0.873 | −₹37,802.77, PF 0.681 | −₹61,891.08, PF 0.523 | **REJECTED** — every profitability and yearly-stress gate failed |
 | Quick Flip Scalper V1 clean discovery | 2020–2024, 7,277 trades | −349.84R, PF 0.935 | Not modeled by frozen protocol | Not modeled by frozen protocol | **REJECTED** — negative before costs; PF, profitability, yearly-stability, clustered-confidence, and data-quality gates failed |
-| NIFTY ₹180 six-variant entry-risk discovery | 2020–2024, 1,243 sessions, 641 shared entries per variant | Best: +₹5,366.43, PF 1.003 (5-point stepped) | Best: −₹188,114.69 | Best: −₹381,595.80 | **REJECTED** — no variant passed; no 2025/2026 run |\n| 30-minute opening-range ATM credit spread | 2020–2024, 1,243 sessions, 41 trades | +₹6,232.93, PF 1.245 | +₹1,638.90, PF 1.061 | −₹2,921.42, PF 0.898 | **REJECTED** — insufficient sample, negative 1-point stress, clustered-confidence and concentration failures |
+| NIFTY ₹180 six-variant entry-risk discovery | 2020–2024, 1,243 sessions, 641 shared entries per variant | Best: +₹5,366.43, PF 1.003 (5-point stepped) | Best: −₹188,114.69 | Best: −₹381,595.80 | **REJECTED** — no variant passed; no 2025/2026 run |
+| 30-minute opening-range ATM credit spread | 2020–2024, 1,243 sessions, 41 trades | +₹6,232.93, PF 1.245 | +₹1,638.90, PF 1.061 | −₹2,921.42, PF 0.898 | **REJECTED** — insufficient sample, negative 1-point stress, clustered-confidence and concentration failures |
 
 ### Remaining strategy research — terminal verdicts
 
