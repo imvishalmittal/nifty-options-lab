@@ -1,0 +1,11 @@
+{
+  "requestedAt": "2026-09-01T20:15:36.135Z",
+  "stage": "discovery",
+  "strategy": "monthly-large-cap-rsi-condor",
+  "period": {
+    "startDate": "2020-01-01",
+    "endDate": "2024-12-31"
+  },
+  "protocol": "docs/REMAINING_OPTION_SELLING_PROTOCOL.md",
+  "frozenCommit": "8c573c4cf19fa189c9c8b30ae331fcf91a5eaa68"
+}
