@@ -1,0 +1,94 @@
+name: Research - 30-minute opening-range ATM credit spread
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/remaining-option-selling]
+    paths: [research/requests/opening-range-credit.json]
+
+permissions: { contents: read }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.months.outputs.matrix }}
+    steps:
+      - id: months
+        run: |
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const include = [];
+          for (let year = 2020; year <= 2024; year += 1) {
+            for (let month = 1; month <= 12; month += 1) {
+              const key = `${year}-${String(month).padStart(2, '0')}`;
+              const end = new Date(Date.UTC(year, month, 0)).getUTCDate();
+              include.push({ month: key, start: `${key}-01`, end: `${key}-${end}` });
+            }
+          }
+          console.log(`matrix=${JSON.stringify({ include })}`);
+          NODE
+
+  shard:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Validate frozen engine
+        run: node --test tests/remaining-option-selling-engine.test.mjs tests/groww-opening-range-credit-backtest.test.mjs tests/opening-range-credit-pipeline.test.mjs tests/groww-option-costs.test.mjs
+      - name: Resolve Groww token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run frozen monthly shard
+        run: >-
+          node research/groww-opening-range-credit-backtest.mjs
+          --start=${{ matrix.start }} --end=${{ matrix.end }}
+          --out=opening-range-credit-${{ matrix.month }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opening-range-credit-${{ matrix.month }}
+          path: opening-range-credit-${{ matrix.month }}.json
+          retention-days: 90
+
+  finalize:
+    needs: shard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: opening-range-credit-*
+          path: shards
+          merge-multiple: true
+      - name: Merge exactly 60 monthly shards
+        run: >-
+          node research/merge-opening-range-credit-shards.mjs
+          --in=shards --start=2020-01-01 --end=2024-12-31 --out=consolidated.json
+      - name: Strict causal and structural integrity
+        run: node research/opening-range-credit-integrity.mjs --in=consolidated.json --out=integrity.json
+      - name: Apply frozen gates
+        run: node research/opening-range-credit-gates.mjs --in=consolidated.json --out=gate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: opening-range-credit-discovery-2020-2024
+          path: |
+            consolidated.json
+            integrity.json
+            gate.json
+          retention-days: 90
+      - name: Enforce research decision
+        run: node research/opening-range-credit-gates.mjs --in=consolidated.json --out=gate.json --enforce=true
