@@ -132,3 +132,10 @@ If the live session remains incomplete, a 15:40 IST recovery may replay the same
 **Decision:** The Jan–Aug 2026 matched-risk result is diagnostic, not an untouched holdout. It cannot automatically promote, remove, or rewrite V2–V11 paper variants, even when its result is terminal.
 
 **Reason:** The period was examined after the paper mechanics were designed, and 11 trading dates were data-missing. Prospective paper evidence must remain separate and auditable.
+
+
+## ADR-026: Reconcile accepted artifacts before rerunning research
+
+**Decision:** The clean Stocks-in-Play, four-module opportunity comparison, afternoon-compression validation, and Williams bear-call artifacts are authoritative for their frozen scopes. Documentation must link those artifacts before any strategy is labelled unverified or scheduled again.
+
+**Reason:** A stale ledger is not evidence that a backtest is missing. Duplicate runs waste provider capacity and increase the risk of post-result parameter selection. Williams remains inconclusive because its executable sample was one 2025 trade and zero post-publication trades; that does not justify promotion or tuning.

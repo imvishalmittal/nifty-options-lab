@@ -14,7 +14,7 @@ Last updated: 1 September 2026
 1. Continue accumulating clean V2–V11 forward sessions without changing or backfilling frozen variant definitions.
 2. Treat the completed Jan–Aug 2026 matched-risk result as diagnostic evidence, not an untouched holdout or automatic promotion/removal decision.
 3. Keep the dashboard and strategy-status ledger synchronized with accepted artifacts.
-4. Reconcile archived evidence for the remaining implemented opportunity modules before scheduling duplicate runs.
+4. Preserve the reconciled terminal evidence for Stocks-in-Play and the four opportunity modules; do not schedule duplicate runs.
 
 ## Completed decisions
 
@@ -29,19 +29,23 @@ The following frozen studies completed and were rejected:
 - directional defined-credit spread;
 - Morning Tea stock-options proxy;
 - Quick Flip clean discovery;
-- NIFTY ₹180 six-variant entry-risk discovery.
+- NIFTY ₹180 six-variant entry-risk discovery;
+- Stocks-in-Play ORB;
+- late breakout/retest;
+- VWAP trend pullback;
+- failed opening-range break;
+- afternoon compression breakout after failed untouched 2025 validation.
 
 They should not be rerun merely to search for a profitable parameter. A materially changed rule set must be declared as a new hypothesis with new gates and a fresh holdout.
 
 ## Research backlog
 
-Priority is given to strategies with deterministic rules and reliable actual-contract data:
+There is no fully specified, implemented strategy waiting for its first clean backtest.
 
-1. Produce or reconcile a clean consolidated Stocks-in-Play ORB result.
-2. Reconcile the four isolated opportunity modules: late breakout/retest, VWAP pullback, failed opening-range break, and afternoon compression breakout.
-3. Convert incompletely specified video ideas into deterministic specs before implementation:
+1. Continue V2–V11 prospective paper observation without backfill or rule changes.
+2. Treat the Williams %R/EMA bear-call replication as inconclusive: one 2025 trade and zero post-publication trades are insufficient for promotion or tuning.
+3. Convert only genuinely incomplete ideas into deterministic specifications before implementation:
    - 30-minute breakout with ATM option selling;
-   - Williams %R plus 5/15/50 EMA bear-call spread;
    - monthly “Ramesh–Suresh” strangle/iron condor;
    - smart strangle near 0.08 delta.
 

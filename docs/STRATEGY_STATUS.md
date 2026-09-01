@@ -78,6 +78,32 @@ The definitive NIFTY ₹180 entry-risk discovery merged 60 monthly shards with v
 
 Every variant failed normalized PF, stress profitability, 1-point PF, yearly stress, and clustered-bootstrap lower-bound gates, except that the 5-point trail was marginally positive at normal costs. Maximum absolute year contribution was 22.9%–33.9%, safely below the 50% concentration ceiling, so concentration was not the reason for rejection. The exact ₹170/₹210 comparator materially reduced the current control's normal loss and drawdown, but remained unprofitable and became worse under either slippage stress. Evidence: [repaired run 33439891121](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33439891121).
 
+### Reconciled opportunity-strategy evidence
+
+The clean 2020–2024 comparison is [run 32738388894](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/32738388894). All four modules covered 1,243 sessions and passed artifact-integrity checks.
+
+| Strategy | Trades | Win rate | Normal net P&L | Gross PF | 1-point net P&L | 1-point maximum drawdown | Discovery verdict |
+|---|---:|---:|---:|---:|---:|---:|---|
+| Late breakout/retest | 670 | 34.03% | −₹42,357.83 | 1.004 | −₹116,122.04 | ₹133,956.10 | **REJECTED** |
+| VWAP trend pullback | 1,223 | 37.86% | +₹96,139.97 | 1.195 | −₹37,345.26 | ₹82,507.23 | **REJECTED** |
+| Failed opening-range break | 976 | 33.71% | −₹91,875.17 | 0.985 | −₹198,573.40 | ₹212,423.66 | **REJECTED** |
+| Afternoon compression breakout | 112 | 41.96% | +₹16,979.79 | 1.249 | +₹4,335.92 | ₹11,879.60 | Passed discovery only |
+
+Afternoon compression then failed its untouched 2025 validation in [run 32805645486](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/32805645486): 248 sessions, 25 trades, 36.00% wins, gross PF 0.946, normal net P&L −₹3,056.20, 0.5-point P&L −₹4,930.29, 1-point P&L −₹6,804.38, and 1-point maximum drawdown ₹14,765.96. Its final status is **REJECTED**; no 2026 holdout or paper phase is justified.
+
+Stocks-in-Play ORB is also terminally **REJECTED**: its clean 2020–2024 discovery produced 1,076 trades, PF 0.319 at 2-bps stress and 0.262 at 5-bps stress, with zero profitable discovery years. It requires no rerun.
+
+### Williams %R/EMA bear-call replication — inconclusive
+
+The isolated assumption-explicit replication completed successfully in [run 33250212094](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33250212094). Integrity passed, but the frozen rules produced only one trade in all of 2025 and no post-publication trades from 4 June–28 August 2026.
+
+| Period | Trades | Normal P&L | 0.5-point P&L | 1-point P&L |
+|---|---:|---:|---:|---:|
+| 2025 discovery | 1 | −₹103.73 | −₹1,603.00 | −₹3,102.28 |
+| Post-publication 2026 | 0 | ₹0 | ₹0 | ₹0 |
+
+This is **INCONCLUSIVE**, not selected: the sample is too small to estimate an edge. It must not be expanded or tuned after seeing the result unless a materially different, source-supported hypothesis is frozen as a new strategy.
+
 ## 2026 matched paper-risk diagnostic — terminal
 
 The frozen 1 January–31 August 2026 diagnostic compared the four prospective ₹170-family exits with their exact ₹160-family counterparts. All eight monthly shards and final integrity checks completed in [run 33476628683](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33476628683).
@@ -144,21 +170,18 @@ Only 3/8 months were profitable at 0.25-point stress; largest-winner concentrati
 
 Evidence: [repaired 2025 diagnostic](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33349456840) and [2026 validation](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33357725341).
 
-## Implemented or reviewed but unverified
+## Remaining research boundaries
 
-| Strategy family | Current state | What is missing |
+No fully specified, implemented strategy is waiting for its first clean backtest.
+
+| Strategy family | Current state | What remains |
 |---|---|---|
-| Stocks-in-Play ORB | **UNVERIFIED** | Underlying-selection hypothesis is implemented, but no clean final outcome is documented |
-| Late breakout and retest | **UNVERIFIED** | Research module exists; no accepted consolidated result |
-| VWAP pullback continuation | **UNVERIFIED** | Research module exists; no accepted consolidated result |
-| Failed opening-range break | **UNVERIFIED** | Research module exists; no accepted consolidated result |
-| Afternoon compression breakout | **UNVERIFIED** | Research module exists; no accepted consolidated result |
+| Williams %R plus 5/15/50 EMA bear-call spread | **INCONCLUSIVE** | One 2025 trade and zero post-publication trades; no promotion or parameter tuning |
 | 30-minute breakout with ATM option selling | **INCOMPLETE SPEC** | Source rules do not fully define selection, timing, risk, and exit behavior |
-| Williams %R plus 5/15/50 EMA bear-call spread | **INCOMPLETE SPEC** | Needs final deterministic contract selection, entry, risk, and exit rules |
 | Monthly “Ramesh–Suresh” strangle/iron condor | **INCOMPLETE SPEC** | Entry timing and stop/adjustment rules are incomplete |
 | Smart strangle near 0.08 delta | **INCOMPLETE SPEC** | Educational strike-selection idea lacks complete entry, stop, adjustment, and exit rules |
 
-Unverified and incomplete ideas are not paper traded and must not be represented as selected strategies.
+Inconclusive and incomplete ideas are not paper traded and must not be represented as selected strategies.
 
 ## Promotion policy
 

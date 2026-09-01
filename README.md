@@ -22,7 +22,9 @@ The hosted Sites build can lag GitHub `main`; source readiness and public deploy
 - **Completed and rejected:** Morning Tea one-minute proxy failed its frozen execution gates in both the repaired 2025 diagnostic and the Jan–Aug 2026 validation.
 - **Completed and rejected:** Quick Flip clean discovery and the six-variant 2020–2024 entry-risk discovery.
 - **Terminal diagnostic:** the Jan–Aug 2026 V2/V9, V3/V10 and V6/V11 matched comparison was negative for every variant at normal costs and both stresses. It does not alter prospective paper observation.
-- **Unverified/incomplete:** Stocks-in-Play ORB, four isolated opportunity modules, and four incompletely specified video-derived option ideas.
+- **Completed/rejected:** Stocks-in-Play ORB, late breakout/retest, VWAP pullback, failed opening-range break, and afternoon compression after its untouched 2025 validation.
+- **Inconclusive:** the assumption-explicit Williams %R/EMA bear-call replication produced only one 2025 trade and no post-publication 2026 trades.
+- **Incomplete specifications:** the 30-minute ATM-selling breakout, monthly “Ramesh–Suresh”, and 0.08-delta smart-strangle ideas.
 
 See [Strategy status and evidence ledger](docs/STRATEGY_STATUS.md) for samples, P&L, profit factors, failure reasons, and the exact paper suite.
 
@@ -93,7 +95,7 @@ Active GitHub Actions workflows are intentionally limited to:
 - `NIFTY Paper Smoke` — manually checks paper mechanics, Groww authentication, and a small historical-data request.
 - `Research - NIFTY ...` opportunity workflows — four isolated strategy backtests, their suite chain, and comparison report.
 
-Completed or superseded one-time studies remain preserved as code, tests, documentation, artifacts, and Git history. Quick Flip and the six-variant entry-risk discovery are terminally rejected; Stocks-in-Play remains unverified until clean consolidated evidence is documented. Groww-heavy research jobs share a serialized API group to reduce rate-limit conflicts.
+Completed or superseded one-time studies remain preserved as code, tests, documentation, artifacts, and Git history. Quick Flip, Stocks-in-Play, the rejected opportunity modules, afternoon compression after validation, and the six-variant entry-risk discovery are terminally closed. The Williams replication remains inconclusive because its executable sample was effectively empty. Groww-heavy research jobs share a serialized API group to reduce rate-limit conflicts.
 
 ## Methodology controls
 

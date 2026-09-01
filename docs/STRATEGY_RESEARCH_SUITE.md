@@ -4,13 +4,12 @@
 
 The detailed evidence ledger is `docs/STRATEGY_STATUS.md`. Current decisions are:
 
-- **Paper:** V2, V3-5, V3-10, V4, V5, V6, V7, and V8, as non-additive shadow outcomes.
-- **Rejected after completed testing:** NIFTY ₹180 V1 fixed stop/target, opening-range negative control, Batman, HAI 1:3:2, intraday iron condor, intraday iron butterfly, and directional defined-credit spread.
-- **Diagnostic:** Morning Tea 2025 one-minute proxy. The initial result was profitable only at zero slippage and failed both missing-data and original stress gates; a repaired diagnostic run is in progress.
-- **Unverified:** Quick Flip, Stocks-in-Play ORB, and the four isolated opportunity modules.
-- **Incomplete specification:** 30-minute breakout/ATM selling, Williams/EMA bear-call, monthly “Ramesh–Suresh”, and 0.08-delta smart-strangle ideas.
+- **Paper:** V2–V11, as prospective non-additive shadow outcomes; V9–V11 started on 1 September 2026 without backfill.
+- **Rejected after completed testing:** NIFTY ₹180 V1 fixed stop/target, opening-range negative control, Batman, HAI 1:3:2, iron condor, iron butterfly, directional credit, Morning Tea, Quick Flip, Stocks-in-Play ORB, late breakout/retest, VWAP pullback, failed opening-range break, afternoon compression after validation, and the six-variant entry-risk discovery.
+- **Inconclusive:** Williams/EMA bear-call replication—one 2025 trade and zero post-publication trades.
+- **Incomplete specification:** 30-minute breakout/ATM selling, monthly “Ramesh–Suresh”, and 0.08-delta smart-strangle ideas.
 
-No rejected, unverified, or incomplete strategy is in paper trading.
+No rejected, inconclusive, or incomplete strategy is in paper trading.
 
 The project keeps each video-derived idea as a separate hypothesis. Rules are frozen before results are inspected; strategies are not blended to rescue weak backtests.
 
@@ -54,7 +53,7 @@ Stock-candle fetches already use retry/backoff and a pause between chunks. The o
 
 ## S1 — Quick Flip Scalper V1
 
-Status: **UNVERIFIED — implemented for 5-minute confirmation; earlier outputs were invalidated by pre-open and closing-auction defects; a clean full-history rerun is required; 1m/3m confirmation remains a separate pending comparison**.
+Status: **REJECTED — clean 2020–2024 discovery completed with 7,277 trades, −349.84R, PF 0.935, 1/5 profitable years, and failed clustered-confidence and data-quality gates. No 2025/2026 stage will run.**
 
 Frozen rules:
 
@@ -143,7 +142,7 @@ The initial 2025 output was profitable at zero slippage but failed the 2% missin
 
 ## S5 — Evidence-guided Stocks-in-Play ORB
 
-Status: **UNVERIFIED — implemented as a separate literature-motivated hypothesis, but no clean consolidated continuous-session result is documented**.
+Status: **REJECTED — clean 2020–2024 discovery completed with 1,076 trades, PF 0.319 at 2-bps stress, PF 0.262 at 5-bps stress, and zero profitable years.**
 
 This is deliberately not a rewrite of Quick Flip. Its rules were declared before performance was inspected:
 

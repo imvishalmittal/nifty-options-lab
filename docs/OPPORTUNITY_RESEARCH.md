@@ -63,6 +63,17 @@ The separate `Research - chain NIFTY opportunity suite` workflow may advance an 
 
 ## Current evidence status
 
-The four isolated modules—late breakout/retest, VWAP pullback, failed opening-range break, and afternoon compression breakout—remain **UNVERIFIED**. Their code and workflows are research scaffolding, not selected strategies. No clean consolidated artifact currently supports paper promotion, and none of these modules is in the paper workflow.
+The clean 2020–2024 suite and comparison completed in [run 32738388894](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/32738388894):
 
-The separate opening-range sweep/reversal negative control did complete: its best 15-minute variant produced +13.62R over 604 trades from 2020 through August 2026, but only +0.023R per trade and severe period instability (−16.08R in 2025 versus +19.25R in 2026). That frozen baseline is **REJECTED** and did not advance to an option overlay.
+| Strategy | Trades | Normal net P&L | Gross PF | 1-point net P&L | Decision |
+|---|---:|---:|---:|---:|---|
+| Late breakout/retest | 670 | −₹42,357.83 | 1.004 | −₹116,122.04 | **REJECTED** |
+| VWAP trend pullback | 1,223 | +₹96,139.97 | 1.195 | −₹37,345.26 | **REJECTED** |
+| Failed opening-range break | 976 | −₹91,875.17 | 0.985 | −₹198,573.40 | **REJECTED** |
+| Afternoon compression breakout | 112 | +₹16,979.79 | 1.249 | +₹4,335.92 | Discovery gate passed |
+
+Afternoon compression advanced alone to untouched 2025 validation. [Run 32805645486](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/32805645486) passed integrity but failed performance: 25 trades, 36.00% wins, gross PF 0.946, normal net P&L −₹3,056.20, 0.5-point P&L −₹4,930.29, and 1-point P&L −₹6,804.38. It is therefore **REJECTED**; no 2026 holdout or paper phase will run.
+
+All four modules are terminal for their frozen rules and require no rerun. None is in paper trading.
+
+The separate opening-range sweep/reversal negative control also completed: its best 15-minute variant produced +13.62R over 604 trades from 2020 through August 2026, but only +0.023R per trade and severe period instability (−16.08R in 2025 versus +19.25R in 2026). That frozen baseline is **REJECTED** and did not advance to an option overlay.
