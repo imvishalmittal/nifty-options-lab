@@ -24,7 +24,8 @@ The hosted Sites build can lag GitHub `main`; source readiness and public deploy
 - **Terminal diagnostic:** the Jan–Aug 2026 V2/V9, V3/V10 and V6/V11 matched comparison was negative for every variant at normal costs and both stresses. It does not alter prospective paper observation.
 - **Completed/rejected:** Stocks-in-Play ORB, late breakout/retest, VWAP pullback, failed opening-range break, and afternoon compression after its untouched 2025 validation.
 - **Inconclusive:** the assumption-explicit Williams %R/EMA bear-call replication produced only one 2025 trade and no post-publication 2026 trades.
-- **Incomplete specifications:** the 30-minute ATM-selling breakout, monthly “Ramesh–Suresh”, and 0.08-delta smart-strangle ideas.
+- **Completed/rejected:** the assumption-explicit 30-minute opening-range ATM credit spread failed sample, 1-point stress, clustered-confidence, and concentration gates; an isolated prospective shadow journal does not change that verdict.
+- **Active frozen research:** weekly 0.08-delta NIFTY smart-condor discovery is running; monthly large-cap RSI-condor discovery is queued behind it. Neither has a performance verdict yet.
 
 See [Strategy status and evidence ledger](docs/STRATEGY_STATUS.md) for samples, P&L, profit factors, failure reasons, and the exact paper suite.
 
@@ -146,6 +147,7 @@ Research workflows also run monthly integrity gates.
 
 ## Documentation
 
+- [AI strategy-research handoff](docs/AI_STRATEGY_RESEARCH_SUMMARY.md)
 - [Strategy status and evidence ledger](docs/STRATEGY_STATUS.md)
 - [Current paper-family specification](docs/STRATEGY_SPEC.md)
 - [Stepped-trail research](docs/STEPPED_TRAIL_RESEARCH.md)

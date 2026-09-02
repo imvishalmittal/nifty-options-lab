@@ -195,14 +195,14 @@ It passed normal and 0.5-point profitability/PF, yearly stability, active-month 
 
 ## Remaining research boundaries
 
-No fully specified, implemented strategy is waiting for its first clean backtest.
+Two assumption-explicit option-selling strategies are fully specified, implemented, and in frozen discovery. Partial shard output is not a verdict and must not be used for tuning.
 
 | Strategy family | Current state | What remains |
 |---|---|---|
 | Williams %R plus 5/15/50 EMA bear-call spread | **INCONCLUSIVE** | One 2025 trade and zero post-publication trades; no promotion or parameter tuning |
 | 30-minute breakout with ATM option selling | **REJECTED · EXPERIMENTAL SHADOW** | Historical gates failed; isolated prospective one-lot observation is collecting up to a 100-trade review point without backfill or promotion |
-| Monthly “Ramesh–Suresh” strangle/iron condor | **INCOMPLETE SPEC** | Entry timing and stop/adjustment rules are incomplete |
-| Smart strangle near 0.08 delta | **INCOMPLETE SPEC** | Educational strike-selection idea lacks complete entry, stop, adjustment, and exit rules |
+| Monthly large-cap RSI iron condor | **ACTIVE RESEARCH** | Frozen 2020–2024 discovery is queued behind the weekly study; no result accepted yet |
+| Weekly 0.08-delta NIFTY smart condor | **ACTIVE RESEARCH** | Frozen 2020–2024 discovery is running; no result accepted yet |
 
 Inconclusive and incomplete ideas are not paper traded and must not be represented as selected strategies.
 
@@ -219,6 +219,7 @@ Inconclusive and incomplete ideas are not paper traded and must not be represent
 
 ## Detailed references
 
+- `docs/AI_STRATEGY_RESEARCH_SUMMARY.md` — portable AI-readable project handoff
 - `docs/STRATEGY_SPEC.md` — NIFTY premium-entry baseline
 - `docs/PAPER_RISK_2026_DIAGNOSTIC.md` — frozen 2026 matched-risk protocol
 - `docs/MORNING_TEA_SPEC.md` — frozen Morning Tea rules and gates
