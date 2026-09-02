@@ -4,12 +4,12 @@
 
 The detailed evidence ledger is `docs/STRATEGY_STATUS.md`. Current decisions are:
 
-- **Paper:** V2–V11, as prospective non-additive shadow outcomes; V9–V11 started on 1 September 2026 without backfill.
-- **Rejected after completed testing:** NIFTY ₹180 V1 fixed stop/target, opening-range negative control, Batman, HAI 1:3:2, iron condor, iron butterfly, directional credit, Morning Tea, Quick Flip, Stocks-in-Play ORB, late breakout/retest, VWAP pullback, failed opening-range break, afternoon compression after validation, and the six-variant entry-risk discovery.
+- **Paper:** V2–V11, as prospective non-additive shadow outcomes; V9–V11 started on 1 September 2026 without backfill. The rejected 30-minute opening-range ATM credit spread also has a separately authorized experimental shadow journal from 2 September 2026; this is not a promotion.
+- **Rejected after completed testing:** NIFTY ₹180 V1 fixed stop/target, opening-range negative control, Batman, HAI 1:3:2, iron condor, iron butterfly, directional credit, Morning Tea, Quick Flip, Stocks-in-Play ORB, late breakout/retest, VWAP pullback, failed opening-range break, afternoon compression after validation, the six-variant entry-risk discovery, and the assumption-explicit 30-minute opening-range ATM credit spread.
 - **Inconclusive:** Williams/EMA bear-call replication—one 2025 trade and zero post-publication trades.
-- **Incomplete specification:** 30-minute breakout/ATM selling, monthly “Ramesh–Suresh”, and 0.08-delta smart-strangle ideas.
+- **Active frozen discovery:** weekly 0.08-delta NIFTY smart condor and monthly large-cap RSI iron condor. No performance verdict is accepted from partial shards.
 
-No rejected, inconclusive, or incomplete strategy is in paper trading.
+No strategy is selected for live trading. The experimental opening-range shadow remains isolated and historically rejected.
 
 The project keeps each video-derived idea as a separate hypothesis. Rules are frozen before results are inspected; strategies are not blended to rescue weak backtests.
 
@@ -77,21 +77,9 @@ Next refinement is not parameter tuning: fetch 1-minute raw data, construct 1m/3
 
 ## S2 — 30-minute breakout / option-selling strategy
 
-Status: **specification pending before implementation**.
+Status: **REJECTED — frozen assumption-explicit discovery completed with 41 trades, +₹6,232.93 and PF 1.245 at normal costs, +₹1,638.90 and PF 1.061 at 0.5-point stress, and −₹2,921.42 and PF 0.898 at 1-point stress.**
 
-Known rules from the supplied summary:
-
-- opening range is the first 30-minute candle (09:15-09:45);
-- act after a breakout of that range;
-- ATM option is sold;
-- cited option-premium target is 20-30 points and stop is 50 points.
-
-Still unresolved and therefore not guessed:
-
-- exact option side sold after an upside/downside breakout;
-- whether breakout requires touch, close, or sustained close;
-- exact target value (20 vs 30) and whether it is fixed or conditional;
-- re-entry and forced-exit rules.
+Because the original source idea omitted deterministic details, the test was explicitly a bounded-risk interpretation: first 30-minute NIFTY cash range, first completed five-minute close outside it, next-minute entry into an ATM directional credit spread with an exact 300-point hedge, 50% credit target, 2×-credit stop, and 15:15 exit. It failed the minimum-sample, 1-point profitability, clustered-confidence, and concentration gates. A prospective experimental shadow lane begins 2 September 2026 without backfill or automatic promotion. Full frozen rules and evidence are in `docs/REMAINING_OPTION_SELLING_PROTOCOL.md` and `docs/STRATEGY_STATUS.md`.
 
 ## S3 — NIFTY ₹180 Premium Momentum V1
 
