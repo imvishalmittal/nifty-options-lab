@@ -139,3 +139,9 @@ If the live session remains incomplete, a 15:40 IST recovery may replay the same
 **Decision:** The clean Stocks-in-Play, four-module opportunity comparison, afternoon-compression validation, and Williams bear-call artifacts are authoritative for their frozen scopes. Documentation must link those artifacts before any strategy is labelled unverified or scheduled again.
 
 **Reason:** A stale ledger is not evidence that a backtest is missing. Duplicate runs waste provider capacity and increase the risk of post-result parameter selection. Williams remains inconclusive because its executable sample was one 2025 trade and zero post-publication trades; that does not justify promotion or tuning.
+
+## ADR-027: Isolate the opening-range experimental shadow lane
+
+**Decision:** Observe the frozen 30-minute opening-range ATM credit spread prospectively from 2 September 2026 in a dedicated one-lot after-market journal. Do not assign it a V-number, backfill earlier dates, combine its P/L with V2–V11, or expose any broker-order path. Review only after at least 100 prospective trades, retaining normal, 0.5-point, and 1-point results.
+
+**Reason:** Normal-cost PF above one is interesting but did not overcome the 41-trade sample, negative 1-point stress, negative clustered lower bound, or excessive year concentration. A separately labelled shadow observation can collect genuine forward evidence without misrepresenting the rejected discovery as selected.

@@ -28,6 +28,7 @@ Groww market data ──> research / paper engines ──> validated trade ledge
 - `app/paper-ledger.tsx`: sortable/filterable ledger.
 - `public/paper/trades.json`: historical accepted rows plus completed forward paper rows.
 - `public/paper/session-status.json`: latest paper-session status.
+- `public/paper/opening-range-shadow.json`: isolated prospective opening-range spread observations; excluded from the V2–V11 ledger.
 
 The ledger now distinguishes strategy versions and can display entry/peak/exit premium, maximum favorable move, trail step/gap, breakeven status, final stop, exit reason, stop adjustments, gross P/L, charges, and net P/L. Older rows display missing non-recorded V3 fields as `—`.
 
@@ -35,6 +36,7 @@ The ledger now distinguishes strategy versions and can display entry/peak/exit p
 
 - `paper/paper-engine.mjs`: current forward-paper mechanics.
 - `paper/run-session.mjs`: Groww-backed weekday paper session.
+- `paper/run-opening-range-shadow.mjs`: guarded post-close causal observation for the rejected/unconfirmed opening-range spread.
 - `paper/groww-paper-client.mjs`: shared cross-process throttling, short-lived response caching, and canonical one-minute candle normalization.
 - `paper/paper-contract-selection.mjs`: complete 50-point NIFTY strike-grid discovery, including auditable gap-filled symbols when Groww's contract catalogue is sparse.
 - `paper/replay-session.mjs`: deterministic causal recovery for sessions that ended with a data/infrastructure status.
@@ -61,6 +63,7 @@ Active workflows are limited to:
 - `NIFTY Paper Session`: one continuous weekday paper job starting around 09:20 IST.
 - `NIFTY Paper Post-Close Recovery`: a guarded 15:40 IST replay that runs only when the live session is non-terminal. It requires a passing integrity report and cannot overwrite `CLOSED`, `NO_TRADE`, or `AMBIGUOUS` live outcomes.
 - `NIFTY Paper Smoke`: manual paper/Groww operational validation.
+- `Experimental Opening-Range Shadow Paper`: guarded 15:25/16:05 IST after-market observation with no order path and no V2–V11 mutation.
 - `Research - NIFTY ...`: four isolated opportunity backtests, their suite chain, and comparison.
 
 Historical NIFTY 180, opening-range, Quick Flip, Stocks-in-Play, backfill, and diagnostic engines remain reproducible from versioned code and Git history without cluttering the active Actions inventory. Groww-heavy active research jobs share a serialized API concurrency group.

@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "paperMode": true,
+    "experimental": true,
+    "confirmedEdge": false,
+    "strategy": "30-minute opening-range ATM credit spread",
+    "strategyVersion": "ORC-SHADOW-V1",
+    "startedOn": "2026-09-02",
+    "noBackfill": true,
+    "excludedFromV2V11": true,
+    "lotsPerObservation": 1,
+    "minimumProspectiveTrades": 100,
+    "selectionStatus": "REJECTED_UNCONFIRMED"
+  },
+  "sessions": []
+}

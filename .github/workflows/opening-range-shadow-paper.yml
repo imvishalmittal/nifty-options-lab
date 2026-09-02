@@ -1,0 +1,60 @@
+name: Experimental Opening-Range Shadow Paper
+
+on:
+  schedule:
+    # 15:25 IST, after the frozen 15:15 exit. This is a causal end-of-day
+    # shadow evaluation, not an order-execution workflow.
+    - cron: '55 9 * * 1-5'
+    # Guarded operational retry at 16:05 IST. A terminal date is skipped.
+    - cron: '35 10 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Retry today's non-live shadow observation
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+# Isolated from V2-V11 and from the research queue. The post-close timing avoids
+# the live paper runners; the guarded second schedule retries transient auth.
+concurrency:
+  group: opening-range-shadow-paper
+  cancel-in-progress: false
+
+jobs:
+  shadow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Validate experimental shadow pipeline
+        run: node --test tests/opening-range-shadow-paper.test.mjs tests/remaining-option-selling-engine.test.mjs tests/groww-opening-range-credit-backtest.test.mjs tests/groww-option-costs.test.mjs
+      - name: Resolve Groww token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run today's causal shadow observation
+        env:
+          FORCE: ${{ inputs.force }}
+        run: node paper/run-opening-range-shadow.mjs
+      - name: Persist isolated experimental journal
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/paper/opening-range-shadow.json
+          if git diff --cached --quiet; then
+            echo "No opening-range shadow journal change"
+          else
+            git commit -m "Update opening-range shadow journal $(date -u +%F)"
+            git push origin HEAD:main
+          fi
