@@ -63,6 +63,8 @@ Amounts below include the repository's normal cost model. “0.5” and “1.0�
 | Quick Flip Scalper V1 clean discovery | 2020–2024, 7,277 trades | −349.84R, PF 0.935 | Not modeled by frozen protocol | Not modeled by frozen protocol | **REJECTED** — negative before costs; PF, profitability, yearly-stability, clustered-confidence, and data-quality gates failed |
 | NIFTY ₹180 six-variant entry-risk discovery | 2020–2024, 1,243 sessions, 641 shared entries per variant | Best: +₹5,366.43, PF 1.003 (5-point stepped) | Best: −₹188,114.69 | Best: −₹381,595.80 | **REJECTED** — no variant passed; no 2025/2026 run |
 | 30-minute opening-range ATM credit spread | 2020–2024, 1,243 sessions, 41 trades | +₹6,232.93, PF 1.245 | +₹1,638.90, PF 1.061 | −₹2,921.42, PF 0.898 | **REJECTED** — insufficient sample, negative 1-point stress, clustered-confidence and concentration failures |
+| Weekly 0.08-delta NIFTY smart condor | 2020–2024, 261 observations, 255 trades | −₹47,418.06, PF 0.438 | −₹103,091.04, PF 0.106 | −₹158,730.33, PF 0.020 | **REJECTED** — negative in every year and stress case; robustness, stability and data-completeness gates failed |
+| Monthly large-cap RSI iron condor | 2020–2024, 548 observations, 0 trades | ₹0, PF not measurable | ₹0, PF not measurable | ₹0, PF not measurable | **REJECTED / UNTESTABLE** — 402 RSI-filtered no-trades and 146 data-missing observations; no performance sample |
 
 ### Remaining strategy research — terminal verdicts
 
@@ -193,18 +195,47 @@ All 60 discovery shards, consolidation, and causal/structural integrity complete
 
 It passed normal and 0.5-point profitability/PF, yearly stability, active-month stability, missing-data, and integrity gates. It failed the minimum 100-trade sample, 1-point profitability, clustered-confidence, and 50% concentration gates. Discovery therefore remains **REJECTED** and 2025/2026 remain sealed. A user-authorized experimental shadow lane begins prospectively on 2 September 2026 solely to collect new observations; it does not change this verdict or permit live promotion.
 
+## Remaining option-selling discoveries — terminal
+
+### Weekly NIFTY smart condor — rejected
+
+The frozen structure sold approximately ±0.08-delta options, bought approximately ±0.03-delta hedges, entered on the first session after weekly expiry using actual listed contracts and causal synchronized quotes, and used a 50% credit target, 2×-credit stop and pre-expiry exit. All 60 monthly shards consolidated with valid causal and structural integrity in [run 33547992564](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33547992564).
+
+- Scheduled observations: 261; trades: 255; data-missing: 6 (2.30%)
+- Targets / stops / time exits: 179 / 76 / 0
+- Normal: 56.08% wins, −₹47,418.06, PF 0.438, maximum drawdown ₹47,869.37
+- 0.5 point per leg: 23.14% wins, −₹103,091.04, PF 0.106, maximum drawdown ₹103,242.50
+- 1 point per leg: 6.67% wins, −₹158,730.33, PF 0.020, maximum drawdown ₹158,730.33
+- Positive years: 0/5; positive normal months: 13/60
+- Clustered monthly bootstrap lower 95% bound: −₹1,101.51
+- Positive-year concentration is not measurable because no year was profitable
+
+It failed normal and stressed profitability/PF, yearly and monthly stability, clustered robustness, concentration and the frozen missing-data ceiling. Three missing observations lacked the four-leg delta structure and three lacked the 09:45 underlying open. The strategy is **REJECTED**; 2025 and 2026 remain sealed.
+
+### Monthly large-cap RSI iron condor — rejected as untestable
+
+The frozen study required simultaneous completed daily and weekly RSI below 50 on the exact large-cap watchlist, first-session-after-monthly-expiry entry, 0.10 CE / −0.12 PE short deltas, 0.05 CE / −0.06 PE hedge deltas, a 12% discontinuity guard, 50% target, 2×-credit stop and pre-expiry exit. All 60 shards consolidated with structurally valid integrity in [run 33554275097](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33554275097).
+
+- Scheduled observations: 548
+- Trades: 0; valid no-trades: 402; data-missing: 146 (26.64%)
+- All 402 valid no-trades failed the simultaneous daily-and-weekly RSI weakness filter
+- Missing reasons: 63 historical lot sizes, 41 four-leg delta structures, 27 RSI warmups, 9 underlying entry opens, 4 terminal observations and 2 synchronized fills
+- P&L, PF, win rate, drawdown, slippage stability and concentration are not measurable because no trade exists
+
+The ₹0 output is not a break-even result. The frozen hypothesis generated no performance sample and exceeded the missing-data ceiling, so it failed the sample, profitability, PF, yearly stability, clustered robustness, concentration and completeness gates. It is **REJECTED / UNTESTABLE**; 2025 and 2026 remain sealed.
+
 ## Remaining research boundaries
 
-Two assumption-explicit option-selling strategies are fully specified, implemented, and in frozen discovery. Partial shard output is not a verdict and must not be used for tuning.
+The remaining assumption-explicit option-selling discoveries are terminal. None passed promotion gates, and no 2025/2026 validation was opened.
 
-| Strategy family | Current state | What remains |
+| Strategy family | Current state | Boundary |
 |---|---|---|
 | Williams %R plus 5/15/50 EMA bear-call spread | **INCONCLUSIVE** | One 2025 trade and zero post-publication trades; no promotion or parameter tuning |
-| 30-minute breakout with ATM option selling | **REJECTED · EXPERIMENTAL SHADOW** | Historical gates failed; isolated prospective one-lot observation is collecting up to a 100-trade review point without backfill or promotion |
-| Monthly large-cap RSI iron condor | **ACTIVE RESEARCH** | Frozen 2020–2024 discovery is queued behind the weekly study; no result accepted yet |
-| Weekly 0.08-delta NIFTY smart condor | **ACTIVE RESEARCH** | Frozen 2020–2024 discovery is running; no result accepted yet |
+| 30-minute breakout with ATM option selling | **REJECTED · EXPERIMENTAL SHADOW** | Historical gates failed; isolated prospective one-lot observation collects new evidence without backfill or promotion |
+| Monthly large-cap RSI iron condor | **REJECTED / UNTESTABLE** | The RSI filter generated no trades; missing structural data was 26.64%; do not interpret zero P&L as safety or profitability |
+| Weekly 0.08-delta NIFTY smart condor | **REJECTED** | Negative after normal costs and both slippage stresses; no profitable discovery year |
 
-Inconclusive and incomplete ideas are not paper traded and must not be represented as selected strategies.
+Inconclusive and rejected ideas are not promoted to live trading and must not be represented as selected strategies.
 
 ## Promotion policy
 
@@ -224,6 +255,7 @@ Inconclusive and incomplete ideas are not paper traded and must not be represent
 - `docs/PAPER_RISK_2026_DIAGNOSTIC.md` — frozen 2026 matched-risk protocol
 - `docs/MORNING_TEA_SPEC.md` — frozen Morning Tea rules and gates
 - `docs/OPENING_RANGE_BASELINE_RESULTS.md` — negative-control results
+- `docs/REMAINING_OPTION_SELLING_PROTOCOL.md` — frozen option-selling assumptions and gates
 - `docs/IRON_CONDOR_RESEARCH.md` — iron-condor design
 - `docs/STRATEGY_RESEARCH_SUITE.md` — research implementations
 - `docs/OPPORTUNITY_RESEARCH.md` — isolated intraday opportunity modules

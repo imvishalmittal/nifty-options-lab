@@ -9,9 +9,8 @@ live_trading_authorized: false
 live_selected_strategies: 0
 paper_suite: V2-V11 counterfactual NIFTY premium-entry outcomes
 experimental_shadow: 30-minute opening-range ATM credit spread
-active_research:
-  - weekly 0.08-delta NIFTY smart condor
-  - monthly large-cap RSI iron condor
+active_research: []
+remaining_option_selling_research: terminal; no candidate passed
 source_of_truth: docs/STRATEGY_STATUS.md
 ```
 
@@ -26,7 +25,7 @@ The most important current conclusions are:
 3. **The ₹170-risk family is not proven profitable.** It reduced losses relative to some ₹160 counterparts, especially V9 versus V2 and V11 versus V6, but every tested variant remained negative in the 2026 diagnostic and every six-variant discovery candidate failed the frozen gates.
 4. **A positive profit factor above 1.0 is not sufficient.** A result can still fail on sample size, slippage, drawdown, temporal instability, concentration, bootstrap confidence, or data quality.
 5. **The 30-minute opening-range ATM credit spread remains historically rejected.** A separately authorized prospective shadow journal is collecting observations, but it is not a promotion or a live strategy.
-6. **Two option-selling discoveries are still in progress:** the weekly 0.08-delta NIFTY smart condor and the monthly large-cap RSI iron condor. Their parameters are frozen and must not be tuned after results.
+6. **The remaining option-selling discoveries are terminal.** The weekly smart condor was decisively negative; the monthly RSI condor produced zero trades and failed as an untestable frozen hypothesis. Neither advances to 2025/2026.
 
 ## 2. Objective and operating constraints
 
@@ -137,8 +136,8 @@ Amounts below include the repository's normal cost model. `0.5` and `1.0` denote
 | Williams %R/EMA bear-call | Williams %R plus 5/15/50 EMA alignment, expressed as bear-call spread | 2025: 1 trade; post-publication 2026: 0 | One trade lost ₹104 normal; no forward sample | **INCONCLUSIVE:** insufficient occurrences; do not tune after viewing |
 | Morning Tea stock-options proxy | 09:15 point-in-time gainer→call / loser→put; 09:16 entry; 10% target; opening-candle stop; 09:30 exit | 2025: 226 trades; 2026: 143 trades | 2025 normal +₹79,073 but 0.5 −₹51,939; 2026 normal +₹10,959 but 0.10 −₹6,146 and 0.25 −₹31,802 | **REJECTED:** execution sensitivity and weak monthly stability |
 | 30-minute opening-range ATM credit spread | Confirm 30-minute NIFTY range break; sell ATM directional spread with 300-point hedge; 50% target / 2× stop / 15:15 exit | 2020–2024; 41 trades | Normal +₹6,233, PF 1.245; 0.5 +₹1,639, PF 1.061; 1.0 −₹2,921, PF 0.898 | **REJECTED:** sample, 1-point, bootstrap, and concentration gates failed; experimental shadow only |
-| Weekly 0.08-delta NIFTY smart condor | Weekly ±0.08 shorts and ±0.03 hedges; 50% target / 2× stop; pre-expiry exit | Frozen 2020–2024 discovery | Result not yet accepted | **ACTIVE RESEARCH:** do not infer from partial shards |
-| Monthly large-cap RSI iron condor | Daily and weekly RSI(14)<50; delta-selected monthly condor on frozen large-cap list | Frozen 2020–2024 discovery | Result not yet accepted | **ACTIVE RESEARCH:** queued behind weekly study |
+| Weekly 0.08-delta NIFTY smart condor | Weekly ±0.08 shorts and ±0.03 hedges; 50% target / 2× stop; pre-expiry exit | 2020–2024; 261 observations; 255 trades | Normal −₹47,418, PF 0.438; 0.5 −₹103,091; 1.0 −₹158,730; 0/5 profitable years | **REJECTED:** negative and unstable under every cost scenario |
+| Monthly large-cap RSI iron condor | Daily and weekly RSI(14)<50; delta-selected monthly condor on frozen large-cap list | 2020–2024; 548 observations; 0 trades | 402 RSI-filtered no-trades; 146 data-missing observations (26.64%); PF/P&L robustness not measurable | **REJECTED / UNTESTABLE:** no performance sample and completeness failed |
 
 ## 6. The ₹160 versus ₹170 risk question
 
@@ -174,33 +173,19 @@ Every variant was negative at normal costs and at 0.5/1-point stress. Eleven of 
 
 Evidence: [run 33476628683](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33476628683).
 
-## 7. Detailed notes on active option-selling studies
+## 7. Terminal option-selling studies
 
-### Weekly 0.08-delta NIFTY smart condor
+### Weekly 0.08-delta NIFTY smart condor — rejected
 
-- Entry: first trading session after preceding weekly expiry; decision 09:44, entry 09:45.
-- Expiry: next listed weekly NIFTY expiry.
-- Shorts: listed CE closest to +0.08 delta and PE closest to −0.08 delta.
-- Hedges: farther-OTM CE closest to +0.03 and PE closest to −0.03.
-- Exit: 50% of initial credit target, 2× initial credit stop, or 15:15 on the session before expiry.
-- No adjustment, rolling, or re-entry.
-- Reported on defined maximum-loss capital with actual contracts, historical lots, costs, and stress.
-- Discovery run: [33547992564](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33547992564).
+Frozen rules: enter the first session after weekly expiry at 09:45 using listed ±0.08-delta shorts and farther-OTM ±0.03 hedges; exit at 50% of initial credit, 2× initial credit, or 15:15 before expiry. No adjustment, rolling, or re-entry.
 
-### Monthly large-cap RSI iron condor
+The 2020–2024 discovery consolidated all 60 shards with 261 observations, 255 trades and six missing observations. Integrity passed. Normal costs produced 56.08% wins, −₹47,418, PF 0.438 and ₹47,869 drawdown. At 0.5-point slippage it lost ₹103,091 with PF 0.106; at 1 point it lost ₹158,730 with PF 0.020. Every year was negative, only 13/60 months were positive, and the clustered monthly lower bound was −₹1,102. Final status: **REJECTED**. Evidence: [run 33547992564](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33547992564).
 
-- Frozen watchlist: SBIN, RELIANCE, TCS, INFY, WIPRO, CIPLA, DRREDDY, SUNPHARMA, BAJAJ-AUTO, ASIANPAINT.
-- Eligibility: RSI(14) from completed daily and weekly underlying bars is below 50 at decision time.
-- Entry: first trading day after preceding monthly expiry; decision 09:44, entry 09:45.
-- Expiry: next monthly expiry.
-- Shorts: listed CE closest to +0.10 delta and PE closest to −0.12 delta.
-- Hedges: farther-OTM CE closest to +0.05 and PE closest to −0.06.
-- Skip proxy: absolute prior-close to entry-open underlying gap above 12%; report separately.
-- Exit: 50% credit target, 2× credit stop, or 15:15 on the trading day before expiry.
-- No adjustment, rolling, or re-entry.
-- Discovery run: [33554275097](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33554275097).
+### Monthly large-cap RSI iron condor — rejected as untestable
 
-Partial results from either active study must not be inspected or used to tune parameters. Only consolidated artifacts that pass integrity can support a verdict.
+Frozen rules: on SBIN, RELIANCE, TCS, INFY, WIPRO, CIPLA, DRREDDY, SUNPHARMA, BAJAJ-AUTO and ASIANPAINT, require completed daily and weekly RSI(14)<50; enter after monthly expiry at 09:45 with +0.10/−0.12 shorts and +0.05/−0.06 hedges; apply the 12% discontinuity guard; exit at 50% credit, 2× credit, or pre-expiry 15:15.
+
+The 2020–2024 discovery consolidated all 60 shards with valid structural integrity, but generated **zero trades** from 548 scheduled observations. The RSI filter rejected 402 valid observations, while 146 (26.64%) were data-missing. Therefore win rate, PF, drawdown, slippage stability and concentration cannot be estimated. The displayed ₹0 is not evidence of break-even performance. Final status: **REJECTED / UNTESTABLE**. Evidence: [run 33554275097](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33554275097).
 
 ## 8. Why seemingly good strategies were rejected
 
@@ -234,8 +219,8 @@ The governing question is: **is the edge large, stable, causal, diversified, and
 3. Do not add V2–V11 P&L together; they are alternative exits on shared opportunities.
 4. Preserve all historical and paper journals. Do not rewrite or backfill V2–V11 or the opening-range shadow.
 5. Do not rerun terminally rejected strategies unless a genuinely new, source-supported hypothesis is frozen under a new name.
-6. Do not change active weekly/monthly condor parameters after any result is visible.
-7. Repair only operational or integrity defects during an active frozen study.
+6. Treat both condor discoveries as terminal; do not tune or rerun them under the same names.
+7. Repair only operational or integrity defects during a genuinely active frozen study.
 8. If discovery fails any decisive gate, seal 2025/2026 and record `REJECTED`.
 9. If discovery passes every gate, run untouched 2025 with identical rules; run 2026 only after validation passes.
 10. Never promote to paper/live automatically. Paper addition and live engineering require explicit authorization and separate risk controls.
