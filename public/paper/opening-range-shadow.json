@@ -10,7 +10,31 @@
     "excludedFromV2V11": true,
     "lotsPerObservation": 1,
     "minimumProspectiveTrades": 100,
-    "selectionStatus": "REJECTED_UNCONFIRMED"
+    "selectionStatus": "REJECTED_UNCONFIRMED",
+    "updatedAt": "2026-09-02T13:57:47.115Z"
   },
-  "sessions": []
+  "sessions": [
+    {
+      "date": "2026-09-02",
+      "status": "FAILED",
+      "reason": "Groww /historical/expiries failed (400): Year cannot be in the future",
+      "updatedAt": "2026-09-02T13:57:47.115Z",
+      "signalDirection": null,
+      "rangeHigh": null,
+      "rangeLow": null,
+      "confirmationTimestamp": null,
+      "expiry": null,
+      "short": null,
+      "long": null,
+      "entryTimestamp": null,
+      "entryCredit": null,
+      "exitTimestamp": null,
+      "exitReason": null,
+      "lotSize": null,
+      "ambiguous": false,
+      "normalized": null,
+      "stress0_5": null,
+      "stress1_0": null
+    }
+  ]
 }
