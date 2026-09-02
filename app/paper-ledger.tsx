@@ -4,306 +4,138 @@ import { useEffect, useMemo, useState } from "react";
 import styles from "./paper-ledger.module.css";
 
 type CallType = "CE" | "PE";
-type PnlFilter = "ALL" | "PROFIT" | "LOSS";
-type SortDir = "asc" | "desc";
-type Source = "BACKTEST" | "PAPER";
-type StrategyMode = "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "V10" | "V11";
 type DataSource = "proxy" | "published" | null;
 type SessionThread = "BASE" | "V4";
-
-type PaperTrade = {
-  source?: Source; strategy?: string; strategyVersion?: string; date: string; indexStockName: string; weeklyExpiry: string;
-  lots: number; callType: CallType; strikePrice: number; startTarget: number; startStopLoss: number; endStopLoss: number;
-  entryTime: string; exitTime: string; stopLossAdjustments: number; totalPnl: number; entryPremium?: number; peakPremium?: number;
-  maxFavorableMove?: number; trailStepPoints?: number; trailGapPoints?: number; breakevenReached?: boolean; exitPremium?: number;
-  exitReason?: string; grossPnl?: number; charges?: number;
-};
-
+type Scope = "DATE" | "MONTH" | "YEAR" | "ALL";
+type SortDir = "asc" | "desc";
+type SortKey = "strategy" | "cohort" | "status" | "sessions" | "trades" | "winsLosses" | "winRate" | "pf" | "total" | "drawdown" | "contract" | "entryExit" | "exitReason";
+type PaperTrade = { strategy?: string; strategyVersion?: string; date: string; indexStockName: string; weeklyExpiry: string; lots: number; callType: CallType; strikePrice: number; startTarget: number; startStopLoss: number; endStopLoss: number; entryTime: string; exitTime: string; stopLossAdjustments: number; totalPnl: number; entryPremium?: number; peakPremium?: number; maxFavorableMove?: number; trailStepPoints?: number; trailGapPoints?: number; breakevenReached?: boolean; exitPremium?: number; exitReason?: string; grossPnl?: number; charges?: number };
 type SessionContract = { symbol: string; strike?: number; optionType?: CallType; premium?: number };
-type PaperSession = {
-  date: string; thread: SessionThread; strategyVersions: string[]; status: string; reason?: string | null; updatedAt?: string | null;
-  spot925?: number | null; expiry?: string | null; referencePremium?: number | null; ce?: SessionContract | null; pe?: SessionContract | null;
-  side?: CallType | null; strike?: number | null; entry?: number | null; entryTime?: string | null; signalSource?: string | null;
-  tradeCount: number; totalPnl?: number | null; strategyOutcomes?: Record<string, { tradeCount: number; totalPnl: number | null }>;
-};
+type PaperSession = { date: string; thread: SessionThread; strategyVersions: string[]; status: string; reason?: string | null; updatedAt?: string | null; spot925?: number | null; expiry?: string | null; referencePremium?: number | null; ce?: SessionContract | null; pe?: SessionContract | null; side?: CallType | null; strike?: number | null; entry?: number | null; entryTime?: string | null; signalSource?: string | null; tradeCount: number; totalPnl?: number | null; strategyOutcomes?: Record<string, { tradeCount: number; totalPnl: number | null }> };
+type StrategyKey = "V2" | "V3-5" | "V3-10" | "V4" | "V5-10" | "V6" | "V7-10" | "V8-10" | "V9" | "V10-5" | "V10-10" | "V11";
+type StrategyDefinition = { key: StrategyKey; label: string; shortRule: string; cohort: "₹160 / ₹220" | "₹170 / ₹210" | "NIFTY confirmed"; thread: SessionThread; sessionKey: string };
 
-type OpeningRangeScenario = { netPnl: number | null; grossPnl: number | null; charges: number | null };
-type OpeningRangeSession = {
-  date: string; status: string; reason?: string | null; signalDirection?: string | null; expiry?: string | null;
-  short?: SessionContract | null; long?: SessionContract | null; entryCredit?: number | null; exitReason?: string | null;
-  lotSize?: number | null; normalized?: OpeningRangeScenario | null; stress0_5?: OpeningRangeScenario | null; stress1_0?: OpeningRangeScenario | null;
-};
-type OpeningRangeJournal = {
-  meta: { minimumProspectiveTrades?: number; startedOn?: string; selectionStatus?: string; confirmedEdge?: boolean };
-  sessions: OpeningRangeSession[];
-};
+const strategies: StrategyDefinition[] = [
+  { key: "V2", label: "V2 · Momentum trail", shortRule: "₹160 initial stop · continuous trail", cohort: "₹160 / ₹220", thread: "BASE", sessionKey: "V2" },
+  { key: "V3-5", label: "V3-5 · Stepped trail", shortRule: "₹160 initial stop · 5-point steps", cohort: "₹160 / ₹220", thread: "BASE", sessionKey: "V3-5" },
+  { key: "V3-10", label: "V3-10 · Stepped trail", shortRule: "₹160 initial stop · 10-point steps", cohort: "₹160 / ₹220", thread: "BASE", sessionKey: "V3-10" },
+  { key: "V4", label: "V4 · Confirmed fail-fast", shortRule: "NIFTY confirmation · fail-fast exit", cohort: "NIFTY confirmed", thread: "V4", sessionKey: "V4" },
+  { key: "V5-10", label: "V5-10 · Confirmed stepped", shortRule: "NIFTY confirmation · 10-point steps", cohort: "NIFTY confirmed", thread: "V4", sessionKey: "V5" },
+  { key: "V6", label: "V6 · Fixed 2R", shortRule: "₹160 initial stop · entry-relative 2R", cohort: "₹160 / ₹220", thread: "BASE", sessionKey: "V6" },
+  { key: "V7-10", label: "V7-10 · Failure exit", shortRule: "15-minute failure exit · 10-point steps", cohort: "₹160 / ₹220", thread: "BASE", sessionKey: "V7" },
+  { key: "V8-10", label: "V8-10 · Capped risk", shortRule: "Entry-capped risk · 10-point steps", cohort: "₹160 / ₹220", thread: "BASE", sessionKey: "V8" },
+  { key: "V9", label: "V9 · 170/210 momentum", shortRule: "₹170 stop · ₹210 activation · continuous trail", cohort: "₹170 / ₹210", thread: "BASE", sessionKey: "V9" },
+  { key: "V10-5", label: "V10-5 · 170/210 stepped", shortRule: "₹170 stop · ₹210 activation · 5-point steps", cohort: "₹170 / ₹210", thread: "BASE", sessionKey: "V10-5" },
+  { key: "V10-10", label: "V10-10 · 170/210 stepped", shortRule: "₹170 stop · ₹210 activation · 10-point steps", cohort: "₹170 / ₹210", thread: "BASE", sessionKey: "V10-10" },
+  { key: "V11", label: "V11 · 170-stop fixed 2R", shortRule: "₹170 stop · entry-relative 2R target", cohort: "₹170 / ₹210", thread: "BASE", sessionKey: "V11" },
+];
 
-type SortKey = "rowNo" | keyof PaperTrade;
+const comparisonColumns: Array<{ key: SortKey; label: string }> = [
+  { key: "strategy", label: "Strategy" },
+  { key: "cohort", label: "Policy family" },
+  { key: "status", label: "Status" },
+  { key: "sessions", label: "Sessions" },
+  { key: "trades", label: "Trades" },
+  { key: "winsLosses", label: "W / L" },
+  { key: "winRate", label: "Win rate" },
+  { key: "pf", label: "PF" },
+  { key: "total", label: "Net P/L" },
+  { key: "drawdown", label: "Max DD" },
+  { key: "contract", label: "Contract" },
+  { key: "entryExit", label: "Entry → exit" },
+  { key: "exitReason", label: "Exit reason" },
+];
 
 const money = new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const num = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 });
-const V2 = "NIFTY ₹180 Momentum V2";
-const V3 = "NIFTY ₹180 Stepped Trail V3";
-const V4 = "NIFTY ₹180 NIFTY-Confirmed Fail-Fast V4";
-const V5 = "NIFTY ₹180 NIFTY-Confirmed Stepped Trail V5";
-const V6 = "NIFTY ₹180 Fixed 2R V6";
-const V7 = "NIFTY ₹180 15-Minute Failure Exit V7";
-const V8 = "NIFTY ₹180 Capped-Risk Stepped Trail V8";
-const V9 = "NIFTY ₹180 170/210 Momentum Trail V9";
-const V10 = "NIFTY ₹180 170/210 Stepped Trail V10";
-const V11 = "NIFTY ₹180 170-Stop Fixed 2R V11";
-const strategyNames: Record<StrategyMode, string> = { V2, V3, V4, V5, V6, V7, V8, V9, V10, V11 };
+const premium = (value?: number | null) => value == null ? "—" : `₹${num.format(value)}`;
+const pnl = (value?: number | null) => value == null ? "—" : `${value >= 0 ? "+" : "−"}₹${money.format(Math.abs(value))}`;
+const optionalNumber = (value: unknown) => value == null || value === "" || !Number.isFinite(Number(value)) ? undefined : Number(value);
 
-const columns: Array<{ key: SortKey; label: string }> = [
-  { key: "rowNo", label: "#" }, { key: "date", label: "Date" }, { key: "indexStockName", label: "Index / Stock" },
-  { key: "weeklyExpiry", label: "Weekly Expiry" }, { key: "lots", label: "Lots" }, { key: "callType", label: "Call Type" },
-  { key: "strikePrice", label: "Trade Entry Strike" }, { key: "entryPremium", label: "Entry Premium" }, { key: "peakPremium", label: "Peak Premium" },
-  { key: "maxFavorableMove", label: "Max Favorable Move" }, { key: "trailStepPoints", label: "Trail Step" }, { key: "trailGapPoints", label: "Trail Gap" },
-  { key: "breakevenReached", label: "BE Reached" }, { key: "startTarget", label: "BE / Start Target" }, { key: "startStopLoss", label: "Start Stop Loss" },
-  { key: "endStopLoss", label: "End Stop Loss" }, { key: "entryTime", label: "Trade Entry Time" }, { key: "exitTime", label: "Trade Exit Time" },
-  { key: "exitPremium", label: "Exit Premium" }, { key: "exitReason", label: "Exit Reason" }, { key: "stopLossAdjustments", label: "SL Adjustments" },
-  { key: "grossPnl", label: "Gross P/L" }, { key: "charges", label: "Charges" }, { key: "totalPnl", label: "Net P/L" },
-];
-
-function optionalNumber(value: unknown) {
-  return value === null || value === undefined || value === "" || !Number.isFinite(Number(value)) ? undefined : Number(value);
-}
 function normalizeTrade(value: unknown): PaperTrade | null {
   if (!value || typeof value !== "object") return null;
   const row = value as Partial<PaperTrade>;
   if (!row.date || !row.indexStockName || !row.weeklyExpiry || (row.callType !== "CE" && row.callType !== "PE")) return null;
-  for (const key of ["lots", "strikePrice", "startTarget", "startStopLoss", "endStopLoss", "stopLossAdjustments", "totalPnl"] as const)
-    if (!Number.isFinite(Number(row[key]))) return null;
-  const source: Source = row.source === "PAPER" ? "PAPER" : "BACKTEST";
-  return {
-    source, strategy: row.strategy ? String(row.strategy) : source === "BACKTEST" ? V2 : V3, strategyVersion: row.strategyVersion ? String(row.strategyVersion) : undefined,
-    date: String(row.date), indexStockName: String(row.indexStockName), weeklyExpiry: String(row.weeklyExpiry), lots: Number(row.lots), callType: row.callType,
-    strikePrice: Number(row.strikePrice), startTarget: Number(row.startTarget), startStopLoss: Number(row.startStopLoss), endStopLoss: Number(row.endStopLoss),
-    entryTime: String(row.entryTime ?? ""), exitTime: String(row.exitTime ?? ""), stopLossAdjustments: Number(row.stopLossAdjustments), totalPnl: Number(row.totalPnl),
-    entryPremium: optionalNumber(row.entryPremium), peakPremium: optionalNumber(row.peakPremium), maxFavorableMove: optionalNumber(row.maxFavorableMove),
-    trailStepPoints: optionalNumber(row.trailStepPoints), trailGapPoints: optionalNumber(row.trailGapPoints), breakevenReached: typeof row.breakevenReached === "boolean" ? row.breakevenReached : undefined,
-    exitPremium: optionalNumber(row.exitPremium), exitReason: row.exitReason ? String(row.exitReason) : undefined, grossPnl: optionalNumber(row.grossPnl), charges: optionalNumber(row.charges),
-  };
+  for (const key of ["lots", "strikePrice", "startTarget", "startStopLoss", "endStopLoss", "stopLossAdjustments", "totalPnl"] as const) if (!Number.isFinite(Number(row[key]))) return null;
+  return { strategy: row.strategy ? String(row.strategy) : undefined, strategyVersion: row.strategyVersion ? String(row.strategyVersion) : undefined, date: String(row.date), indexStockName: String(row.indexStockName), weeklyExpiry: String(row.weeklyExpiry), lots: Number(row.lots), callType: row.callType, strikePrice: Number(row.strikePrice), startTarget: Number(row.startTarget), startStopLoss: Number(row.startStopLoss), endStopLoss: Number(row.endStopLoss), entryTime: String(row.entryTime ?? ""), exitTime: String(row.exitTime ?? ""), stopLossAdjustments: Number(row.stopLossAdjustments), totalPnl: Number(row.totalPnl), entryPremium: optionalNumber(row.entryPremium), peakPremium: optionalNumber(row.peakPremium), maxFavorableMove: optionalNumber(row.maxFavorableMove), trailStepPoints: optionalNumber(row.trailStepPoints), trailGapPoints: optionalNumber(row.trailGapPoints), breakevenReached: typeof row.breakevenReached === "boolean" ? row.breakevenReached : undefined, exitPremium: optionalNumber(row.exitPremium), exitReason: row.exitReason ? String(row.exitReason) : undefined, grossPnl: optionalNumber(row.grossPnl), charges: optionalNumber(row.charges) };
 }
 function normalizeContract(value: unknown): SessionContract | null {
-  if (!value || typeof value !== "object") return null;
-  const row = value as Partial<SessionContract>;
-  if (!row.symbol) return null;
-  const optionType = row.optionType === "CE" || row.optionType === "PE" ? row.optionType : undefined;
-  return { symbol: String(row.symbol), strike: optionalNumber(row.strike), optionType, premium: optionalNumber(row.premium) };
+  if (!value || typeof value !== "object") return null; const row = value as Partial<SessionContract>; if (!row.symbol) return null;
+  return { symbol: String(row.symbol), strike: optionalNumber(row.strike), optionType: row.optionType === "CE" || row.optionType === "PE" ? row.optionType : undefined, premium: optionalNumber(row.premium) };
 }
 function normalizeSession(value: unknown): PaperSession | null {
-  if (!value || typeof value !== "object") return null;
-  const row = value as Partial<PaperSession>;
+  if (!value || typeof value !== "object") return null; const row = value as Partial<PaperSession>;
   if (!row.date || (row.thread !== "BASE" && row.thread !== "V4") || !row.status) return null;
-  const side = row.side === "CE" || row.side === "PE" ? row.side : null;
-  const strategyOutcomes = row.strategyOutcomes && typeof row.strategyOutcomes === "object" ? Object.fromEntries(Object.entries(row.strategyOutcomes).map(([key, value]) => {
-    const outcome = value && typeof value === "object" ? value as { tradeCount?: unknown; totalPnl?: unknown } : {};
-    return [key, { tradeCount: Number.isFinite(Number(outcome.tradeCount)) ? Number(outcome.tradeCount) : 0, totalPnl: optionalNumber(outcome.totalPnl) ?? null }];
-  })) : undefined;
-  return {
-    date: String(row.date), thread: row.thread, strategyVersions: Array.isArray(row.strategyVersions) ? row.strategyVersions.map(String) : [],
-    status: String(row.status), reason: row.reason ? String(row.reason) : null, updatedAt: row.updatedAt ? String(row.updatedAt) : null,
-    spot925: optionalNumber(row.spot925) ?? null, expiry: row.expiry ? String(row.expiry) : null, referencePremium: optionalNumber(row.referencePremium) ?? null,
-    ce: normalizeContract(row.ce), pe: normalizeContract(row.pe), side, strike: optionalNumber(row.strike) ?? null, entry: optionalNumber(row.entry) ?? null,
-    entryTime: row.entryTime ? String(row.entryTime) : null, signalSource: row.signalSource ? String(row.signalSource) : null,
-    tradeCount: Number.isFinite(Number(row.tradeCount)) ? Number(row.tradeCount) : 0, totalPnl: optionalNumber(row.totalPnl) ?? null, strategyOutcomes,
-  };
+  const outcomes = row.strategyOutcomes && typeof row.strategyOutcomes === "object" ? Object.fromEntries(Object.entries(row.strategyOutcomes).map(([key, value]) => { const outcome = value && typeof value === "object" ? value as { tradeCount?: unknown; totalPnl?: unknown } : {}; return [key, { tradeCount: Number.isFinite(Number(outcome.tradeCount)) ? Number(outcome.tradeCount) : 0, totalPnl: optionalNumber(outcome.totalPnl) ?? null }]; })) : undefined;
+  return { date: String(row.date), thread: row.thread, strategyVersions: Array.isArray(row.strategyVersions) ? row.strategyVersions.map(String) : [], status: String(row.status), reason: row.reason ? String(row.reason) : null, updatedAt: row.updatedAt ? String(row.updatedAt) : null, spot925: optionalNumber(row.spot925) ?? null, expiry: row.expiry ? String(row.expiry) : null, referencePremium: optionalNumber(row.referencePremium) ?? null, ce: normalizeContract(row.ce), pe: normalizeContract(row.pe), side: row.side === "CE" || row.side === "PE" ? row.side : null, strike: optionalNumber(row.strike) ?? null, entry: optionalNumber(row.entry) ?? null, entryTime: row.entryTime ? String(row.entryTime) : null, signalSource: row.signalSource ? String(row.signalSource) : null, tradeCount: Number.isFinite(Number(row.tradeCount)) ? Number(row.tradeCount) : 0, totalPnl: optionalNumber(row.totalPnl) ?? null, strategyOutcomes: outcomes };
 }
-function normalizeOpeningRangeJournal(value: unknown): OpeningRangeJournal {
-  if (!value || typeof value !== "object") return { meta: {}, sessions: [] };
-  const row = value as { meta?: OpeningRangeJournal["meta"]; sessions?: unknown[] };
-  const sessions = (Array.isArray(row.sessions) ? row.sessions : []).flatMap((item) => {
-    if (!item || typeof item !== "object") return [];
-    const source = item as Partial<OpeningRangeSession>;
-    if (!source.date || !source.status) return [];
-    const scenario = (candidate: unknown): OpeningRangeScenario | null => {
-      if (!candidate || typeof candidate !== "object") return null;
-      const record = candidate as Partial<OpeningRangeScenario>;
-      return { netPnl: optionalNumber(record.netPnl) ?? null, grossPnl: optionalNumber(record.grossPnl) ?? null, charges: optionalNumber(record.charges) ?? null };
-    };
-    return [{
-      date: String(source.date), status: String(source.status), reason: source.reason ? String(source.reason) : null,
-      signalDirection: source.signalDirection ? String(source.signalDirection) : null, expiry: source.expiry ? String(source.expiry) : null,
-      short: normalizeContract(source.short), long: normalizeContract(source.long), entryCredit: optionalNumber(source.entryCredit) ?? null,
-      exitReason: source.exitReason ? String(source.exitReason) : null, lotSize: optionalNumber(source.lotSize) ?? null,
-      normalized: scenario(source.normalized), stress0_5: scenario(source.stress0_5), stress1_0: scenario(source.stress1_0),
-    }];
-  });
-  return { meta: row.meta ?? {}, sessions };
+function tradeKey(trade: PaperTrade): StrategyKey | null {
+  const version = trade.strategyVersion ?? "";
+  if (version === "V3") return trade.trailStepPoints === 5 ? "V3-5" : "V3-10";
+  if (version === "V5") return "V5-10"; if (version === "V7") return "V7-10"; if (version === "V8") return "V8-10";
+  if (version === "V10") return trade.trailStepPoints === 5 ? "V10-5" : "V10-10";
+  if (["V2", "V4", "V6", "V9", "V11"].includes(version)) return version as StrategyKey;
+  const name = trade.strategy ?? "";
+  if (name.includes(" V3")) return trade.trailStepPoints === 5 ? "V3-5" : "V3-10";
+  if (name.includes(" V5")) return "V5-10"; if (name.includes(" V7")) return "V7-10"; if (name.includes(" V8")) return "V8-10";
+  if (name.includes(" V10")) return trade.trailStepPoints === 5 ? "V10-5" : "V10-10";
+  return (["V2", "V4", "V6", "V9", "V11"] as StrategyKey[]).find((key) => name.includes(` ${key}`)) ?? null;
 }
-function compareValues(a: unknown, b: unknown) {
-  if (typeof a === "boolean" && typeof b === "boolean") return Number(a) - Number(b);
-  if (typeof a === "number" && typeof b === "number") return a - b;
-  return String(a ?? "").localeCompare(String(b ?? ""), "en", { numeric: true });
-}
-const premium = (value?: number | null) => value === undefined || value === null ? "—" : `₹${num.format(value)}`;
-const pnl = (value?: number | null) => value === undefined || value === null ? "—" : `${value >= 0 ? "+" : "−"}₹${money.format(Math.abs(value))}`;
-const strategyName = (mode: StrategyMode) => strategyNames[mode];
-const threadFor = (mode: StrategyMode): SessionThread => mode === "V4" || mode === "V5" ? "V4" : "BASE";
-
-function rankedContracts(session: PaperSession) {
-  const reference = session.referencePremium ?? 180;
-  return [session.ce, session.pe].filter((row): row is SessionContract => Boolean(row && row.premium !== undefined)).sort((a, b) => {
-    const distance = Math.abs((a.premium ?? Infinity) - reference) - Math.abs((b.premium ?? Infinity) - reference);
-    if (distance !== 0) return distance;
-    if ((a.premium ?? 0) !== (b.premium ?? 0)) return (b.premium ?? 0) - (a.premium ?? 0);
-    return String(a.optionType ?? "").localeCompare(String(b.optionType ?? ""));
-  });
-}
-function contractLabel(row?: SessionContract | null) {
-  if (!row) return "—";
-  return `${row.strike === undefined ? "?" : num.format(row.strike)} ${row.optionType ?? ""} @ ${premium(row.premium)}`;
-}
-function statusTone(status: string) {
-  if (status === "CLOSED") return styles.sessionGood;
-  if (["OPEN", "WAITING_SIGNAL", "STARTING"].includes(status)) return styles.sessionLive;
-  if (status === "NO_TRADE") return styles.sessionNeutral;
-  return styles.sessionWarn;
+function maxDrawdown(trades: PaperTrade[]) { let equity = 0, peak = 0, drawdown = 0; [...trades].sort((a, b) => a.date.localeCompare(b.date) || a.entryTime.localeCompare(b.entryTime)).forEach((trade) => { equity += trade.totalPnl; peak = Math.max(peak, equity); drawdown = Math.max(drawdown, peak - equity); }); return drawdown; }
+function scopeLabel(scope: Scope, date: string, month: string, year: string) { if (scope === "DATE") return new Date(`${date}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }); if (scope === "MONTH") return new Date(`${month}-01T00:00:00`).toLocaleDateString("en-IN", { month: "long", year: "numeric" }); return scope === "YEAR" ? year : "All recorded paper sessions"; }
+function rowStatus(row: { trades: PaperTrade[]; session?: PaperSession }) { return row.trades.length ? "TRADED" : row.session?.status ?? "NO RECORD"; }
+function compareSortValues(a: string | number | null, b: string | number | null, direction: SortDir) {
+  if (a == null && b == null) return 0;
+  if (a == null) return 1;
+  if (b == null) return -1;
+  const result = typeof a === "number" && typeof b === "number" ? a - b : String(a).localeCompare(String(b), "en", { numeric: true, sensitivity: "base" });
+  return direction === "asc" ? result : -result;
 }
 
 export default function PaperLedger() {
-  const [rows, setRows] = useState<PaperTrade[]>([]);
-  const [sessions, setSessions] = useState<PaperSession[]>([]);
-  const [openingRange, setOpeningRange] = useState<OpeningRangeJournal>({ meta: {}, sessions: [] });
-  const [year, setYear] = useState("ALL"); const [month, setMonth] = useState("ALL");
-  const [callType, setCallType] = useState<"ALL" | CallType>("ALL"); const [strategyMode, setStrategyMode] = useState<StrategyMode>("V2");
-  const [trailStep, setTrailStep] = useState("5"); const [pnlFilter, setPnlFilter] = useState<PnlFilter>("ALL");
-  const [sortKey, setSortKey] = useState<SortKey>("date"); const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [lastUpdated, setLastUpdated] = useState("—"); const [loadState, setLoadState] = useState<"loading" | "ok" | "error">("loading");
-  const [dataSource, setDataSource] = useState<DataSource>(null);
-
-  useEffect(() => {
-    let active = true;
-    const applyPayload = (payload: unknown, source: Exclude<DataSource, null>) => {
-      const object = payload && typeof payload === "object" ? payload as { trades?: unknown[]; sessions?: unknown[]; openingRangeShadow?: unknown } : {};
-      const nextRows = (Array.isArray(object.trades) ? object.trades : []).map(normalizeTrade).filter(Boolean) as PaperTrade[];
-      const nextSessions = (Array.isArray(object.sessions) ? object.sessions : []).map(normalizeSession).filter(Boolean) as PaperSession[];
-      if (!nextRows.length && !nextSessions.length) return false;
-      if (active) {
-        setRows(nextRows); setSessions(nextSessions); setOpeningRange(normalizeOpeningRangeJournal(object.openingRangeShadow)); setLastUpdated(new Date().toLocaleString("en-IN")); setLoadState("ok"); setDataSource(source);
-      }
-      return true;
+  const [rows, setRows] = useState<PaperTrade[]>([]); const [sessions, setSessions] = useState<PaperSession[]>([]); const [scope, setScope] = useState<Scope>("DATE");
+  const [date, setDate] = useState(""); const [month, setMonth] = useState(""); const [year, setYear] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("strategy"); const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [lastUpdated, setLastUpdated] = useState("—"); const [loadState, setLoadState] = useState<"loading" | "ok" | "error">("loading"); const [dataSource, setDataSource] = useState<DataSource>(null);
+  useEffect(() => { let active = true; const apply = (payload: unknown, source: Exclude<DataSource, null>) => { const object = payload && typeof payload === "object" ? payload as { trades?: unknown[]; sessions?: unknown[] } : {}; const nextRows = (Array.isArray(object.trades) ? object.trades : []).map(normalizeTrade).filter(Boolean) as PaperTrade[]; const nextSessions = (Array.isArray(object.sessions) ? object.sessions : []).map(normalizeSession).filter(Boolean) as PaperSession[]; if (!nextRows.length && !nextSessions.length) return false; if (active) { setRows(nextRows); setSessions(nextSessions); setLastUpdated(new Date().toLocaleString("en-IN")); setLoadState("ok"); setDataSource(source); } return true; };
+    const load = async () => { try { const response = await fetch(`/api/paper-trades?t=${Date.now()}`, { cache: "no-store" }); if (response.ok && apply(await response.json(), "proxy")) return; } catch {} try { const [ledgerResponse, sessionsResponse] = await Promise.all([fetch(`/paper/trades.json?t=${Date.now()}`, { cache: "no-store" }), fetch(`/paper/sessions.json?t=${Date.now()}`, { cache: "no-store" })]); if (!ledgerResponse.ok) throw new Error(); const ledger = await ledgerResponse.json(); const journal = sessionsResponse.ok ? await sessionsResponse.json() : { sessions: [] }; if (apply({ trades: ledger.trades ?? ledger, sessions: journal.sessions ?? [] }, "published")) return; } catch {} if (active) { setLoadState("error"); setDataSource(null); } };
+    load(); const timer = window.setInterval(load, 60_000); return () => { active = false; window.clearInterval(timer); }; }, []);
+  const allDates = useMemo(() => Array.from(new Set([...rows.map((row) => row.date), ...sessions.map((session) => session.date)])).sort().reverse(), [rows, sessions]);
+  const years = useMemo(() => Array.from(new Set(allDates.map((value) => value.slice(0, 4)))).sort().reverse(), [allDates]); const months = useMemo(() => Array.from(new Set(allDates.map((value) => value.slice(0, 7)))).sort().reverse(), [allDates]);
+  const selectedDate = date || allDates[0] || ""; const selectedMonth = month || months[0] || ""; const selectedYear = year || years[0] || "";
+  const scopedTrades = useMemo(() => rows.filter((row) => scope === "DATE" ? row.date === selectedDate : scope === "MONTH" ? row.date.startsWith(selectedMonth) : scope === "YEAR" ? row.date.startsWith(`${selectedYear}-`) : true), [rows, scope, selectedDate, selectedMonth, selectedYear]);
+  const scopedSessions = useMemo(() => sessions.filter((session) => scope === "DATE" ? session.date === selectedDate : scope === "MONTH" ? session.date.startsWith(selectedMonth) : scope === "YEAR" ? session.date.startsWith(`${selectedYear}-`) : true), [sessions, scope, selectedDate, selectedMonth, selectedYear]);
+  const comparison = useMemo(() => strategies.map((strategy) => { const trades = scopedTrades.filter((trade) => tradeKey(trade) === strategy.key); const strategySessions = scopedSessions.filter((session) => session.thread === strategy.thread && (session.strategyVersions.includes(strategy.sessionKey) || session.strategyOutcomes?.[strategy.sessionKey] !== undefined)); const session = scope === "DATE" ? strategySessions[0] : undefined; const latestTrade = [...trades].sort((a, b) => b.date.localeCompare(a.date) || b.entryTime.localeCompare(a.entryTime))[0]; const wins = trades.filter((trade) => trade.totalPnl > 0).length, losses = trades.filter((trade) => trade.totalPnl < 0).length; const grossProfit = trades.reduce((sum, trade) => sum + Math.max(0, trade.totalPnl), 0), grossLoss = Math.abs(trades.reduce((sum, trade) => sum + Math.min(0, trade.totalPnl), 0)); const total = trades.reduce((sum, trade) => sum + trade.totalPnl, 0); return { strategy, trades, session, latestTrade, sessions: new Set(strategySessions.map((value) => value.date)).size, wins, losses, total, drawdown: maxDrawdown(trades), pf: grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : null }; }), [scopedTrades, scopedSessions, scope]);
+  const sortedComparison = useMemo(() => [...comparison].sort((a, b) => {
+    const sortValue = (row: typeof a): string | number | null => {
+      const trade = row.latestTrade;
+      if (sortKey === "strategy") return row.strategy.label;
+      if (sortKey === "cohort") return row.strategy.cohort;
+      if (sortKey === "status") return rowStatus(row);
+      if (sortKey === "sessions") return row.sessions;
+      if (sortKey === "trades") return row.trades.length;
+      if (sortKey === "winsLosses") return row.wins;
+      if (sortKey === "winRate") return row.trades.length ? row.wins / row.trades.length : null;
+      if (sortKey === "pf") return row.pf;
+      if (sortKey === "total") return row.trades.length ? row.total : null;
+      if (sortKey === "drawdown") return row.trades.length ? row.drawdown : null;
+      if (sortKey === "contract") return scope === "DATE" && trade ? trade.strikePrice : null;
+      if (sortKey === "entryExit") return scope === "DATE" && trade ? trade.entryPremium ?? null : null;
+      return scope === "DATE" && trade ? trade.exitReason ?? null : null;
     };
-    const load = async () => {
-      try {
-        const response = await fetch(`/api/paper-trades?t=${Date.now()}`, { cache: "no-store" });
-        if (response.ok && applyPayload(await response.json(), "proxy")) return;
-      } catch { /* use published files */ }
-      try {
-        const [ledgerResponse, sessionsResponse, openingRangeResponse] = await Promise.all([
-          fetch(`/paper/trades.json?t=${Date.now()}`, { cache: "no-store" }),
-          fetch(`/paper/sessions.json?t=${Date.now()}`, { cache: "no-store" }),
-          fetch(`/paper/opening-range-shadow.json?t=${Date.now()}`, { cache: "no-store" }),
-        ]);
-        if (!ledgerResponse.ok) throw new Error("published ledger unavailable");
-        const ledger = await ledgerResponse.json();
-        const sessionJournal = sessionsResponse.ok ? await sessionsResponse.json() : { sessions: [] };
-        const openingRangeShadow = openingRangeResponse.ok ? await openingRangeResponse.json() : { meta: {}, sessions: [] };
-        if (applyPayload({ trades: ledger.trades ?? ledger, sessions: sessionJournal.sessions ?? [], openingRangeShadow }, "published")) return;
-      } catch { /* surface unavailable state */ }
-      if (active) { setLoadState("error"); setDataSource(null); }
-    };
-    load(); const timer = window.setInterval(load, 60_000); return () => { active = false; window.clearInterval(timer); };
-  }, []);
-
-  const allDates = useMemo(() => [...rows.map((r) => r.date), ...sessions.map((s) => s.date)], [rows, sessions]);
-  const years = useMemo(() => Array.from(new Set(allDates.map((date) => date.slice(0, 4)))).sort().reverse(), [allDates]);
-  const months = useMemo(() => Array.from(new Set(allDates.filter((date) => year === "ALL" || date.startsWith(`${year}-`)).map((date) => date.slice(0, 7)))).sort().reverse(), [allDates, year]);
-  const trailSteps = useMemo(() => Array.from(new Set(rows.filter((r) => r.strategy === strategyName(strategyMode)).map((r) => r.trailStepPoints).filter((v): v is number => v !== undefined))).sort((a,b) => a-b), [rows, strategyMode]);
-  const effectiveTrailStep = trailSteps.includes(Number(trailStep)) ? Number(trailStep) : (trailSteps[0] ?? 5);
-
-  const displayed = useMemo(() => {
-    const wantedStrategy = strategyName(strategyMode);
-    const base = rows.map((trade, index) => ({ trade, originalRow: index + 1 })).filter(({ trade }) => {
-      if (trade.strategy !== wantedStrategy) return false;
-      if ((strategyMode === "V3" || strategyMode === "V10") && trade.trailStepPoints !== effectiveTrailStep) return false;
-      if (year !== "ALL" && !trade.date.startsWith(`${year}-`)) return false;
-      if (month !== "ALL" && !trade.date.startsWith(month)) return false;
-      if (callType !== "ALL" && trade.callType !== callType) return false;
-      if (pnlFilter === "PROFIT" && trade.totalPnl <= 0) return false;
-      if (pnlFilter === "LOSS" && trade.totalPnl >= 0) return false;
-      return true;
-    });
-    base.sort((a,b) => { const av = sortKey === "rowNo" ? a.originalRow : a.trade[sortKey as keyof PaperTrade]; const bv = sortKey === "rowNo" ? b.originalRow : b.trade[sortKey as keyof PaperTrade]; const result = compareValues(av,bv); return sortDir === "asc" ? result : -result; });
-    return base;
-  }, [rows, year, month, callType, strategyMode, effectiveTrailStep, pnlFilter, sortKey, sortDir]);
-
-  const latestSession = useMemo(() => sessions.filter((session) => {
-    if (session.thread !== threadFor(strategyMode)) return false;
-    if (year !== "ALL" && !session.date.startsWith(`${year}-`)) return false;
-    if (month !== "ALL" && !session.date.startsWith(month)) return false;
-    return true;
-  }).sort((a, b) => b.date.localeCompare(a.date) || String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")))[0] ?? null, [sessions, strategyMode, year, month]);
-
-  const totalPnl = displayed.reduce((s,r) => s + r.trade.totalPnl, 0); const profits = displayed.filter((r) => r.trade.totalPnl > 0).length;
-  const losses = displayed.filter((r) => r.trade.totalPnl < 0); const beReached = displayed.filter((r) => r.trade.breakevenReached === true).length;
-  const lossMfe10 = losses.filter((r) => (r.trade.maxFavorableMove ?? -Infinity) >= 10).length; const lossMfe20 = losses.filter((r) => (r.trade.maxFavorableMove ?? -Infinity) >= 20).length; const lossMfe30 = losses.filter((r) => (r.trade.maxFavorableMove ?? -Infinity) >= 30).length;
-  function sortBy(key: SortKey) { if (key === sortKey) setSortDir((d) => d === "asc" ? "desc" : "asc"); else { setSortKey(key); setSortDir(key === "date" ? "desc" : "asc"); } }
-
-  const ranked = latestSession ? rankedContracts(latestSession) : [];
-  const primary = ranked[0] ?? null; const backup = ranked[1] ?? null;
-  const outcomeKey = strategyMode === "V3" || strategyMode === "V10" ? `${strategyMode}-${effectiveTrailStep}` : strategyMode;
-  const selectedOutcome = latestSession?.strategyOutcomes?.[outcomeKey];
-  const selectedSessionTrade = latestSession ? rows.find((trade) => trade.date === latestSession.date && trade.strategy === strategyName(strategyMode)
-    && (strategyMode !== "V3" && strategyMode !== "V10" || trade.trailStepPoints === effectiveTrailStep)) : null;
-  const resolvedOutcome = selectedOutcome ?? (selectedSessionTrade ? { tradeCount: 1, totalPnl: selectedSessionTrade.totalPnl } : undefined);
-  const openingRangeSessions = openingRange.sessions.filter((session) => session.date >= (openingRange.meta.startedOn ?? "2026-09-02"));
-  const openingRangeLatest = [...openingRangeSessions].sort((a, b) => b.date.localeCompare(a.date))[0] ?? null;
-  const openingRangeTrades = openingRangeSessions.filter((session) => session.status === "TRADE" && session.normalized?.netPnl !== null);
-  const openingRangeNet = openingRangeTrades.reduce((sum, session) => sum + (session.normalized?.netPnl ?? 0), 0);
-  const openingRangeStress05 = openingRangeTrades.reduce((sum, session) => sum + (session.stress0_5?.netPnl ?? 0), 0);
-  const openingRangeStress10 = openingRangeTrades.reduce((sum, session) => sum + (session.stress1_0?.netPnl ?? 0), 0);
-  const openingRangeTarget = openingRange.meta.minimumProspectiveTrades ?? 100;
-
+    const result = compareSortValues(sortValue(a), sortValue(b), sortDir);
+    if (result !== 0) return result;
+    if (sortKey === "winsLosses" && a.losses !== b.losses) return sortDir === "asc" ? a.losses - b.losses : b.losses - a.losses;
+    return strategies.findIndex((strategy) => strategy.key === a.strategy.key) - strategies.findIndex((strategy) => strategy.key === b.strategy.key);
+  }), [comparison, scope, sortDir, sortKey]);
+  const activeRows = comparison.filter((row) => row.trades.length > 0); const best = [...activeRows].sort((a, b) => b.total - a.total)[0], worst = [...activeRows].sort((a, b) => a.total - b.total)[0];
+  function sortBy(key: SortKey) { if (key === sortKey) setSortDir((value) => value === "asc" ? "desc" : "asc"); else { setSortKey(key); setSortDir("asc"); } }
   return <section className={styles.ledger} id="trade-ledger">
-    <div className={styles.heading}><div><p className={styles.eyebrow}>Backtest + live paper journal</p><h2>Trade ledger</h2>
-      <p>Compare the original ₹160/₹220 family with the new ₹170/₹210 paper cohort. Session outcomes are journalled even when no trade is taken, so NO_TRADE and data-boundary days remain visible.</p></div>
-      <div className={styles.status}><span className={loadState === "ok" ? styles.ok : styles.warn} />{loadState === "loading" ? "Loading…" : loadState === "error" ? "Journal unavailable" : `${dataSource === "proxy" ? "Live GitHub journal" : "Published snapshot"} · Updated ${lastUpdated}`}</div></div>
-
-    <div className={styles.filters}>
-      <label><span>Strategy</span><select value={strategyMode} onChange={(e) => setStrategyMode(e.target.value as StrategyMode)}><option value="V2">V2 · 160/220 momentum trail</option><option value="V3">V3 · 160-based stepped trail</option><option value="V4">V4 · NIFTY-confirmed fail-fast</option><option value="V5">V5 · Confirmed + stepped</option><option value="V6">V6 · 160-stop fixed 2R</option><option value="V7">V7 · 15-minute failure exit</option><option value="V8">V8 · Capped-risk stepped trail</option><option value="V9">V9 · 170/210 momentum trail</option><option value="V10">V10 · 170/210 stepped trail</option><option value="V11">V11 · 170-stop fixed 2R</option></select></label>
-      {(strategyMode === "V3" || strategyMode === "V10") && <label><span>Stepped points</span><select value={String(effectiveTrailStep)} onChange={(e) => setTrailStep(e.target.value)}>{trailSteps.map((v) => <option key={v} value={String(v)}>{num.format(v)} pts</option>)}</select></label>}
-      <label><span>Year</span><select value={year} onChange={(e) => { setYear(e.target.value); setMonth("ALL"); }}><option value="ALL">All years</option>{years.map((v) => <option key={v}>{v}</option>)}</select></label>
-      <label><span>Month</span><select value={month} onChange={(e) => setMonth(e.target.value)}><option value="ALL">All months</option>{months.map((v) => <option key={v} value={v}>{new Date(`${v}-01T00:00:00`).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</option>)}</select></label>
-      <label><span>Call type</span><select value={callType} onChange={(e) => setCallType(e.target.value as "ALL" | CallType)}><option value="ALL">All</option><option value="CE">CE</option><option value="PE">PE</option></select></label>
-      <label><span>Profit / Loss</span><select value={pnlFilter} onChange={(e) => setPnlFilter(e.target.value as PnlFilter)}><option value="ALL">All trades</option><option value="PROFIT">Profit only</option><option value="LOSS">Loss only</option></select></label>
-    </div>
-
-    {latestSession ? <div className={styles.sessionCard}>
-      <div className={styles.sessionHeader}><div><span>Latest journalled session</span><strong>{latestSession.date} · {strategyMode === "V3" || strategyMode === "V10" ? `${strategyMode}-${effectiveTrailStep}` : strategyMode}</strong></div><span className={`${styles.sessionBadge} ${statusTone(latestSession.status)}`}>{latestSession.status}</span></div>
-      <div className={styles.sessionGrid}>
-        <div><span>Weekly expiry</span><strong>{latestSession.expiry ?? "—"}</strong></div>
-        <div><span>NIFTY 09:25</span><strong>{latestSession.spot925 === null || latestSession.spot925 === undefined ? "—" : num.format(latestSession.spot925)}</strong></div>
-        {strategyMode === "V4" || strategyMode === "V5" ? <><div><span>Primary</span><strong>{contractLabel(primary)}</strong></div><div><span>Backup</span><strong>{contractLabel(backup)}</strong></div></> : <div><span>Monitored contract</span><strong>{contractLabel(primary)}</strong></div>}
-        <div><span>Trade count</span><strong>{resolvedOutcome?.tradeCount ?? 0}</strong></div>
-        <div><span>Variant P/L</span><strong className={(resolvedOutcome?.totalPnl ?? 0) >= 0 ? styles.profit : styles.loss}>{pnl(resolvedOutcome?.totalPnl ?? null)}</strong></div>
-        {latestSession.signalSource && <div><span>Signal source</span><strong>{latestSession.signalSource}</strong></div>}
-      </div>
-      {latestSession.reason && <p className={styles.sessionReason}><strong>Reason:</strong> {latestSession.reason}</p>}
-    </div> : <div className={styles.sessionCard}><p className={styles.sessionReason}>No session journal row is available for this strategy and date filter yet.</p></div>}
-
-    <div className={styles.summary}><div><span>Visible trades</span><strong>{displayed.length}</strong></div><div><span>Profitable</span><strong>{profits}</strong></div><div><span>Losing</span><strong>{losses.length}</strong></div><div><span>BE cushion reached</span><strong>{beReached}</strong></div><div><span>Losses after +10</span><strong>{lossMfe10}</strong></div><div><span>Losses after +20</span><strong>{lossMfe20}</strong></div><div><span>Losses after +30</span><strong>{lossMfe30}</strong></div><div><span>Visible net P/L</span><strong className={totalPnl >= 0 ? styles.profit : styles.loss}>{pnl(totalPnl)}</strong></div></div>
-
-    <div className={styles.tableWrap}><table><thead><tr>{columns.map((c) => <th key={c.key}><button type="button" onClick={() => sortBy(c.key)}>{c.label}<span>{sortKey === c.key ? (sortDir === "asc" ? "▲" : "▼") : "↕"}</span></button></th>)}</tr></thead><tbody>
-      {displayed.map(({ trade, originalRow }, i) => <tr key={`${trade.date}-${trade.callType}-${trade.strikePrice}-${trade.strategy}-${trade.trailStepPoints ?? 0}-${originalRow}`}><td>{i+1}</td><td>{trade.date}</td><td>{trade.indexStockName}</td><td>{trade.weeklyExpiry}</td><td>{trade.lots}</td><td><span className={`${styles.optionBadge} ${trade.callType === "CE" ? styles.ce : styles.pe}`}>{trade.callType}</span></td><td>{num.format(trade.strikePrice)}</td><td>{premium(trade.entryPremium)}</td><td>{premium(trade.peakPremium)}</td><td>{premium(trade.maxFavorableMove)}</td><td>{trade.trailStepPoints === undefined ? "—" : `${num.format(trade.trailStepPoints)} pts`}</td><td>{trade.trailGapPoints === undefined ? "—" : `${num.format(trade.trailGapPoints)} pts`}</td><td>{trade.breakevenReached === undefined ? "—" : trade.breakevenReached ? "Yes" : "No"}</td><td>₹{num.format(trade.startTarget)}</td><td>₹{num.format(trade.startStopLoss)}</td><td>₹{num.format(trade.endStopLoss)}</td><td>{trade.entryTime || "—"}</td><td>{trade.exitTime || "—"}</td><td>{premium(trade.exitPremium)}</td><td>{trade.exitReason || "—"}</td><td>{trade.stopLossAdjustments}</td><td className={(trade.grossPnl ?? 0) >= 0 ? styles.profit : styles.loss}>{pnl(trade.grossPnl)}</td><td>{trade.charges === undefined ? "—" : `₹${money.format(trade.charges)}`}</td><td className={trade.totalPnl >= 0 ? styles.profit : styles.loss}>{pnl(trade.totalPnl)}</td></tr>)}
-      {!displayed.length && <tr><td className={styles.empty} colSpan={24}>No validated trades are available for this strategy/step selection. Check the session card above for NO_TRADE or data-quality outcomes.</td></tr>}
-    </tbody></table></div>
-    <div className={styles.experimentalCard}>
-      <div className={styles.sessionHeader}><div><span>Isolated experimental shadow lane</span><strong>30-minute opening-range ATM credit spread</strong></div><span className={`${styles.sessionBadge} ${styles.sessionWarn}`}>REJECTED / UNCONFIRMED</span></div>
-      <p className={styles.sessionReason}>Prospective one-lot observation only. It is excluded from V2–V11 totals and cannot place an order. Historical discovery had only 41 trades and failed the 1-point, robustness, and concentration gates.</p>
-      <div className={styles.sessionGrid}>
-        <div><span>Prospective sample</span><strong>{openingRangeTrades.length} / {openingRangeTarget} trades</strong></div>
-        <div><span>Normal net P/L</span><strong className={openingRangeNet >= 0 ? styles.profit : styles.loss}>{pnl(openingRangeTrades.length ? openingRangeNet : null)}</strong></div>
-        <div><span>0.5-point stress</span><strong className={openingRangeStress05 >= 0 ? styles.profit : styles.loss}>{pnl(openingRangeTrades.length ? openingRangeStress05 : null)}</strong></div>
-        <div><span>1-point stress</span><strong className={openingRangeStress10 >= 0 ? styles.profit : styles.loss}>{pnl(openingRangeTrades.length ? openingRangeStress10 : null)}</strong></div>
-        <div><span>Latest session</span><strong>{openingRangeLatest ? `${openingRangeLatest.date} · ${openingRangeLatest.status}` : "Awaiting first session"}</strong></div>
-        <div><span>Latest spread</span><strong>{openingRangeLatest?.short && openingRangeLatest?.long ? `${contractLabel(openingRangeLatest.short)} / hedge ${contractLabel(openingRangeLatest.long)}` : "—"}</strong></div>
-        <div><span>Latest entry credit</span><strong>{premium(openingRangeLatest?.entryCredit)}</strong></div>
-        <div><span>Latest exit</span><strong>{openingRangeLatest?.exitReason ?? "—"}</strong></div>
-      </div>
-      {openingRangeLatest?.reason && <p className={styles.sessionReason}><strong>Latest reason:</strong> {openingRangeLatest.reason}</p>}
-    </div>
-    <p className={styles.footnote}>Paper/research mode only. V2–V11 are counterfactual alternatives, never additive account profit. The ₹170/₹210 cohort begins 1 September 2026 and is not retroactively added to earlier paper sessions. No broker order is placed.</p>
+    <div className={styles.heading}><div><p className={styles.eyebrow}>Unified paper strategy view</p><h2>All strategies, one screen</h2><p>Compare every V2–V11 paper variant for one date, month, year, or the complete journal. A missing trade is shown explicitly instead of hiding the strategy.</p></div><div className={styles.status}><span className={loadState === "ok" ? styles.ok : styles.warn} />{loadState === "loading" ? "Loading…" : loadState === "error" ? "Journal unavailable" : `${dataSource === "proxy" ? "Live GitHub journal" : "Published snapshot"} · Updated ${lastUpdated}`}</div></div>
+    <div className={styles.scopeTabs} role="group" aria-label="Time range">{(["DATE", "MONTH", "YEAR", "ALL"] as Scope[]).map((value) => <button key={value} type="button" className={scope === value ? styles.scopeActive : ""} onClick={() => setScope(value)}>{value === "ALL" ? "All time" : value[0] + value.slice(1).toLowerCase()}</button>)}</div>
+    <div className={styles.periodBar}>{scope === "DATE" && <label><span>Selected date</span><select value={selectedDate} onChange={(event) => setDate(event.target.value)}>{allDates.map((value) => <option key={value} value={value}>{new Date(`${value}T00:00:00`).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}</option>)}</select></label>}{scope === "MONTH" && <label><span>Selected month</span><select value={selectedMonth} onChange={(event) => setMonth(event.target.value)}>{months.map((value) => <option key={value} value={value}>{new Date(`${value}-01T00:00:00`).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</option>)}</select></label>}{scope === "YEAR" && <label><span>Selected year</span><select value={selectedYear} onChange={(event) => setYear(event.target.value)}>{years.map((value) => <option key={value}>{value}</option>)}</select></label>}<div><span>Showing</span><strong>{selectedDate && selectedMonth && selectedYear ? scopeLabel(scope, selectedDate, selectedMonth, selectedYear) : "Loading journal…"}</strong></div></div>
+    <div className={styles.summary}><div><span>Strategies shown</span><strong>{strategies.length}</strong></div><div><span>Strategies with trades</span><strong>{activeRows.length}</strong></div><div><span>Best in period</span><strong className={styles.profit}>{best ? `${best.strategy.key} · ${pnl(best.total)}` : "—"}</strong></div><div><span>Lowest in period</span><strong className={worst && worst.total < 0 ? styles.loss : styles.profit}>{worst ? `${worst.strategy.key} · ${pnl(worst.total)}` : "—"}</strong></div></div>
+    <div className={styles.comparisonWrap}><table className={styles.comparisonTable}><thead><tr>{comparisonColumns.map((column) => <th key={column.key} aria-sort={sortKey === column.key ? (sortDir === "asc" ? "ascending" : "descending") : "none"}><button type="button" onClick={() => sortBy(column.key)}>{column.label}<span aria-hidden="true">{sortKey === column.key ? (sortDir === "asc" ? "▲" : "▼") : "↕"}</span></button></th>)}</tr></thead><tbody>{sortedComparison.map((row) => { const trade = row.latestTrade, status = rowStatus(row); return <tr key={row.strategy.key}><td className={styles.strategyCell}><strong>{row.strategy.label}</strong><span>{row.strategy.shortRule}</span>{!row.trades.length && row.session?.reason && <small>{row.session.reason}</small>}</td><td><span className={`${styles.cohortBadge} ${row.strategy.cohort === "₹170 / ₹210" ? styles.cohort170 : row.strategy.cohort === "NIFTY confirmed" ? styles.cohortConfirmed : ""}`}>{row.strategy.cohort}</span></td><td><span className={`${styles.sessionBadge} ${status === "TRADED" || status === "CLOSED" ? styles.sessionGood : status === "NO_TRADE" ? styles.sessionNeutral : styles.sessionWarn}`}>{status.replace("_", " ")}</span></td><td>{row.sessions}</td><td>{row.trades.length}</td><td>{row.wins} / {row.losses}</td><td>{row.trades.length ? `${money.format(row.wins / row.trades.length * 100)}%` : "—"}</td><td>{row.pf === Infinity ? "∞" : row.pf === null ? "—" : row.pf.toFixed(3)}</td><td className={row.total >= 0 ? styles.profit : styles.loss}>{row.trades.length ? pnl(row.total) : "—"}</td><td>{row.trades.length ? pnl(-row.drawdown) : "—"}</td><td>{scope === "DATE" && trade ? `${num.format(trade.strikePrice)} ${trade.callType}` : "—"}</td><td>{scope === "DATE" && trade ? `${premium(trade.entryPremium)} → ${premium(trade.exitPremium)}` : "—"}</td><td>{scope === "DATE" && trade ? trade.exitReason ?? "—" : "—"}</td></tr>; })}</tbody></table></div>
+    <p className={styles.footnote}>Each row is a counterfactual strategy result; rows are not additive account profit. Month, year and all-time views aggregate only journalled paper trades. The ₹170/₹210 cohort starts on 1 September 2026 and is never backfilled.</p>
   </section>;
 }
