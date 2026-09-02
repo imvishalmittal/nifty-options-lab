@@ -27,6 +27,17 @@ type PaperSession = {
   tradeCount: number; totalPnl?: number | null; strategyOutcomes?: Record<string, { tradeCount: number; totalPnl: number | null }>;
 };
 
+type OpeningRangeScenario = { netPnl: number | null; grossPnl: number | null; charges: number | null };
+type OpeningRangeSession = {
+  date: string; status: string; reason?: string | null; signalDirection?: string | null; expiry?: string | null;
+  short?: SessionContract | null; long?: SessionContract | null; entryCredit?: number | null; exitReason?: string | null;
+  lotSize?: number | null; normalized?: OpeningRangeScenario | null; stress0_5?: OpeningRangeScenario | null; stress1_0?: OpeningRangeScenario | null;
+};
+type OpeningRangeJournal = {
+  meta: { minimumProspectiveTrades?: number; startedOn?: string; selectionStatus?: string; confirmedEdge?: boolean };
+  sessions: OpeningRangeSession[];
+};
+
 type SortKey = "rowNo" | keyof PaperTrade;
 
 const money = new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -99,6 +110,28 @@ function normalizeSession(value: unknown): PaperSession | null {
     tradeCount: Number.isFinite(Number(row.tradeCount)) ? Number(row.tradeCount) : 0, totalPnl: optionalNumber(row.totalPnl) ?? null, strategyOutcomes,
   };
 }
+function normalizeOpeningRangeJournal(value: unknown): OpeningRangeJournal {
+  if (!value || typeof value !== "object") return { meta: {}, sessions: [] };
+  const row = value as { meta?: OpeningRangeJournal["meta"]; sessions?: unknown[] };
+  const sessions = (Array.isArray(row.sessions) ? row.sessions : []).flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const source = item as Partial<OpeningRangeSession>;
+    if (!source.date || !source.status) return [];
+    const scenario = (candidate: unknown): OpeningRangeScenario | null => {
+      if (!candidate || typeof candidate !== "object") return null;
+      const record = candidate as Partial<OpeningRangeScenario>;
+      return { netPnl: optionalNumber(record.netPnl) ?? null, grossPnl: optionalNumber(record.grossPnl) ?? null, charges: optionalNumber(record.charges) ?? null };
+    };
+    return [{
+      date: String(source.date), status: String(source.status), reason: source.reason ? String(source.reason) : null,
+      signalDirection: source.signalDirection ? String(source.signalDirection) : null, expiry: source.expiry ? String(source.expiry) : null,
+      short: normalizeContract(source.short), long: normalizeContract(source.long), entryCredit: optionalNumber(source.entryCredit) ?? null,
+      exitReason: source.exitReason ? String(source.exitReason) : null, lotSize: optionalNumber(source.lotSize) ?? null,
+      normalized: scenario(source.normalized), stress0_5: scenario(source.stress0_5), stress1_0: scenario(source.stress1_0),
+    }];
+  });
+  return { meta: row.meta ?? {}, sessions };
+}
 function compareValues(a: unknown, b: unknown) {
   if (typeof a === "boolean" && typeof b === "boolean") return Number(a) - Number(b);
   if (typeof a === "number" && typeof b === "number") return a - b;
@@ -132,6 +165,7 @@ function statusTone(status: string) {
 export default function PaperLedger() {
   const [rows, setRows] = useState<PaperTrade[]>([]);
   const [sessions, setSessions] = useState<PaperSession[]>([]);
+  const [openingRange, setOpeningRange] = useState<OpeningRangeJournal>({ meta: {}, sessions: [] });
   const [year, setYear] = useState("ALL"); const [month, setMonth] = useState("ALL");
   const [callType, setCallType] = useState<"ALL" | CallType>("ALL"); const [strategyMode, setStrategyMode] = useState<StrategyMode>("V2");
   const [trailStep, setTrailStep] = useState("5"); const [pnlFilter, setPnlFilter] = useState<PnlFilter>("ALL");
@@ -142,12 +176,12 @@ export default function PaperLedger() {
   useEffect(() => {
     let active = true;
     const applyPayload = (payload: unknown, source: Exclude<DataSource, null>) => {
-      const object = payload && typeof payload === "object" ? payload as { trades?: unknown[]; sessions?: unknown[] } : {};
+      const object = payload && typeof payload === "object" ? payload as { trades?: unknown[]; sessions?: unknown[]; openingRangeShadow?: unknown } : {};
       const nextRows = (Array.isArray(object.trades) ? object.trades : []).map(normalizeTrade).filter(Boolean) as PaperTrade[];
       const nextSessions = (Array.isArray(object.sessions) ? object.sessions : []).map(normalizeSession).filter(Boolean) as PaperSession[];
       if (!nextRows.length && !nextSessions.length) return false;
       if (active) {
-        setRows(nextRows); setSessions(nextSessions); setLastUpdated(new Date().toLocaleString("en-IN")); setLoadState("ok"); setDataSource(source);
+        setRows(nextRows); setSessions(nextSessions); setOpeningRange(normalizeOpeningRangeJournal(object.openingRangeShadow)); setLastUpdated(new Date().toLocaleString("en-IN")); setLoadState("ok"); setDataSource(source);
       }
       return true;
     };
@@ -157,14 +191,16 @@ export default function PaperLedger() {
         if (response.ok && applyPayload(await response.json(), "proxy")) return;
       } catch { /* use published files */ }
       try {
-        const [ledgerResponse, sessionsResponse] = await Promise.all([
+        const [ledgerResponse, sessionsResponse, openingRangeResponse] = await Promise.all([
           fetch(`/paper/trades.json?t=${Date.now()}`, { cache: "no-store" }),
           fetch(`/paper/sessions.json?t=${Date.now()}`, { cache: "no-store" }),
+          fetch(`/paper/opening-range-shadow.json?t=${Date.now()}`, { cache: "no-store" }),
         ]);
         if (!ledgerResponse.ok) throw new Error("published ledger unavailable");
         const ledger = await ledgerResponse.json();
         const sessionJournal = sessionsResponse.ok ? await sessionsResponse.json() : { sessions: [] };
-        if (applyPayload({ trades: ledger.trades ?? ledger, sessions: sessionJournal.sessions ?? [] }, "published")) return;
+        const openingRangeShadow = openingRangeResponse.ok ? await openingRangeResponse.json() : { meta: {}, sessions: [] };
+        if (applyPayload({ trades: ledger.trades ?? ledger, sessions: sessionJournal.sessions ?? [], openingRangeShadow }, "published")) return;
       } catch { /* surface unavailable state */ }
       if (active) { setLoadState("error"); setDataSource(null); }
     };
@@ -212,6 +248,13 @@ export default function PaperLedger() {
   const selectedSessionTrade = latestSession ? rows.find((trade) => trade.date === latestSession.date && trade.strategy === strategyName(strategyMode)
     && (strategyMode !== "V3" && strategyMode !== "V10" || trade.trailStepPoints === effectiveTrailStep)) : null;
   const resolvedOutcome = selectedOutcome ?? (selectedSessionTrade ? { tradeCount: 1, totalPnl: selectedSessionTrade.totalPnl } : undefined);
+  const openingRangeSessions = openingRange.sessions.filter((session) => session.date >= (openingRange.meta.startedOn ?? "2026-09-02"));
+  const openingRangeLatest = [...openingRangeSessions].sort((a, b) => b.date.localeCompare(a.date))[0] ?? null;
+  const openingRangeTrades = openingRangeSessions.filter((session) => session.status === "TRADE" && session.normalized?.netPnl !== null);
+  const openingRangeNet = openingRangeTrades.reduce((sum, session) => sum + (session.normalized?.netPnl ?? 0), 0);
+  const openingRangeStress05 = openingRangeTrades.reduce((sum, session) => sum + (session.stress0_5?.netPnl ?? 0), 0);
+  const openingRangeStress10 = openingRangeTrades.reduce((sum, session) => sum + (session.stress1_0?.netPnl ?? 0), 0);
+  const openingRangeTarget = openingRange.meta.minimumProspectiveTrades ?? 100;
 
   return <section className={styles.ledger} id="trade-ledger">
     <div className={styles.heading}><div><p className={styles.eyebrow}>Backtest + live paper journal</p><h2>Trade ledger</h2>
@@ -246,6 +289,21 @@ export default function PaperLedger() {
       {displayed.map(({ trade, originalRow }, i) => <tr key={`${trade.date}-${trade.callType}-${trade.strikePrice}-${trade.strategy}-${trade.trailStepPoints ?? 0}-${originalRow}`}><td>{i+1}</td><td>{trade.date}</td><td>{trade.indexStockName}</td><td>{trade.weeklyExpiry}</td><td>{trade.lots}</td><td><span className={`${styles.optionBadge} ${trade.callType === "CE" ? styles.ce : styles.pe}`}>{trade.callType}</span></td><td>{num.format(trade.strikePrice)}</td><td>{premium(trade.entryPremium)}</td><td>{premium(trade.peakPremium)}</td><td>{premium(trade.maxFavorableMove)}</td><td>{trade.trailStepPoints === undefined ? "—" : `${num.format(trade.trailStepPoints)} pts`}</td><td>{trade.trailGapPoints === undefined ? "—" : `${num.format(trade.trailGapPoints)} pts`}</td><td>{trade.breakevenReached === undefined ? "—" : trade.breakevenReached ? "Yes" : "No"}</td><td>₹{num.format(trade.startTarget)}</td><td>₹{num.format(trade.startStopLoss)}</td><td>₹{num.format(trade.endStopLoss)}</td><td>{trade.entryTime || "—"}</td><td>{trade.exitTime || "—"}</td><td>{premium(trade.exitPremium)}</td><td>{trade.exitReason || "—"}</td><td>{trade.stopLossAdjustments}</td><td className={(trade.grossPnl ?? 0) >= 0 ? styles.profit : styles.loss}>{pnl(trade.grossPnl)}</td><td>{trade.charges === undefined ? "—" : `₹${money.format(trade.charges)}`}</td><td className={trade.totalPnl >= 0 ? styles.profit : styles.loss}>{pnl(trade.totalPnl)}</td></tr>)}
       {!displayed.length && <tr><td className={styles.empty} colSpan={24}>No validated trades are available for this strategy/step selection. Check the session card above for NO_TRADE or data-quality outcomes.</td></tr>}
     </tbody></table></div>
+    <div className={styles.experimentalCard}>
+      <div className={styles.sessionHeader}><div><span>Isolated experimental shadow lane</span><strong>30-minute opening-range ATM credit spread</strong></div><span className={`${styles.sessionBadge} ${styles.sessionWarn}`}>REJECTED / UNCONFIRMED</span></div>
+      <p className={styles.sessionReason}>Prospective one-lot observation only. It is excluded from V2–V11 totals and cannot place an order. Historical discovery had only 41 trades and failed the 1-point, robustness, and concentration gates.</p>
+      <div className={styles.sessionGrid}>
+        <div><span>Prospective sample</span><strong>{openingRangeTrades.length} / {openingRangeTarget} trades</strong></div>
+        <div><span>Normal net P/L</span><strong className={openingRangeNet >= 0 ? styles.profit : styles.loss}>{pnl(openingRangeTrades.length ? openingRangeNet : null)}</strong></div>
+        <div><span>0.5-point stress</span><strong className={openingRangeStress05 >= 0 ? styles.profit : styles.loss}>{pnl(openingRangeTrades.length ? openingRangeStress05 : null)}</strong></div>
+        <div><span>1-point stress</span><strong className={openingRangeStress10 >= 0 ? styles.profit : styles.loss}>{pnl(openingRangeTrades.length ? openingRangeStress10 : null)}</strong></div>
+        <div><span>Latest session</span><strong>{openingRangeLatest ? `${openingRangeLatest.date} · ${openingRangeLatest.status}` : "Awaiting first session"}</strong></div>
+        <div><span>Latest spread</span><strong>{openingRangeLatest?.short && openingRangeLatest?.long ? `${contractLabel(openingRangeLatest.short)} / hedge ${contractLabel(openingRangeLatest.long)}` : "—"}</strong></div>
+        <div><span>Latest entry credit</span><strong>{premium(openingRangeLatest?.entryCredit)}</strong></div>
+        <div><span>Latest exit</span><strong>{openingRangeLatest?.exitReason ?? "—"}</strong></div>
+      </div>
+      {openingRangeLatest?.reason && <p className={styles.sessionReason}><strong>Latest reason:</strong> {openingRangeLatest.reason}</p>}
+    </div>
     <p className={styles.footnote}>Paper/research mode only. V2–V11 are counterfactual alternatives, never additive account profit. The ₹170/₹210 cohort begins 1 September 2026 and is not retroactively added to earlier paper sessions. No broker order is placed.</p>
   </section>;
 }

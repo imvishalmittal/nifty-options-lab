@@ -19,9 +19,10 @@ async function fetchJson(path: string, required = true) {
 
 export async function GET() {
   try {
-    const [ledger, sessionJournal] = await Promise.all([
+    const [ledger, sessionJournal, openingRangeShadow] = await Promise.all([
       fetchJson("trades.json"),
       fetchJson("sessions.json", false),
+      fetchJson("opening-range-shadow.json", false),
     ]);
     return NextResponse.json(
       {
@@ -29,6 +30,7 @@ export async function GET() {
         trades: Array.isArray(ledger?.trades) ? ledger.trades : [],
         sessions: Array.isArray(sessionJournal?.sessions) ? sessionJournal.sessions : [],
         sessionMeta: sessionJournal?.meta ?? {},
+        openingRangeShadow: openingRangeShadow ?? { meta: {}, sessions: [] },
       },
       { headers: { "Cache-Control": "no-store, max-age=0" } },
     );

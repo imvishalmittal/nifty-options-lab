@@ -45,6 +45,8 @@ Important accounting rule: variants are counterfactual outcomes, not independent
 
 The latest published paper session is 1 September 2026. It was a valid no-trade session for both threads: authentication and contract discovery succeeded, but the completed signal was outside the executable band. V9–V11 started prospectively on that date and are not backfilled into earlier paper dates. See `public/paper/sessions.json` for the auditable session ledger.
 
+An additional, isolated experimental lane observes the rejected 30-minute opening-range ATM credit spread prospectively from 2 September 2026. It is not a V-number, uses one lot per observation, has no broker-order path, is excluded from V2–V11 and account totals, and is never backfilled. The purpose is to collect at least 100 prospective trades under the already frozen rules—not to relabel the historical rejection as a selected strategy. Its journal is `public/paper/opening-range-shadow.json`.
+
 ## Completed backtests
 
 Amounts below include the repository's normal cost model. “0.5” and “1.0” are the strategy's adverse slippage stress scenarios unless otherwise stated.
@@ -189,7 +191,7 @@ All 60 discovery shards, consolidation, and causal/structural integrity complete
 - Largest positive-year concentration: 53.53%
 - Data-missing sessions: 8/1,243 (0.64%); integrity passed
 
-It passed normal and 0.5-point profitability/PF, yearly stability, active-month stability, missing-data, and integrity gates. It failed the minimum 100-trade sample, 1-point profitability, clustered-confidence, and 50% concentration gates. Discovery is therefore **REJECTED**; 2025 and 2026 remain sealed and it is not added to paper trading.
+It passed normal and 0.5-point profitability/PF, yearly stability, active-month stability, missing-data, and integrity gates. It failed the minimum 100-trade sample, 1-point profitability, clustered-confidence, and 50% concentration gates. Discovery therefore remains **REJECTED** and 2025/2026 remain sealed. A user-authorized experimental shadow lane begins prospectively on 2 September 2026 solely to collect new observations; it does not change this verdict or permit live promotion.
 
 ## Remaining research boundaries
 
@@ -198,7 +200,7 @@ No fully specified, implemented strategy is waiting for its first clean backtest
 | Strategy family | Current state | What remains |
 |---|---|---|
 | Williams %R plus 5/15/50 EMA bear-call spread | **INCONCLUSIVE** | One 2025 trade and zero post-publication trades; no promotion or parameter tuning |
-| 30-minute breakout with ATM option selling | **REJECTED** | Assumption-explicit defined-risk discovery completed; 41 trades, failed sample, 1-point stress, clustered-confidence, and concentration gates |
+| 30-minute breakout with ATM option selling | **REJECTED · EXPERIMENTAL SHADOW** | Historical gates failed; isolated prospective one-lot observation is collecting up to a 100-trade review point without backfill or promotion |
 | Monthly “Ramesh–Suresh” strangle/iron condor | **INCOMPLETE SPEC** | Entry timing and stop/adjustment rules are incomplete |
 | Smart strangle near 0.08 delta | **INCOMPLETE SPEC** | Educational strike-selection idea lacks complete entry, stop, adjustment, and exit rules |
 
