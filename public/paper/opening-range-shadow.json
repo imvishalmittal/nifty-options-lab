@@ -11,7 +11,7 @@
     "lotsPerObservation": 1,
     "minimumProspectiveTrades": 100,
     "selectionStatus": "REJECTED_UNCONFIRMED",
-    "updatedAt": "2026-09-03T14:41:23.704Z"
+    "updatedAt": "2026-09-04T13:53:05.054Z"
   },
   "sessions": [
     {
@@ -41,6 +41,28 @@
       "status": "FAILED",
       "reason": "Groww /historical/expiries failed (400): Year cannot be in the future",
       "updatedAt": "2026-09-03T14:41:23.704Z",
+      "signalDirection": null,
+      "rangeHigh": null,
+      "rangeLow": null,
+      "confirmationTimestamp": null,
+      "expiry": null,
+      "short": null,
+      "long": null,
+      "entryTimestamp": null,
+      "entryCredit": null,
+      "exitTimestamp": null,
+      "exitReason": null,
+      "lotSize": null,
+      "ambiguous": false,
+      "normalized": null,
+      "stress0_5": null,
+      "stress1_0": null
+    },
+    {
+      "date": "2026-09-04",
+      "status": "FAILED",
+      "reason": "Groww /historical/expiries failed (400): Year cannot be in the future",
+      "updatedAt": "2026-09-04T13:53:05.054Z",
       "signalDirection": null,
       "rangeHigh": null,
       "rangeLow": null,
