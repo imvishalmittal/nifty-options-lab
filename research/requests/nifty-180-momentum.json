@@ -1,0 +1,7 @@
+{
+  "start": "2025-01-01",
+  "end": "2025-12-31",
+  "lotSize": 65,
+  "requestedAt": "2026-09-05T00:00:00Z",
+  "purpose": "Placeholder push-trigger request for the new momentum/stepped-trail integrity workflow. Update start/end/lotSize and push to research/nifty-180-runs to trigger a run; this file is not itself decision-grade evidence."
+}

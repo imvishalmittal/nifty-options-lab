@@ -6,17 +6,10 @@ import {
 } from './paper-engine.mjs';
 import { candleAt, completedCandles, createGrowwPaperClient, indiaParts, sleep, waitUntil } from './groww-paper-client.mjs';
 import { selectPaperContracts } from './paper-contract-selection.mjs';
+import { paperOptionCosts } from './option-costs.mjs';
 
 const JOURNAL = 'public/paper/trades.json';
 const STATUS = 'public/paper/session-status.json';
-function optionCosts(entry, exit, units, tradeDate) {
-  const sttRate = tradeDate < '2026-04-01' ? 0.001 : 0.0015;
-  const buy = entry * units, sell = exit * units, total = buy + sell;
-  const brokerage = 40, exchange = total * 0.0003503, sebi = total * 0.000001, ipft = total * 0.000005, stamp = buy * 0.00003, stt = sell * sttRate;
-  const gst = (brokerage + exchange + sebi + ipft) * 0.18;
-  const charges = brokerage + exchange + sebi + ipft + stamp + stt + gst;
-  return { gross: (exit - entry) * units, charges, net: (exit - entry) * units - charges };
-}
 function writeStatus(value) { fs.mkdirSync('public/paper', { recursive: true }); fs.writeFileSync(STATUS, JSON.stringify({ updatedAt: new Date().toISOString(), ...value }, null, 2)); }
 function paperKey(row) { return `${row.source}|${row.date}|${row.strategy}|${row.trailStepPoints ?? ''}`; }
 function appendTrades(rows) {
@@ -30,7 +23,7 @@ function appendTrades(rows) {
 function positionStatus(position) { return { activeStop: Number(position.activeStop.toFixed(2)), targetPremium: position.targetPremium, peakPremium: Number(position.peakHigh.toFixed(2)), barsProcessed: position.barsProcessed, pendingTimeExitFrom: position.pendingTimeExitFrom, stopLossAdjustments: Math.max(0, position.stopHistory.length - 1), exit: position.exit }; }
 function buildRow({ position, date, expiry, chosen, lots }) {
   if (!position.exit) throw new Error(`${position.variant.id} has no executable exit`);
-  const units = lots * PAPER_RULES.lotSize; const pnl = optionCosts(position.entry, position.exit.price, units, date); const mfe = position.peakHigh - position.entry; const variant = position.variant;
+  const units = lots * PAPER_RULES.lotSize; const pnl = paperOptionCosts(position.entry, position.exit.price, units, date); const mfe = position.peakHigh - position.entry; const variant = position.variant;
   const startTarget = variant.kind === 'fixed_target' ? position.targetPremium : variant.trailActivationPremium ?? (variant.kind === 'v2' ? PAPER_RULES.trailActivation : Number((position.entry + PAPER_RULES.trailGap).toFixed(2)));
   const row = { source: 'PAPER', strategy: variant.strategy, strategyVersion: variant.strategyVersion, cohort: variant.cohort ?? '160/220', date, indexStockName: 'NIFTY 50', weeklyExpiry: expiry, lots, callType: chosen.side, strikePrice: chosen.strike, startTarget, startStopLoss: position.initialStop, endStopLoss: Number(position.activeStop.toFixed(2)), entryTime: timeOf(position.entryTime), exitTime: timeOf(position.exit.time), stopLossAdjustments: Math.max(0, position.stopHistory.length - 1), totalPnl: Number(pnl.net.toFixed(2)), entryPremium: position.entry, peakPremium: Number(position.peakHigh.toFixed(2)), maxFavorableMove: Number(mfe.toFixed(2)), breakevenReached: position.activeStop >= position.entry, trailGapPoints: PAPER_RULES.trailGap, exitPremium: position.exit.price, exitReason: position.exit.result, grossPnl: Number(pnl.gross.toFixed(2)), charges: Number(pnl.charges.toFixed(2)) };
   if (variant.kind === 'v3' || variant.kind === 'v3_time') row.trailStepPoints = variant.trailStep;

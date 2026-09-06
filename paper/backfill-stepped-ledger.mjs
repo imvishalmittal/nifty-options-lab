@@ -49,7 +49,7 @@ function rowFromTrade(trade, step) {
 const generated = [];
 for (const entry of fs.readdirSync(root, { withFileTypes: true }).filter((item) => item.isDirectory())) {
   const resultPath = path.join(root, entry.name, 'result.json');
-  if (!fs.existsSync(resultPath)) continue;
+  if (!fs.existsSync(resultPath)) throw new Error(`Incomplete stepped backfill input: ${entry.name}/result.json is missing`);
   const result = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
   for (const step of steps) {
     const variant = result.variants?.[String(step)];

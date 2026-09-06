@@ -1,15 +1,17 @@
 import fs from 'node:fs';
 
 export function validateNifty180Result(result) {
-  const diagnostics = result?.diagnostics ?? {};
+  const diagnostics = result?.diagnostics ?? result?.baselineDiagnostics ?? {};
   const blockers = [];
   const missingDays = Number(diagnostics.missingDays ?? 0);
   const boundaryDays = Number(diagnostics.boundaryDays ?? 0);
   const ambiguousDays = Number(diagnostics.ambiguousDays ?? 0);
+  const rateLimitRetries = Number(diagnostics.rateLimitRetries ?? 0);
 
   if (missingDays > 0) blockers.push(`${missingDays} DATA_MISSING session(s)`);
   if (boundaryDays > 0) blockers.push(`${boundaryDays} CANDIDATE_BOUNDARY session(s)`);
   if (ambiguousDays > 0) blockers.push(`${ambiguousDays} AMBIGUOUS session(s)`);
+  if (rateLimitRetries > 0) blockers.push(`${rateLimitRetries} rate-limit retry/retries`);
 
   return {
     valid: blockers.length === 0,

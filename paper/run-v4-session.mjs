@@ -5,17 +5,10 @@ import {
 import { candleAt, completedCandles, createGrowwPaperClient, indiaParts, sleep, waitUntil } from './groww-paper-client.mjs';
 import { selectPaperContracts } from './paper-contract-selection.mjs';
 import { classifyV4Entry, CONFIRMED_VARIANTS, initialV4Position, processV4CompletedBar } from './v4-engine.mjs';
+import { paperOptionCosts } from './option-costs.mjs';
 
 const JOURNAL = 'public/paper/v4-trades.json';
 const STATUS = 'public/paper/v4-session-status.json';
-function optionCosts(entry, exit, units, tradeDate) {
-  const sttRate = tradeDate < '2026-04-01' ? 0.001 : 0.0015;
-  const buy = entry * units, sell = exit * units, total = buy + sell;
-  const brokerage = 40, exchange = total * 0.0003503, sebi = total * 0.000001, ipft = total * 0.000005, stamp = buy * 0.00003, stt = sell * sttRate;
-  const gst = (brokerage + exchange + sebi + ipft) * 0.18;
-  const charges = brokerage + exchange + sebi + ipft + stamp + stt + gst;
-  return { gross: (exit - entry) * units, charges, net: (exit - entry) * units - charges };
-}
 function writeStatus(value) { fs.mkdirSync('public/paper', { recursive: true }); fs.writeFileSync(STATUS, JSON.stringify({ updatedAt: new Date().toISOString(), ...value }, null, 2)); }
 function tradeKey(row) { return `${row.source}|${row.date}|${row.strategy}`; }
 function appendTrades(rows) {
@@ -30,7 +23,7 @@ function appendTrades(rows) {
 function positionStatus(position) { return { activeStop: Number(position.activeStop.toFixed(2)), peakPremium: Number(position.peakHigh.toFixed(2)), stopLossAdjustments: Math.max(0, position.stopHistory.length - 1), pendingFailFastFrom: position.pendingFailFastFrom, exit: position.exit }; }
 function buildRow({ position, date, expiry, chosen, lots, signalInfo }) {
   if (!position.exit) throw new Error(`${position.variant.id} has no executable exit`);
-  const units = lots * PAPER_RULES.lotSize; const pnl = optionCosts(position.entry, position.exit.price, units, date); const mfe = position.peakHigh - position.entry;
+  const units = lots * PAPER_RULES.lotSize; const pnl = paperOptionCosts(position.entry, position.exit.price, units, date); const mfe = position.peakHigh - position.entry;
   const variant = position.variant;
   const row = {
     source: 'PAPER', strategy: variant.strategy, strategyVersion: variant.strategyVersion, date, indexStockName: 'NIFTY 50', weeklyExpiry: expiry, lots,

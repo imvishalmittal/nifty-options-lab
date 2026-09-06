@@ -45,7 +45,7 @@ function rowFromTrade(trade) {
 const generated = [];
 for (const entry of fs.readdirSync(root, { withFileTypes: true }).filter((item) => item.isDirectory())) {
   const resultPath = path.join(root, entry.name, 'result.json');
-  if (!fs.existsSync(resultPath)) continue;
+  if (!fs.existsSync(resultPath)) throw new Error(`Incomplete backfill input: ${entry.name}/result.json is missing`);
   const result = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
   const variant = result.variants?.[String(trailGap)];
   if (!variant?.trades) throw new Error(`${entry.name} does not contain trail variant ${trailGap}`);

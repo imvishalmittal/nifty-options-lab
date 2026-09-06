@@ -78,7 +78,11 @@ export function classifyV4Signal({ callSelection, putSelection, callCandles, put
     const backupBar = backupMap.get(clock);
     const niftyBar = niftyMap.get(clock);
 
-    if (primaryBar) primaryArmed = primaryBar.close > rules.referencePremium;
+    if (primaryBar) {
+      const previous = previousBar(primaryCandles, primaryBar.timestamp);
+      if (previous && previous.close <= rules.referencePremium && primaryBar.close > rules.referencePremium) primaryArmed = true;
+      if (primaryBar.close <= rules.referencePremium) primaryArmed = false;
+    }
     if (backupBar) {
       const previous = previousBar(backupCandles, backupBar.timestamp);
       if (previous && previous.close <= rules.referencePremium && backupBar.close > rules.referencePremium) backupArmed = true;

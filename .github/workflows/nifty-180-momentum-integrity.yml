@@ -1,0 +1,97 @@
+name: Research - NIFTY 180 momentum and stepped-trail integrity
+
+# This workflow closes a gap found in code review: research/momentum-result-integrity.mjs,
+# research/stepped-result-integrity.mjs, and research/validate-nifty-180-result.mjs already
+# implement a zero-tolerance completeness check (missingDays/boundaryDays/ambiguousDays/
+# rateLimitRetries must all be zero), but none of the three were referenced by any workflow,
+# so no NIFTY-180 momentum/stepped result had ever actually been gated on it before being
+# treated as decision-grade evidence in docs/STRATEGY_STATUS.md. This mirrors the existing
+# backtest -> integrity check -> upload pattern already used by morning-tea-backtest.yml and
+# the research/opportunity/* workflows.
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: 'YYYY-MM-DD'
+        required: true
+        type: string
+      end:
+        description: 'YYYY-MM-DD'
+        required: true
+        type: string
+      lot_size:
+        description: 'Historical lot size for the requested period'
+        required: true
+        type: number
+        default: 65
+  push:
+    branches: [research/nifty-180-runs]
+    paths: [research/requests/nifty-180-momentum.json]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: groww-opportunity-backtest-api
+  cancel-in-progress: false
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      START_DATE: ${{ inputs.start }}
+      END_DATE: ${{ inputs.end }}
+      LOT_SIZE: ${{ inputs.lot_size || 65 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+
+      - run: node --test tests/nifty-180-momentum-trail.test.mjs tests/nifty-180-stepped-trail.test.mjs tests/groww-option-costs.test.mjs
+
+      - name: Resolve requested period
+        if: github.event_name == 'push'
+        run: |
+          node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync('research/requests/nifty-180-momentum.json','utf8'));fs.appendFileSync(process.env.GITHUB_ENV,'START_DATE='+r.start+'\nEND_DATE='+r.end+'\nLOT_SIZE='+(r.lotSize||65)+'\n')"
+
+      - name: Resolve Groww access token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'false'
+        run: node scripts/resolve-groww-token.mjs
+
+      - name: Run frozen momentum (V2) backtest
+        run: node research/groww-backtest-nifty-180-momentum.mjs --start=$START_DATE --end=$END_DATE --lot-size=$LOT_SIZE --out=momentum-result.json
+
+      - name: Verify momentum result completeness (blocks on missing/boundary/ambiguous sessions)
+        run: node research/momentum-result-integrity.mjs momentum-result.json
+
+      - name: Run frozen stepped-trail (V3) backtest
+        run: node research/groww-backtest-nifty-180-stepped.mjs --start=$START_DATE --end=$END_DATE --lot-size=$LOT_SIZE --out=stepped-result.json
+
+      - name: Verify stepped-trail result completeness (blocks on missing/boundary/ambiguous sessions)
+        run: node research/stepped-result-integrity.mjs stepped-result.json
+
+      - name: Cross-check against the general NIFTY-180 result validator
+        run: |
+          node research/validate-nifty-180-result.mjs momentum-result.json
+          node research/validate-nifty-180-result.mjs stepped-result.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nifty-180-momentum-stepped-${{ env.START_DATE }}-${{ env.END_DATE }}
+          path: |
+            momentum-result.json
+            stepped-result.json
+          retention-days: 90
+
+# Note: any prior result.json for this date range that was recorded in
+# docs/STRATEGY_STATUS.md before this workflow existed (e.g. the V1/V2 evidence
+# with 11 missing sessions referenced in that doc) was never actually run through
+# these checks in CI. Re-running the relevant historical windows through this
+# workflow is the only way to confirm whether that evidence would still pass.

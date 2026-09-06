@@ -73,10 +73,12 @@ export function premiumBracket(rows, reference = PAPER_RULES.referencePremium) {
   };
 }
 export function firstSignal(candles, rules = PAPER_RULES) {
-  for (const current of candles) {
+  for (let i = 1; i < candles.length; i += 1) {
+    const current = candles[i];
+    const previous = candles[i - 1];
     const t = timeOf(current.timestamp);
     if (!t || t < rules.signalStart || t >= rules.signalCutoff) continue;
-    if (current.close > rules.referencePremium) return current;
+    if (previous.close <= rules.referencePremium && current.close > rules.referencePremium) return current;
   }
   return null;
 }
