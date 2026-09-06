@@ -19,6 +19,21 @@ export function findIndiaVixInstruments(rows) {
     .toSorted((a, b) => a.growwSymbol.localeCompare(b.growwSymbol));
 }
 
+export function findVixCandidateInstruments(rows) {
+  return (rows ?? []).filter((row) => Object.values(row).some((value) => /\bVIX\b/i.test(String(value))))
+    .map((row) => ({
+      exchange: row.exchange,
+      segment: row.segment,
+      growwSymbol: row.groww_symbol,
+      tradingSymbol: row.trading_symbol,
+      name: row.name,
+      underlyingSymbol: row.underlying_symbol,
+      instrumentType: row.instrument_type,
+    }))
+    .filter((row) => row.growwSymbol || row.tradingSymbol || row.name || row.underlyingSymbol)
+    .toSorted((a, b) => String(a.growwSymbol ?? a.tradingSymbol ?? '').localeCompare(String(b.growwSymbol ?? b.tradingSymbol ?? '')));
+}
+
 async function smokeCandles(token, instrument, fetchImpl = fetch) {
   const url = new URL(API_URL);
   const params = {
@@ -40,16 +55,30 @@ export async function resolveIndiaVix({ token, fetchImpl = fetch }) {
   if (!token) throw new Error('GROWW_ACCESS_TOKEN is required');
   const response = await fetchImpl(INSTRUMENTS_URL, { headers: { Accept: 'text/csv' } });
   if (!response.ok) throw new Error(`Groww instrument CSV failed (${response.status})`);
-  const matches = findIndiaVixInstruments(parseInstrumentCsv(await response.text()));
+  const rows = parseInstrumentCsv(await response.text());
+  const matches = findIndiaVixInstruments(rows);
+  const candidates = findVixCandidateInstruments(rows);
   const tested = [];
   for (const instrument of matches) tested.push({ instrument, smoke: await smokeCandles(token, instrument, fetchImpl) });
   const verified = tested.filter((item) => item.smoke.ok);
-  if (verified.length !== 1) throw new Error(`Expected exactly one verified India VIX instrument, found ${verified.length}`);
-  return { schemaVersion: 1, matches: tested, verified: verified[0] };
+  const report = { schemaVersion: 1, candidates, matches: tested, verified: verified[0] ?? null };
+  if (verified.length !== 1) {
+    const error = new Error(`Expected exactly one verified India VIX instrument, found ${verified.length}`);
+    error.report = report;
+    throw error;
+  }
+  return report;
 }
 
 if (process.argv[1]?.endsWith('resolve-india-vix-instrument.mjs')) {
-  const report = await resolveIndiaVix({ token: process.env.GROWW_ACCESS_TOKEN });
-  fs.writeFileSync(process.argv[2] ?? 'india-vix-instrument.json', `${JSON.stringify(report, null, 2)}\n`);
-  process.stdout.write(`Verified India VIX symbol: ${report.verified.instrument.growwSymbol}\n`);
+  try {
+    const report = await resolveIndiaVix({ token: process.env.GROWW_ACCESS_TOKEN });
+    fs.writeFileSync(process.argv[2] ?? 'india-vix-instrument.json', `${JSON.stringify(report, null, 2)}\n`);
+    process.stdout.write(`Verified India VIX symbol: ${report.verified.instrument.growwSymbol}\n`);
+  } catch (error) {
+    if (error.report) {
+      fs.writeFileSync(process.argv[2] ?? 'india-vix-instrument.json', `${JSON.stringify({ ...error.report, error: error.message }, null, 2)}\n`);
+    }
+    throw error;
+  }
 }
