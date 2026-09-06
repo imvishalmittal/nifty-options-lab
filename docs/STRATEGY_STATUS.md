@@ -175,6 +175,8 @@ Only 3/8 months were profitable at 0.25-point stress; largest-winner concentrati
 
 Evidence: [repaired 2025 diagnostic](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33349456840) and [2026 validation](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33357725341).
 
+The 6 September 2026 fixed six-name liquidity proxy did not repair execution sensitivity. It retained 89 trades in 2025 and 75 in Jan–August 2026, but lost ₹3,199.10 (PF 0.928) and ₹8,617.27 (PF 0.804), respectively, at 0.25-point-per-leg stress. Because one-minute candles contain no bid/ask or queue-position evidence, this is a proxy diagnostic and Morning Tea remains rejected.
+
 ## Assumption-explicit 30-minute opening-range credit spread — rejected
 
 The frozen hypothesis used the first 30-minute NIFTY cash range, a completed five-minute close outside that range, causal next-minute entry, an ATM directional credit spread with an exact 300-point hedge, a 50% credit target, a 2×-credit stop, and a 15:15 exit. This was a bounded-risk research interpretation, not an exact video replication.
@@ -200,6 +202,8 @@ It passed normal and 0.5-point profitability/PF, yearly stability, active-month 
 ### Weekly NIFTY smart condor — rejected
 
 The frozen structure sold approximately ±0.08-delta options, bought approximately ±0.03-delta hedges, entered on the first session after weekly expiry using actual listed contracts and causal synchronized quotes, and used a 50% credit target, 2×-credit stop and pre-expiry exit. All 60 monthly shards consolidated with valid causal and structural integrity in [run 33547992564](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/33547992564).
+
+A 6 September 2026 trade-row diagnosis confirmed the loss mechanism: 143/255 winners (56.08%) averaged ₹258.35, while 112 losses averaged −₹753.24, a payoff ratio of 0.343. The worst ten trades caused 26.58% of gross loss. Two predeclared diagnostic filters also failed: a rolling 52-observation short-IV percentile-50 gate retained 91 trades and lost ₹15,785.99 (PF 0.472), while RBI MPC/Budget exclusion retained 237 trades and lost ₹46,375.04 (PF 0.421). The strategy remains terminally rejected.
 
 - Scheduled observations: 261; trades: 255; data-missing: 6 (2.30%)
 - Targets / stops / time exits: 179 / 76 / 0

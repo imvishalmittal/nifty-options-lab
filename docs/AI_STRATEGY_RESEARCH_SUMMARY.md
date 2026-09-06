@@ -227,7 +227,18 @@ The governing question is: **is the edge large, stable, causal, diversified, and
 11. Report samples, win rate, net P&L, PF, drawdown, stress, yearly/monthly stability, clustered confidence, concentration, integrity, missingness, and exact run links.
 12. Keep the scheduled 09:20 paper workflow operationally isolated from Groww-heavy research as far as practical; do not sacrifice paper-session integrity to accelerate research.
 
-## 11. Authoritative references
+## 11. More Ideas diagnostic update — 6 September 2026
+
+The uploaded ideas holding pen was reconciled into [`MORE_IDEAS_RESEARCH_PROTOCOL.md`](MORE_IDEAS_RESEARCH_PROTOCOL.md). Three immediately testable artifact-level hypotheses are terminal:
+
+- The weekly smart condor's 56.08% win rate concealed a 0.343 payoff ratio: average loss −₹753.24 versus average win ₹258.35. The worst ten trades caused 26.58% of gross losses.
+- A frozen rolling short-IV percentile gate retained 91 condor trades but lost ₹15,785.99 at normal costs (PF 0.472) and ₹32,277.99 at 0.5-point-per-leg stress (PF 0.164).
+- An RBI MPC/Budget exclusion retained 237 condor trades but lost ₹46,375.04 at normal costs (PF 0.421).
+- A fixed six-name Morning Tea liquidity proxy failed 0.25-point stress in both 2025 (−₹3,199.10, PF 0.928) and Jan–Aug 2026 (−₹8,617.27, PF 0.804). Historical candles do not prove bid/ask-quality or limit-order fills.
+
+These tests do not change any paper lane. VIX-filter and multi-index variants remain frozen pending verified data/provenance; PEAD, buy-write, and earnings-IV-crush remain blocked by point-in-time data and overnight accounting requirements.
+
+## 12. Authoritative references
 
 - [`STRATEGY_STATUS.md`](STRATEGY_STATUS.md) — outcome and promotion-status ledger
 - [`STRATEGY_SPEC.md`](STRATEGY_SPEC.md) — V2–V11 deterministic paper rules
@@ -239,5 +250,6 @@ The governing question is: **is the edge large, stable, causal, diversified, and
 - [`PAPER_V3_FORWARD_OBSERVATION.md`](PAPER_V3_FORWARD_OBSERVATION.md) — paper operating model
 - [`SAFETY_AND_LIMITATIONS.md`](SAFETY_AND_LIMITATIONS.md) — boundaries and known limitations
 - [`DECISIONS.md`](DECISIONS.md) — architectural/research decisions
+- [`MORE_IDEAS_RESEARCH_PROTOCOL.md`](MORE_IDEAS_RESEARCH_PROTOCOL.md) — all uploaded ideas, frozen rules, diagnostic results and blockers
 
 When this handoff conflicts with a newer dated terminal entry in `STRATEGY_STATUS.md`, the newer terminal entry wins.

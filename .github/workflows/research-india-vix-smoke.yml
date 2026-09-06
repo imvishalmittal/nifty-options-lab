@@ -1,0 +1,39 @@
+name: Research - Resolve India VIX instrument
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/more-ideas-research]
+    paths:
+      - research/requests/india-vix-smoke.json
+      - research/resolve-india-vix-instrument.mjs
+      - .github/workflows/research-india-vix-smoke.yml
+
+permissions: { contents: read }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node --test tests/resolve-india-vix-instrument.test.mjs tests/vol-regime-filter.test.mjs
+      - name: Resolve Groww access token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Resolve and smoke-test India VIX
+        run: node research/resolve-india-vix-instrument.mjs india-vix-instrument.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: india-vix-instrument-smoke
+          path: india-vix-instrument.json
+          if-no-files-found: warn
+          retention-days: 90

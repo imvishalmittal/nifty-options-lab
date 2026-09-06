@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Resolve and smoke-test the exact Groww India VIX instrument before any volatility-regime backtest",
+  "requestedAt": "2026-09-06"
+}
