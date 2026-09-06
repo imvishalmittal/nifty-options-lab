@@ -7,7 +7,7 @@ The detailed evidence ledger is `docs/STRATEGY_STATUS.md`. Current decisions are
 - **Paper:** V2–V11, as prospective non-additive shadow outcomes; V9–V11 started on 1 September 2026 without backfill. The rejected 30-minute opening-range ATM credit spread also has a separately authorized experimental shadow journal from 2 September 2026; this is not a promotion.
 - **Rejected after completed testing:** NIFTY ₹180 V1 fixed stop/target, opening-range negative control, Batman, HAI 1:3:2, iron condor, iron butterfly, directional credit, Morning Tea, Quick Flip, Stocks-in-Play ORB, late breakout/retest, VWAP pullback, failed opening-range break, afternoon compression after validation, the six-variant entry-risk discovery, and the assumption-explicit 30-minute opening-range ATM credit spread.
 - **Inconclusive:** Williams/EMA bear-call replication—one 2025 trade and zero post-publication trades.
-- **Active frozen discovery:** weekly 0.08-delta NIFTY smart condor and monthly large-cap RSI iron condor. No performance verdict is accepted from partial shards.
+- **Terminal option-selling discovery:** the weekly 0.08-delta NIFTY smart condor is rejected after 255 trades; the monthly large-cap RSI iron condor is rejected as untestable after zero trades. See `docs/MORE_IDEAS_RESEARCH_PROTOCOL.md` for the next frozen and blocked research lanes.
 
 No strategy is selected for live trading. The experimental opening-range shadow remains isolated and historically rejected.
 
@@ -47,7 +47,7 @@ High win rate is not an acceptance criterion. Positive expectancy after costs, r
 
 ### Shared Groww research infrastructure
 
-All Groww-heavy GitHub Actions jobs use the repository-wide `groww-backtest-api` concurrency group with `queue: max`, so API jobs execute one at a time instead of racing a single token. Matrix data jobs use `max-parallel: 1`. Legacy runs started before this queue existed are not mixed with post-queue methodology results.
+All Groww-heavy GitHub Actions jobs use the repository-wide `groww-opportunity-backtest-api` concurrency group, so API jobs execute one at a time instead of racing a single token. Matrix data jobs use `max-parallel: 1`. Legacy runs started before this queue existed are not mixed with post-queue methodology results.
 
 Stock-candle fetches already use retry/backoff and a pause between chunks. The option backtester additionally spaces Groww calls, records request/rate-limit diagnostics, and uses progressive strike selection to reduce historical API load.
 
