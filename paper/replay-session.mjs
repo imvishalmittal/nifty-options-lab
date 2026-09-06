@@ -7,20 +7,11 @@ import {
 import { candleAt, createGrowwPaperClient } from './groww-paper-client.mjs';
 import { selectPaperContracts } from './paper-contract-selection.mjs';
 import { classifyV4Entry, CONFIRMED_VARIANTS, initialV4Position, processV4CompletedBar } from './v4-engine.mjs';
+import { paperOptionCosts } from './option-costs.mjs';
 
 function arg(name, fallback = null) {
   const prefix = `--${name}=`;
   return process.argv.find((value) => value.startsWith(prefix))?.slice(prefix.length) ?? fallback;
-}
-
-function optionCosts(entry, exit, units, tradeDate) {
-  const sttRate = tradeDate < '2026-04-01' ? 0.001 : 0.0015;
-  const buy = entry * units; const sell = exit * units; const total = buy + sell;
-  const brokerage = 40; const exchange = total * 0.0003503; const sebi = total * 0.000001;
-  const ipft = total * 0.000005; const stamp = buy * 0.00003; const stt = sell * sttRate;
-  const gst = (brokerage + exchange + sebi + ipft) * 0.18;
-  const charges = brokerage + exchange + sebi + ipft + stamp + stt + gst;
-  return { gross: (exit - entry) * units, charges, net: (exit - entry) * units - charges };
 }
 
 function simulate({ variants, entry, entryBar, candles, createPosition, processBar }) {
@@ -40,7 +31,7 @@ function simulate({ variants, entry, entryBar, candles, createPosition, processB
 
 function baseRow({ position, date, expiry, chosen, lots }) {
   const variant = position.variant; const units = lots * PAPER_RULES.lotSize;
-  const pnl = optionCosts(position.entry, position.exit.price, units, date); const mfe = position.peakHigh - position.entry;
+  const pnl = paperOptionCosts(position.entry, position.exit.price, units, date); const mfe = position.peakHigh - position.entry;
   const startTarget = variant.kind === 'fixed_target' ? position.targetPremium : variant.trailActivationPremium
     ?? (variant.kind === 'v2' ? PAPER_RULES.trailActivation : Number((position.entry + PAPER_RULES.trailGap).toFixed(2)));
   const row = {
@@ -63,7 +54,7 @@ function baseRow({ position, date, expiry, chosen, lots }) {
 
 function confirmedRow({ position, date, expiry, chosen, lots, signalInfo }) {
   const variant = position.variant; const units = lots * PAPER_RULES.lotSize;
-  const pnl = optionCosts(position.entry, position.exit.price, units, date); const mfe = position.peakHigh - position.entry;
+  const pnl = paperOptionCosts(position.entry, position.exit.price, units, date); const mfe = position.peakHigh - position.entry;
   const row = {
     source: 'PAPER_REPLAY', strategy: variant.strategy, strategyVersion: variant.strategyVersion, date,
     indexStockName: 'NIFTY 50', weeklyExpiry: expiry, lots, callType: chosen.side, strikePrice: chosen.strike,

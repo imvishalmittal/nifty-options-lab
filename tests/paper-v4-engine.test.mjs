@@ -21,10 +21,10 @@ test('V4 requires all five NIFTY 09:25-09:29 bars', () => {
 
 test('V4 enters primary only after matching NIFTY directional confirmation', () => {
   const callCandles = [
-    candle('09:25', 184, 185, 183, 184),
-    candle('09:29', 185, 186, 184, 185),
-    candle('09:30', 186, 188, 185, 186),
-    candle('09:31', 187, 189, 186, 188),
+    candle('09:25', 178, 179, 177, 178),
+    candle('09:29', 178, 179, 177, 179),
+    candle('09:30', 179, 180, 178, 179),
+    candle('09:31', 180, 189, 179, 188),
     candle('09:32', 188, 190, 187, 189),
   ];
   const putCandles = [
@@ -46,6 +46,31 @@ test('V4 enters primary only after matching NIFTY directional confirmation', () 
   assert.equal(result.signal.timestamp, t('09:31'));
   assert.equal(result.entryBar.timestamp, t('09:32'));
   assert.equal(result.entry, 188);
+});
+
+test('V4 primary does not arm when premium is already above 180 before the window opens (no crossing)', () => {
+  const callCandles = [
+    candle('09:25', 184, 185, 183, 184),
+    candle('09:29', 185, 186, 184, 185),
+    candle('09:30', 186, 188, 185, 186),
+    candle('09:31', 187, 189, 186, 188),
+    candle('09:32', 188, 190, 187, 189),
+  ];
+  const putCandles = [
+    candle('09:25', 174, 175, 173, 174),
+    candle('09:29', 175, 176, 174, 175),
+    candle('09:30', 176, 177, 175, 176),
+    candle('09:31', 177, 178, 176, 177),
+    candle('09:32', 178, 179, 177, 178),
+  ];
+  const niftyCandles = [
+    candle('09:25', 24500, 24505, 24495, 24500), candle('09:26', 24500, 24506, 24496, 24502),
+    candle('09:27', 24502, 24507, 24497, 24503), candle('09:28', 24503, 24508, 24498, 24504),
+    candle('09:29', 24504, 24510, 24499, 24505), candle('09:30', 24505, 24509, 24500, 24508),
+    candle('09:31', 24508, 24514, 24507, 24512), candle('09:32', 24512, 24515, 24510, 24513),
+  ];
+  const result = classifyV4Entry({ callSelection: ce, putSelection: pe, callCandles, putCandles, niftyCandles });
+  assert.notEqual(result.status, 'ENTRY');
 });
 
 test('V4 backup requires a fresh 180 cross and matching PE NIFTY confirmation', () => {

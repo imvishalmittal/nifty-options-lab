@@ -94,9 +94,14 @@ test('premium reference is bracketed only with observations on both sides', () =
   assert.equal(onlyAbove.above.premium, 506.3);
 });
 
-test('signal is the first completed close above 180 after 09:30', () => {
-  const candles = [c('2026-08-17T09:25:00+05:30', 184, 186, 183, 184), c('2026-08-17T09:30:00+05:30', 185, 188, 184, 186)];
+test('signal is the first completed close above 180 after 09:30, requiring an actual crossing', () => {
+  const candles = [c('2026-08-17T09:25:00+05:30', 178, 179, 176, 178), c('2026-08-17T09:30:00+05:30', 179, 188, 178, 186)];
   assert.equal(firstSignal(candles)?.timestamp, '2026-08-17T09:30:00+05:30');
+});
+
+test('firstSignal does not fire when premium is already above 180 before the window opens (no crossing)', () => {
+  const candles = [c('2026-08-17T09:25:00+05:30', 184, 186, 183, 184), c('2026-08-17T09:30:00+05:30', 185, 188, 184, 186), c('2026-08-17T09:31:00+05:30', 186, 189, 185, 187)];
+  assert.equal(firstSignal(candles), null);
 });
 
 test('entry is next bar open and must remain inside 160-220 band', () => {

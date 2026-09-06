@@ -10,11 +10,26 @@ const bar = (time, open, close) => ({
   close,
 });
 
-test('firstSignal accepts the first completed close above 180 without requiring a fresh crossing', () => {
+test('firstSignal requires an actual crossing and does not fire merely because premium remains above 180', () => {
+  // Per docs/STRATEGY_RESEARCH_SUITE.md: "a contract already above ₹180 before
+  // 09:30 does not qualify merely by remaining above it." This fixture never
+  // actually crosses (184 -> 185 -> 186 -> 187 is a monotonic climb, never a
+  // dip to <=180 followed by a close above 180), so no signal should fire.
   const candles = [
     bar('09:25', 184, 184),
     bar('09:29', 185, 185),
     bar('09:30', 186, 186),
+    bar('09:31', 187, 187),
+  ];
+  const signal = firstSignal(candles);
+  assert.equal(signal, null);
+});
+
+test('firstSignal fires on the completed bar that actually crosses from at/below 180 to above 180', () => {
+  const candles = [
+    bar('09:25', 178, 178),
+    bar('09:29', 179, 179),
+    bar('09:30', 179, 186),
     bar('09:31', 187, 187),
   ];
   const signal = firstSignal(candles);
@@ -39,16 +54,16 @@ test('selectSide monitors only the 09:25 contract closest to 180 overall', () =>
   assert.equal(selected.signal.timestamp, '2026-08-19T09:31:00+05:30');
 });
 
-test('a selected contract already above 180 at 09:30 enters on the next bar open', () => {
+test('a selected contract that crosses 180 at 09:30 enters on the next bar open', () => {
   const callCandles = [
-    bar('09:25', 184, 184),
-    bar('09:30', 186, 186),
+    bar('09:25', 178, 178),
+    bar('09:30', 179, 186),
     bar('09:31', 188, 188),
   ];
   const putCandles = [
     bar('09:25', 170, 170),
-    bar('09:30', 179, 179),
-    bar('09:31', 181, 181),
+    bar('09:30', 175, 175),
+    bar('09:31', 177, 177),
   ];
   const selected = selectSide(callCandles, putCandles);
   assert.equal(selected.side, 'CE');
@@ -59,8 +74,8 @@ test('a selected contract already above 180 at 09:30 enters on the next bar open
 });
 
 test('same-distance tie remains deterministic: higher premium wins', () => {
-  const callCandles = [bar('09:25', 176, 176), bar('09:30', 181, 181), bar('09:31', 182, 182)];
-  const putCandles = [bar('09:25', 184, 184), bar('09:30', 185, 185), bar('09:31', 186, 186)];
+  const callCandles = [bar('09:25', 176, 176), bar('09:30', 179, 181), bar('09:31', 182, 182)];
+  const putCandles = [bar('09:25', 179, 179), bar('09:30', 179, 185), bar('09:31', 186, 186)];
   const selected = selectSide(callCandles, putCandles);
   assert.equal(selected.side, 'PE');
 });

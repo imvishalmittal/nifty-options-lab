@@ -29,3 +29,15 @@ test('rejects partial or unresolved NIFTY premium research results', () => {
     '2 AMBIGUOUS session(s)',
   ]);
 });
+
+test('validates momentum and stepped artifacts through baselineDiagnostics', () => {
+  const out = validateNifty180Result({ baselineDiagnostics: {
+    tradingDates: 20, scoredTrades: 8, missingDays: 1, boundaryDays: 0,
+    ambiguousDays: 0, rateLimitRetries: 2,
+  } });
+  assert.equal(out.valid, false);
+  assert.equal(out.tradingDates, 20);
+  assert.equal(out.scoredTrades, 8);
+  assert.match(out.blockers.join(' '), /DATA_MISSING/);
+  assert.match(out.blockers.join(' '), /rate-limit/);
+});
