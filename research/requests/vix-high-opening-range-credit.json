@@ -1,0 +1,6 @@
+{
+  "strategy": "C3-vix-high-opening-range-atm-credit-spread",
+  "start": "2020-01-01",
+  "end": "2024-12-31",
+  "purpose": "Discovery backtest for frozen prior-session India VIX >= 50th percentile filter on opening-range ATM credit spread"
+}
