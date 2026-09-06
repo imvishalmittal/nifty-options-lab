@@ -7,6 +7,7 @@ type CallType = "CE" | "PE";
 type DataSource = "proxy" | "published" | null;
 type SessionThread = "BASE" | "V4";
 type Scope = "DATE" | "MONTH" | "YEAR" | "ALL";
+type MatrixGranularity = "DAY" | "MONTH" | "YEAR";
 type SortDir = "asc" | "desc";
 type SortKey = "strategy" | "cohort" | "status" | "sessions" | "trades" | "winsLosses" | "winRate" | "pf" | "total" | "drawdown" | "contract" | "entryExit" | "exitReason";
 type PaperTrade = { strategy?: string; strategyVersion?: string; date: string; indexStockName: string; weeklyExpiry: string; lots: number; callType: CallType; strikePrice: number; startTarget: number; startStopLoss: number; endStopLoss: number; entryTime: string; exitTime: string; stopLossAdjustments: number; totalPnl: number; entryPremium?: number; peakPremium?: number; maxFavorableMove?: number; trailStepPoints?: number; trailGapPoints?: number; breakevenReached?: boolean; exitPremium?: number; exitReason?: string; grossPnl?: number; charges?: number };
@@ -14,6 +15,8 @@ type SessionContract = { symbol: string; strike?: number; optionType?: CallType;
 type PaperSession = { date: string; thread: SessionThread; strategyVersions: string[]; status: string; reason?: string | null; updatedAt?: string | null; spot925?: number | null; expiry?: string | null; referencePremium?: number | null; ce?: SessionContract | null; pe?: SessionContract | null; side?: CallType | null; strike?: number | null; entry?: number | null; entryTime?: string | null; signalSource?: string | null; tradeCount: number; totalPnl?: number | null; strategyOutcomes?: Record<string, { tradeCount: number; totalPnl: number | null }> };
 type StrategyKey = "V2" | "V3-5" | "V3-10" | "V4" | "V5-10" | "V6" | "V7-10" | "V8-10" | "V9" | "V10-5" | "V10-10" | "V11";
 type StrategyDefinition = { key: StrategyKey; label: string; shortRule: string; cohort: "₹160 / ₹220" | "₹170 / ₹210" | "NIFTY confirmed"; thread: SessionThread; sessionKey: string };
+type MatrixCell = { total: number; trades: number; sessions: number };
+type MatrixRow = { period: string; cells: Record<StrategyKey, MatrixCell> };
 
 const strategies: StrategyDefinition[] = [
   { key: "V2", label: "V2 · Momentum trail", shortRule: "₹160 initial stop · continuous trail", cohort: "₹160 / ₹220", thread: "BASE", sessionKey: "V2" },
@@ -91,6 +94,28 @@ function compareSortValues(a: string | number | null, b: string | number | null,
   const result = typeof a === "number" && typeof b === "number" ? a - b : String(a).localeCompare(String(b), "en", { numeric: true, sensitivity: "base" });
   return direction === "asc" ? result : -result;
 }
+function periodMatches(date: string, period: string, granularity: MatrixGranularity) { return granularity === "DAY" ? date === period : date.startsWith(granularity === "MONTH" ? period : `${period}-`); }
+function buildMatrix(periods: string[], granularity: MatrixGranularity, trades: PaperTrade[], sessions: PaperSession[]): MatrixRow[] {
+  return periods.map((period) => ({
+    period,
+    cells: Object.fromEntries(strategies.map((strategy) => {
+      const periodTrades = trades.filter((trade) => periodMatches(trade.date, period, granularity) && tradeKey(trade) === strategy.key);
+      const periodSessions = sessions.filter((session) => periodMatches(session.date, period, granularity) && session.thread === strategy.thread && (session.strategyVersions.includes(strategy.sessionKey) || session.strategyOutcomes?.[strategy.sessionKey] !== undefined));
+      return [strategy.key, { total: periodTrades.reduce((sum, trade) => sum + trade.totalPnl, 0), trades: periodTrades.length, sessions: new Set(periodSessions.map((session) => session.date)).size }];
+    })) as Record<StrategyKey, MatrixCell>,
+  }));
+}
+function matrixPeriodLabel(period: string, granularity: MatrixGranularity) {
+  if (granularity === "DAY") return new Date(`${period}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  if (granularity === "MONTH") return new Date(`${period}-01T00:00:00`).toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+  return period;
+}
+function StrategyMatrix({ title, description, granularity, rows }: { title: string; description: string; granularity: MatrixGranularity; rows: MatrixRow[] }) {
+  return <section className={styles.matrixSection}>
+    <div className={styles.matrixHeading}><div><h3>{title}</h3><p>{description}</p></div><span>{rows.length} {rows.length === 1 ? "period" : "periods"}</span></div>
+    <div className={styles.matrixWrap}><table className={styles.matrixTable}><thead><tr><th>{granularity === "DAY" ? "Date" : granularity === "MONTH" ? "Month" : "Year"}</th>{strategies.map((strategy) => <th key={strategy.key} title={`${strategy.label} — ${strategy.shortRule}`}>{strategy.key}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={row.period}><th scope="row">{matrixPeriodLabel(row.period, granularity)}</th>{strategies.map((strategy) => { const cell = row.cells[strategy.key]; return <td key={strategy.key} className={cell.trades ? cell.total > 0 ? styles.matrixProfit : cell.total < 0 ? styles.matrixLoss : styles.matrixFlat : styles.matrixEmpty}>{cell.trades ? <><strong>{pnl(cell.total)}</strong><span>{cell.trades} {cell.trades === 1 ? "trade" : "trades"}</span></> : <span>{cell.sessions ? "No trade" : "—"}</span>}</td>; })}</tr>)}{!rows.length && <tr><td colSpan={strategies.length + 1} className={styles.matrixNoData}>No journalled periods available.</td></tr>}</tbody></table></div>
+  </section>;
+}
 
 export default function PaperLedger() {
   const [rows, setRows] = useState<PaperTrade[]>([]); const [sessions, setSessions] = useState<PaperSession[]>([]); const [scope, setScope] = useState<Scope>("DATE");
@@ -102,6 +127,9 @@ export default function PaperLedger() {
     load(); const timer = window.setInterval(load, 60_000); return () => { active = false; window.clearInterval(timer); }; }, []);
   const allDates = useMemo(() => Array.from(new Set([...rows.map((row) => row.date), ...sessions.map((session) => session.date)])).sort().reverse(), [rows, sessions]);
   const years = useMemo(() => Array.from(new Set(allDates.map((value) => value.slice(0, 4)))).sort().reverse(), [allDates]); const months = useMemo(() => Array.from(new Set(allDates.map((value) => value.slice(0, 7)))).sort().reverse(), [allDates]);
+  const dailyMatrix = useMemo(() => buildMatrix(allDates, "DAY", rows, sessions), [allDates, rows, sessions]);
+  const monthlyMatrix = useMemo(() => buildMatrix(months, "MONTH", rows, sessions), [months, rows, sessions]);
+  const yearlyMatrix = useMemo(() => buildMatrix(years, "YEAR", rows, sessions), [years, rows, sessions]);
   const selectedDate = date || allDates[0] || ""; const selectedMonth = month || months[0] || ""; const selectedYear = year || years[0] || "";
   const scopedTrades = useMemo(() => rows.filter((row) => scope === "DATE" ? row.date === selectedDate : scope === "MONTH" ? row.date.startsWith(selectedMonth) : scope === "YEAR" ? row.date.startsWith(`${selectedYear}-`) : true), [rows, scope, selectedDate, selectedMonth, selectedYear]);
   const scopedSessions = useMemo(() => sessions.filter((session) => scope === "DATE" ? session.date === selectedDate : scope === "MONTH" ? session.date.startsWith(selectedMonth) : scope === "YEAR" ? session.date.startsWith(`${selectedYear}-`) : true), [sessions, scope, selectedDate, selectedMonth, selectedYear]);
@@ -137,5 +165,9 @@ export default function PaperLedger() {
     <div className={styles.summary}><div><span>Strategies shown</span><strong>{strategies.length}</strong></div><div><span>Strategies with trades</span><strong>{activeRows.length}</strong></div><div><span>Best in period</span><strong className={styles.profit}>{best ? `${best.strategy.key} · ${pnl(best.total)}` : "—"}</strong></div><div><span>Lowest in period</span><strong className={worst && worst.total < 0 ? styles.loss : styles.profit}>{worst ? `${worst.strategy.key} · ${pnl(worst.total)}` : "—"}</strong></div></div>
     <div className={styles.comparisonWrap}><table className={styles.comparisonTable}><thead><tr>{comparisonColumns.map((column) => <th key={column.key} aria-sort={sortKey === column.key ? (sortDir === "asc" ? "ascending" : "descending") : "none"}><button type="button" onClick={() => sortBy(column.key)}>{column.label}<span aria-hidden="true">{sortKey === column.key ? (sortDir === "asc" ? "▲" : "▼") : "↕"}</span></button></th>)}</tr></thead><tbody>{sortedComparison.map((row) => { const trade = row.latestTrade, status = rowStatus(row); return <tr key={row.strategy.key}><td className={styles.strategyCell}><strong>{row.strategy.label}</strong><span>{row.strategy.shortRule}</span>{!row.trades.length && row.session?.reason && <small>{row.session.reason}</small>}</td><td><span className={`${styles.cohortBadge} ${row.strategy.cohort === "₹170 / ₹210" ? styles.cohort170 : row.strategy.cohort === "NIFTY confirmed" ? styles.cohortConfirmed : ""}`}>{row.strategy.cohort}</span></td><td><span className={`${styles.sessionBadge} ${status === "TRADED" || status === "CLOSED" ? styles.sessionGood : status === "NO_TRADE" ? styles.sessionNeutral : styles.sessionWarn}`}>{status.replace("_", " ")}</span></td><td>{row.sessions}</td><td>{row.trades.length}</td><td>{row.wins} / {row.losses}</td><td>{row.trades.length ? `${money.format(row.wins / row.trades.length * 100)}%` : "—"}</td><td>{row.pf === Infinity ? "∞" : row.pf === null ? "—" : row.pf.toFixed(3)}</td><td className={row.total >= 0 ? styles.profit : styles.loss}>{row.trades.length ? pnl(row.total) : "—"}</td><td>{row.trades.length ? pnl(-row.drawdown) : "—"}</td><td>{scope === "DATE" && trade ? `${num.format(trade.strikePrice)} ${trade.callType}` : "—"}</td><td>{scope === "DATE" && trade ? `${premium(trade.entryPremium)} → ${premium(trade.exitPremium)}` : "—"}</td><td>{scope === "DATE" && trade ? trade.exitReason ?? "—" : "—"}</td></tr>; })}</tbody></table></div>
     <p className={styles.footnote}>Each row is a counterfactual strategy result; rows are not additive account profit. Month, year and all-time views aggregate only journalled paper trades. The ₹170/₹210 cohort starts on 1 September 2026 and is never backfilled.</p>
+    <div className={styles.historyHeading}><p className={styles.eyebrow}>Cross-period comparison</p><h2>Strategy performance over time</h2><p>Net paper P/L and trade count for every strategy, aligned by calendar period. No-trade sessions remain visible and strategy columns are never summed together.</p></div>
+    <StrategyMatrix title="Day-by-day comparison" description="Compare each strategy on every journalled trading date." granularity="DAY" rows={dailyMatrix} />
+    <StrategyMatrix title="Month-by-month comparison" description="Compare accumulated strategy results within each calendar month." granularity="MONTH" rows={monthlyMatrix} />
+    <StrategyMatrix title="Year-by-year comparison" description="Compare accumulated strategy results within each calendar year." granularity="YEAR" rows={yearlyMatrix} />
   </section>;
 }
