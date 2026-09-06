@@ -1,0 +1,53 @@
+name: Research - VIX-low NIFTY 180 filter
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/more-ideas-vix-runs]
+    paths:
+      - research/requests/vix-low-nifty-180.json
+      - research/backtest-vix-low-nifty-180.mjs
+      - research/vix-low-nifty-180-gates.mjs
+      - .github/workflows/research-vix-low-nifty-180.yml
+
+permissions: { contents: read }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+
+jobs:
+  discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      START_DATE: '2020-01-01'
+      END_DATE: '2024-12-31'
+      LOT_SIZE: '65'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node --test tests/backtest-vix-low-nifty-180.test.mjs tests/vix-low-nifty-180-gates.test.mjs tests/vol-regime-filter.test.mjs
+      - name: Resolve request
+        if: github.event_name == 'push'
+        run: |
+          node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync('research/requests/vix-low-nifty-180.json','utf8'));fs.appendFileSync(process.env.GITHUB_ENV,'START_DATE='+r.start+'\nEND_DATE='+r.end+'\nLOT_SIZE='+(r.lotSize||65)+'\n')"
+      - name: Resolve Groww access token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run O1 discovery
+        run: node research/backtest-vix-low-nifty-180.mjs --start=$START_DATE --end=$END_DATE --lot-size=$LOT_SIZE --out=vix-low-nifty-180.json
+      - name: Evaluate frozen gates
+        run: node research/vix-low-nifty-180-gates.mjs --in=vix-low-nifty-180.json --out=vix-low-nifty-180-gate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vix-low-nifty-180-${{ env.START_DATE }}-${{ env.END_DATE }}
+          path: |
+            vix-low-nifty-180.json
+            vix-low-nifty-180-gate.json
+          retention-days: 90
+      - name: Enforce frozen gates
+        run: node research/vix-low-nifty-180-gates.mjs --in=vix-low-nifty-180.json --out=vix-low-nifty-180-gate.json --enforce=true
