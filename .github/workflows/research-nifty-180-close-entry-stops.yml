@@ -1,0 +1,93 @@
+name: Research - NIFTY 180 close-entry stops
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/nifty-180-close-entry-stop-runs]
+    paths: [research/requests/nifty-180-close-entry-stops.json]
+
+permissions: { contents: read }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.months.outputs.matrix }}
+    steps:
+      - id: months
+        run: |
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const include = [];
+          for (let year = 2020; year <= 2024; year += 1) {
+            for (let month = 1; month <= 12; month += 1) {
+              const key = `${year}-${String(month).padStart(2, '0')}`;
+              include.push({ month: key, start: `${key}-01`, end: `${key}-${new Date(Date.UTC(year, month, 0)).getUTCDate()}` });
+            }
+          }
+          console.log(`matrix=${JSON.stringify({ include })}`);
+          NODE
+
+  shard:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node --test tests/nifty-180-close-entry-stops.test.mjs tests/nifty-180-close-entry-stop-pipeline.test.mjs
+      - name: Resolve Groww access token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run monthly shard
+        run: >-
+          node research/groww-backtest-nifty-180-close-entry-stops.mjs
+          --start=${{ matrix.start }} --end=${{ matrix.end }} --lot-size=65
+          --out=nifty-180-close-entry-stops-${{ matrix.month }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nifty-180-close-entry-stops-${{ matrix.month }}
+          path: nifty-180-close-entry-stops-${{ matrix.month }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+  finalize:
+    needs: shard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: nifty-180-close-entry-stops-*
+          path: shards
+          merge-multiple: true
+      - name: Merge exactly 60 monthly shards
+        run: >-
+          node research/merge-nifty-180-close-entry-stop-shards.mjs
+          --in=shards --start=2020-01-01 --end=2024-12-31 --expected=60
+          --out=nifty-180-close-entry-stops.json
+      - name: Evaluate frozen gates
+        run: node research/nifty-180-close-entry-stop-gates.mjs --in=nifty-180-close-entry-stops.json --out=nifty-180-close-entry-stop-gate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nifty-180-close-entry-stops-discovery-2020-2024
+          path: |
+            nifty-180-close-entry-stops.json
+            nifty-180-close-entry-stop-gate.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Enforce frozen gates
+        run: node research/nifty-180-close-entry-stop-gates.mjs --in=nifty-180-close-entry-stops.json --out=nifty-180-close-entry-stop-gate.json --enforce=true
