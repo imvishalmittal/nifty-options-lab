@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { calculateOptionRoundTripCosts } from './groww-option-costs.mjs';
+import { splitDateRange } from './groww-backtest-nifty-180.mjs';
 import { parseNiftyOptionContract } from './nifty-180-premium-strategy.mjs';
 import { niftyLotSizeForExpiry } from './opportunity/opportunity-engine.mjs';
 import {
@@ -52,12 +53,20 @@ export function normalizeCandles(raw = []) {
     .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 }
 
+export function candleRequestRanges(startDate, endDate) {
+  return splitDateRange(startDate, endDate, 28);
+}
+
 async function fetchCandles(token, segment, symbol, startDate, endDate) {
-  const payload = await apiGet(token, '/historical/candles', {
-    exchange: 'NSE', segment, groww_symbol: symbol,
-    start_time: `${startDate} 09:15:00`, end_time: `${endDate} 15:29:00`, candle_interval: '1minute',
-  });
-  return normalizeCandles(payload.candles ?? []);
+  const rows = [];
+  for (const range of candleRequestRanges(startDate, endDate)) {
+    const payload = await apiGet(token, '/historical/candles', {
+      exchange: 'NSE', segment, groww_symbol: symbol,
+      start_time: `${range.startDate} 09:15:00`, end_time: `${range.endDate} 15:29:00`, candle_interval: '1minute',
+    });
+    rows.push(...normalizeCandles(payload.candles ?? []));
+  }
+  return rows.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 }
 
 async function fetchExpiries(token, year) {

@@ -97,7 +97,7 @@ function scenarioSummary(trades, scenario) {
   };
 }
 
-function summarizeTrades(trades) {
+export function summarizeTrades(trades) {
   return {
     current: scenarioSummary(trades, 'current'),
     stress0_5: scenarioSummary(trades, 'stress0_5'),
