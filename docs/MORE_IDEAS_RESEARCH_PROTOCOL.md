@@ -1,8 +1,11 @@
 # More Ideas — research protocol and evidence ledger
 
-Status date: 2026-09-06
+Status date: 2026-09-07
 
 This document converts the uploaded `MORE_IDEAS.md` holding pen into an auditable research queue. It does not alter V2–V11, the opening-range shadow journal, or any paper-trading rule. No result in this document authorizes broker orders or automatic paper promotion.
+
+Completed runs, numeric outcomes, active work, and the remaining queue are
+tracked in [`MORE_IDEAS_RESULTS.md`](MORE_IDEAS_RESULTS.md).
 
 ## Evidence labels
 
@@ -20,12 +23,12 @@ This document converts the uploaded `MORE_IDEAS.md` holding pen into an auditabl
 | M3 | Multi-index opening-range spread | Apply the exact causal 30-minute opening-range rule to NIFTY, BANKNIFTY and FINNIFTY; use six listed strike intervals for the hedge, each underlying's dated lot size, the existing 50% target/2× stop/15:15 exit, and report both pooled and per-index results | **Frozen, data/provenance run pending** |
 | C1 | ₹180 crossing as spread skew | At 09:45 classify the first causal upward ₹180 option-premium cross. When it agrees with the later opening-range direction, retain the ATM short; otherwise move the short one listed strike OTM and retain a six-interval hedge. All other spread rules stay unchanged | **Frozen, data run pending** |
 | C2 | Morning Tea liquidity gate | Permit only `RELIANCE`, `HDFCBANK`, `ICICIBANK`, `SBIN`, `INFY`, and `TCS`, frozen before symbol-level P&L inspection; retain all original Morning Tea rules and stress cases | **Terminal diagnostic rejection** |
-| C3 | IV regime plus opening-range spread | Prior-session India VIX close ranked against exactly 252 prior VIX sessions; enter only at or above percentile 50; missing/duplicate/reference-date mismatch is data-missing, never a non-trade | **Classifier frozen; VIX source verification/data join pending** |
+| C3 | IV regime plus opening-range spread | Prior-session India VIX close ranked against exactly 252 prior VIX sessions; enter only at or above percentile 50; missing/duplicate/reference-date mismatch is data-missing, never a non-trade | **Operationally incomplete; 30-day fetch/shard repair merged, clean rerun evidence pending** |
 | S1 | PEAD via options | Frozen SUE arithmetic and causal session-window module exist; requires licensed point-in-time consensus/actual EPS, NSE release timestamps, a dated option universe, and an overnight lifecycle | **Blocked on point-in-time earnings data and overnight engine** |
 | S2 | Covered-call/BXM overlay | Requires an owned underlying portfolio, monthly rolls, dividends/corporate actions, assignment treatment and capital accounting | **Blocked; separate portfolio project, not an intraday option variant** |
 | S3 | Earnings IV crush | Requires a point-in-time earnings calendar, stock-option IV surface, overnight gap execution and defined-risk structure | **Blocked; same short-gamma tail risk must be measured explicitly** |
 | S4 | High win-rate condor claim | Diagnose win/loss magnitude, PF, tails and year stability from the complete weekly-condor artifact | **Completed caution; claim rejected as a selection criterion** |
-| O1 | VIX-low V2/V3 | Prior-session India VIX close ranked against exactly 252 prior sessions; run V2 and V3-10 unchanged only at or below percentile 50; record filtered sessions separately | **Classifier frozen; VIX source verification/data join pending** |
+| O1 | VIX-low V2/V3 | Prior-session India VIX close ranked against exactly 252 prior sessions; run V2 and V3-10 unchanged only at or below percentile 50; record filtered sessions separately | **Terminal discovery rejection; all 60 shards completed, both variants failed 1-point stress** |
 | O2 | Index versus stock-option microstructure | A ₹180 absolute premium threshold is not scale-invariant across stocks. A normalized replacement would be a different hypothesis | **Research question only; no unique rule yet** |
 | O3 | Smart-condor loss cause | Recompute payoff ratio, tail-loss concentration, exit causes and yearly economics from all 255 trade rows | **Completed: loss-size-driven failure** |
 
@@ -94,8 +97,9 @@ The proxy failed at the project's 0.25-point decision stress in both periods and
 
 ## Next execution order
 
-1. Verify and ingest India VIX, then run O1 and C3 without changing their frozen percentile rules.
-2. Generalize the opening-range runner for dated BANKNIFTY/FINNIFTY contracts and execute M3.
-3. Execute C1 only after the generalized spread runner passes cross-underlying integrity tests.
-4. Keep S1–S3 blocked until their point-in-time data and overnight accounting requirements are satisfied.
-5. Do not create a backtest for O2 until a scale-invariant hypothesis is separately frozen before viewing stock-option results.
+1. Complete the interrupted profit-only directional suite and evaluate only its full 60-month aggregate.
+2. Produce a clean repaired C3 discovery result without changing its frozen percentile rule.
+3. Generalize the opening-range runner for dated BANKNIFTY/FINNIFTY contracts and execute M3.
+4. Execute C1 only after the generalized spread runner passes cross-underlying integrity tests.
+5. Keep S1–S3 blocked until their point-in-time data and overnight accounting requirements are satisfied.
+6. Do not create a backtest for O2 until a scale-invariant hypothesis is separately frozen before viewing stock-option results.

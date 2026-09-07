@@ -1,6 +1,6 @@
 # Strategy status and evidence ledger
 
-Last updated: 2 September 2026
+Last updated: 7 September 2026
 
 This is the repository's single status index for strategies that were reviewed, implemented, backtested, rejected, or placed in paper observation. Detailed frozen rules remain in the individual specifications; this file records outcomes and promotion status.
 
@@ -65,6 +65,13 @@ Amounts below include the repository's normal cost model. “0.5” and “1.0�
 | 30-minute opening-range ATM credit spread | 2020–2024, 1,243 sessions, 41 trades | +₹6,232.93, PF 1.245 | +₹1,638.90, PF 1.061 | −₹2,921.42, PF 0.898 | **REJECTED** — insufficient sample, negative 1-point stress, clustered-confidence and concentration failures |
 | Weekly 0.08-delta NIFTY smart condor | 2020–2024, 261 observations, 255 trades | −₹47,418.06, PF 0.438 | −₹103,091.04, PF 0.106 | −₹158,730.33, PF 0.020 | **REJECTED** — negative in every year and stress case; robustness, stability and data-completeness gates failed |
 | Monthly large-cap RSI iron condor | 2020–2024, 548 observations, 0 trades | ₹0, PF not measurable | ₹0, PF not measurable | ₹0, PF not measurable | **REJECTED / UNTESTABLE** — 402 RSI-filtered no-trades and 146 data-missing observations; no performance sample |
+| O1 VIX-low NIFTY ₹180 filter, V2 | 2020–2024, 60 valid monthly shards | +₹41,372 | −₹67,515 | −₹176,402 | **REJECTED** — positive normal result failed both stress-profitability gates |
+| O1 VIX-low NIFTY ₹180 filter, V3-10 | 2020–2024, 60 valid monthly shards | +₹116,512 | +₹7,625 | −₹101,262 | **REJECTED** — failed the frozen 1-point stress-profitability gate |
+| ₹180-touch, signal-close entry stop suite | 2020–2024, 967 trades per configuration | Best: −₹74,042, PF 0.928 | Best: −₹351,262 | Best: −₹628,483 | **REJECTED** — all 10 stop/exit configurations lost normally and under stress |
+
+The detailed More Ideas queue, O1 evidence, close-entry configuration table,
+and operational status of the profit-only directional suite are maintained in
+[`MORE_IDEAS_RESULTS.md`](MORE_IDEAS_RESULTS.md).
 
 ### Remaining strategy research — terminal verdicts
 
