@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { mergeProfitOnlyShards } from '../research/merge-profit-only-directional-shards.mjs';import { evaluateProfitOnlyGates } from '../research/profit-only-directional-gates.mjs';
+test('merge refuses incomplete evidence',()=>assert.throws(()=>mergeProfitOnlyShards([],'2020-01-01','2024-12-31',60),/Expected 60/));
+test('gate requires zero directional-loss trades',()=>{const s={trades:100,totalNetPnl:1,profitFactor:1.1};const r={variants:{A:{directionalLossTrades:0,summary:{combined:{current:s,stress0_5:s,stress1_0:s}}}}};assert.equal(evaluateProfitOnlyGates(r).passed,true);r.variants.A.directionalLossTrades=1;assert.equal(evaluateProfitOnlyGates(r).passed,false)});
