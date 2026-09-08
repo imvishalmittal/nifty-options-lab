@@ -7,6 +7,7 @@ jobs:
   research:
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    outputs: { evidence_complete: "${{ steps.complete.outputs.value }}" }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,11 +40,13 @@ jobs:
             m3-gate.json
           if-no-files-found: warn
           retention-days: 90
+      - id: complete
+        run: echo "value=true" >> "$GITHUB_OUTPUT"
       - run: node research/multi-index-credit-gates.mjs --in=m3.json --out=m3-gate.json --enforce=true
   dispatch-c1:
-    if: always()
+    if: ${{ always() && needs.research.outputs.evidence_complete == 'true' }}
     needs: research
     runs-on: ubuntu-latest
     steps:
       - env: { GH_TOKEN: "${{ github.token }}" }
-        run: gh workflow run research-nifty-180-spread-skew.yml --ref main
+        run: gh workflow run research-nifty-180-spread-skew.yml --repo imvishalmittal/nifty-options-lab --ref main
