@@ -1,0 +1,13 @@
+{
+  "requestedAt": "2026-09-08T00:00:00Z",
+  "period": {
+    "startDate": "2025-01-01",
+    "endDate": "2026-09-08",
+    "expectedMonthlyShards": 21
+  },
+  "variants": [
+    "RETEST15_CONFIRM_BE_10",
+    "PREVIOUS_DAY_BREAK_CONFIRM_BE_10"
+  ],
+  "purpose": "Untouched economic validation before continuing prospective paper observation"
+}

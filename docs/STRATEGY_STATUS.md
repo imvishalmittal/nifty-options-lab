@@ -68,10 +68,18 @@ Amounts below include the repository's normal cost model. “0.5” and “1.0�
 | O1 VIX-low NIFTY ₹180 filter, V2 | 2020–2024, 60 valid monthly shards | +₹41,372 | −₹67,515 | −₹176,402 | **REJECTED** — positive normal result failed both stress-profitability gates |
 | O1 VIX-low NIFTY ₹180 filter, V3-10 | 2020–2024, 60 valid monthly shards | +₹116,512 | +₹7,625 | −₹101,262 | **REJECTED** — failed the frozen 1-point stress-profitability gate |
 | ₹180-touch, signal-close entry stop suite | 2020–2024, 967 trades per configuration | Best: −₹74,042, PF 0.928 | Best: −₹351,262 | Best: −₹628,483 | **REJECTED** — all 10 stop/exit configurations lost normally and under stress |
+| Retest-15 + breakeven after +10 | 2020–2024, 839 trades | +₹615,899.21, PF 1.620 | +₹446,981.17 | +₹278,063.14 | **PAPER / VALIDATION PENDING** — economic discovery passed all stresses; zero-loss hypothesis failed |
+| Previous-day break + breakeven after +10 | 2020–2024, 869 trades | +₹410,004.45, PF 1.384 | +₹222,830.28 | +₹35,656.10 | **PAPER / VALIDATION PENDING** — economic discovery passed all stresses; zero-loss hypothesis failed |
 
 The detailed More Ideas queue, O1 evidence, close-entry configuration table,
 and operational status of the profit-only directional suite are maintained in
 [`MORE_IDEAS_RESULTS.md`](MORE_IDEAS_RESULTS.md).
+
+The two profit-only candidates begin an isolated prospective paper journal on
+8 September 2026. They use ₹60,000 model capital per strategy, both CE and PE,
+no broker orders, and no historical paper backfill. Untouched 2025–2026
+validation remains a required stop/continue decision and is displayed separately
+from forward paper performance.
 
 ### Remaining strategy research — terminal verdicts
 

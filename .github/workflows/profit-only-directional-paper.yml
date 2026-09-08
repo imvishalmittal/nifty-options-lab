@@ -1,0 +1,50 @@
+name: Profit-only directional paper
+
+on:
+  schedule:
+    - cron: '5 10 * * 1-5'
+    - cron: '45 10 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Retry today's prospective observation
+        required: false
+        default: false
+        type: boolean
+
+permissions: { contents: write }
+concurrency: { group: profit-only-directional-paper, cancel-in-progress: false }
+
+jobs:
+  paper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node --test tests/profit-only-paper.test.mjs tests/profit-only-directional-engine.test.mjs tests/profit-only-directional-pipeline.test.mjs
+      - name: Resolve Groww token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run prospective end-of-day paper observation
+        env:
+          FORCE: ${{ inputs.force }}
+        run: node paper/run-profit-only-paper.mjs
+      - name: Persist isolated profit-only journal
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/paper/profit-only-directional.json
+          if git diff --cached --quiet; then
+            echo "No profit-only paper journal change"
+          else
+            git commit -m "Update profit-only paper journal $(date -u +%F)"
+            git push origin HEAD:main
+          fi
