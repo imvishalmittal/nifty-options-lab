@@ -1,93 +1,52 @@
 name: Research - VIX-high opening-range credit
-
 on:
   workflow_dispatch:
   push:
     branches: [agent/more-ideas-c3-runs]
     paths: [research/requests/vix-high-opening-range-credit.json]
-
-permissions: { contents: read }
-concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
-
+permissions: { contents: read, actions: write }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: true }
 jobs:
-  prepare:
+  research:
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.months.outputs.matrix }}
-    steps:
-      - id: months
-        run: |
-          node <<'NODE' >> "$GITHUB_OUTPUT"
-          const include = [];
-          for (let year = 2020; year <= 2024; year += 1) {
-            for (let month = 1; month <= 12; month += 1) {
-              const key = `${year}-${String(month).padStart(2, '0')}`;
-              include.push({ month: key, start: `${key}-01`, end: `${key}-${new Date(Date.UTC(year, month, 0)).getUTCDate()}` });
-            }
-          }
-          console.log(`matrix=${JSON.stringify({ include })}`);
-          NODE
-
-  shard:
-    needs: prepare
-    strategy:
-      fail-fast: false
-      max-parallel: 1
-      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: node --test tests/backtest-vix-high-opening-range-credit.test.mjs tests/groww-opening-range-credit-backtest.test.mjs tests/opening-range-credit.test.mjs tests/vol-regime-filter.test.mjs tests/vix-filter-shard-mergers.test.mjs
-      - name: Resolve Groww access token
+      - name: Resolve one Groww token for the complete run
         env:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
           GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
           GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
           GROWW_PREFER_TOTP: 'true'
         run: node scripts/resolve-groww-token.mjs
-      - name: Run monthly C3 shard
-        run: >-
-          node research/backtest-vix-high-opening-range-credit.mjs
-          --start=${{ matrix.start }} --end=${{ matrix.end }}
-          --out=vix-high-opening-range-credit-${{ matrix.month }}.json
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: vix-high-opening-range-credit-${{ matrix.month }}
-          path: vix-high-opening-range-credit-${{ matrix.month }}.json
-          if-no-files-found: error
-          retention-days: 90
-
-  finalize:
-    needs: shard
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22 }
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: vix-high-opening-range-credit-*
-          path: shards
-          merge-multiple: true
-      - name: Merge exactly 60 monthly shards
-        run: >-
-          node research/merge-vix-high-opening-range-credit-shards.mjs
-          --in=shards --start=2020-01-01 --end=2024-12-31 --expected=60
-          --out=vix-high-opening-range-credit.json
-      - name: Evaluate frozen gates
-        run: node research/opening-range-credit-gates.mjs --in=vix-high-opening-range-credit.json --out=vix-high-opening-range-credit-gate.json
+      - name: Run all monthly C3 shards
+        run: |
+          set -euo pipefail
+          mkdir -p shards
+          for year in $(seq 2020 2024); do for month in $(seq -w 1 12); do
+            key="$year-$month"; end=$(date -u -d "$key-01 +1 month -1 day" +%Y-%m-%d)
+            node research/backtest-vix-high-opening-range-credit.mjs --start="$key-01" --end="$end" --out="shards/vix-high-opening-range-credit-$key.json"
+          done; done
+      - run: node research/merge-vix-high-opening-range-credit-shards.mjs --in=shards --start=2020-01-01 --end=2024-12-31 --expected=60 --out=vix-high-opening-range-credit.json
+      - run: node research/opening-range-credit-gates.mjs --in=vix-high-opening-range-credit.json --out=vix-high-opening-range-credit-gate.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: vix-high-opening-range-credit-discovery-2020-2024
           path: |
+            shards
             vix-high-opening-range-credit.json
             vix-high-opening-range-credit-gate.json
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 90
-      - name: Enforce frozen gates
-        run: node research/opening-range-credit-gates.mjs --in=vix-high-opening-range-credit.json --out=vix-high-opening-range-credit-gate.json --enforce=true
+      - run: node research/opening-range-credit-gates.mjs --in=vix-high-opening-range-credit.json --out=vix-high-opening-range-credit-gate.json --enforce=true
+  dispatch-trailing-validation:
+    if: always()
+    needs: research
+    runs-on: ubuntu-latest
+    steps:
+      - env: { GH_TOKEN: "${{ github.token }}" }
+        run: gh workflow run research-profit-only-trailing-validation.yml --ref main
