@@ -116,6 +116,16 @@ paper journal begins prospectively on 8 September 2026 at
 `public/paper/profit-only-directional.json`; it is excluded from V2–V11 totals,
 does not backfill historical paper trades, and cannot place broker orders.
 
+### Stepped-trailing follow-up
+
+Four discovery variants are scheduled over the same 2020–2024 monthly shards:
+Retest-15 and Previous-day Break, each with a 5-point or 10-point stepped trail.
+The initial stop is the signal option candle's low. At +10 premium points the
+stop becomes entry; each later complete 5-point or 10-point rise moves the stop
+by the corresponding step. A stop calculated from a candle applies only from
+the next candle. Current paper rules remain unchanged until this study and its
+required validation pass.
+
 ## Remaining execution order
 
 1. Complete the untouched 2025–2026 profit-only validation; stop new paper

@@ -38,3 +38,17 @@ test('confirmation breakeven starts at signal low and moves after ten points', (
   const result=evaluateImmediateBreakeven(rows,rows[0].timestamp,'CONFIRM_BE_10');
   assert.equal(result.exit,179); assert.equal(result.result,'BREAKEVEN_STOP');
 });
+
+test('five-point trail ratchets only after completed favorable candles', () => {
+  const rows=[c('09:30',195,202,190,200),c('09:35',200,215,198,213),c('09:40',210,211,204,206)];
+  const result=evaluateImmediateBreakeven(rows,rows[0].timestamp,'TRAIL_5_AFTER_BE_10');
+  assert.equal(result.exit,205);
+  assert.equal(result.result,'TRAILING_STOP');
+});
+
+test('ten-point trail retains a wider ratchet between milestones', () => {
+  const rows=[c('09:30',195,202,190,200),c('09:35',200,220,198,218),c('09:40',215,216,209,211)];
+  const result=evaluateImmediateBreakeven(rows,rows[0].timestamp,'TRAIL_10_AFTER_BE_10');
+  assert.equal(result.exit,210);
+  assert.equal(result.result,'TRAILING_STOP');
+});
