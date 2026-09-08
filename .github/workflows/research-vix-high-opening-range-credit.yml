@@ -21,7 +21,7 @@ jobs:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
           GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
           GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
-          GROWW_PREFER_TOTP: 'true'
+          GROWW_PREFER_TOTP: 'false'
         run: node scripts/resolve-groww-token.mjs
       - name: Run all monthly C3 shards
         run: |
