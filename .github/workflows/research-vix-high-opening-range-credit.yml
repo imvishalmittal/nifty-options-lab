@@ -10,6 +10,7 @@ jobs:
   research:
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    outputs: { evidence_complete: "${{ steps.complete.outputs.value }}" }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,7 +21,7 @@ jobs:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
           GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
           GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
-          GROWW_PREFER_TOTP: 'true'
+          GROWW_PREFER_TOTP: 'false'
         run: node scripts/resolve-groww-token.mjs
       - name: Run all monthly C3 shards
         run: |
@@ -42,11 +43,13 @@ jobs:
             vix-high-opening-range-credit-gate.json
           if-no-files-found: warn
           retention-days: 90
+      - id: complete
+        run: echo "value=true" >> "$GITHUB_OUTPUT"
       - run: node research/opening-range-credit-gates.mjs --in=vix-high-opening-range-credit.json --out=vix-high-opening-range-credit-gate.json --enforce=true
   dispatch-trailing-validation:
-    if: always()
+    if: ${{ always() && needs.research.outputs.evidence_complete == 'true' }}
     needs: research
     runs-on: ubuntu-latest
     steps:
       - env: { GH_TOKEN: "${{ github.token }}" }
-        run: gh workflow run research-profit-only-trailing-validation.yml --ref main
+        run: gh workflow run research-profit-only-trailing-validation.yml --repo imvishalmittal/nifty-options-lab --ref main
