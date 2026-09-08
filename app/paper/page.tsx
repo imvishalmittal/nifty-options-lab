@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PaperLedger from "../paper-ledger";
+import ProfitOnlyLedger from "../profit-only-ledger";
 
 export default function PaperTradingPage() {
   return <main style={{ minHeight: "100vh", background: "#f6f8fc", padding: "24px" }}>
@@ -11,6 +12,7 @@ export default function PaperTradingPage() {
         <Link href="/" style={{ border: "1px solid #cbd5e1", borderRadius: 10, padding: "10px 14px", textDecoration: "none", color: "#0f172a", background: "white", fontWeight: 700 }}>Learning dashboard</Link>
       </header>
       <PaperLedger />
+      <ProfitOnlyLedger />
     </div>
   </main>;
 }

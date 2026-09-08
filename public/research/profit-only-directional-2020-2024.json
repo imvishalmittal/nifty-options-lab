@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "period": {
+    "startDate": "2020-01-01",
+    "endDate": "2024-12-31"
+  },
+  "capitalPerStrategy": 60000,
+  "status": "PASSES_ECONOMIC_DISCOVERY_ZERO_DIRECTIONAL_LOSS_HYPOTHESIS_FAILED",
+  "variants": [
+    {
+      "key": "RETEST15_CONFIRM_BE_10",
+      "label": "Retest-15 + breakeven after +10",
+      "trades": 839,
+      "normalNetPnl": 615899.21,
+      "stress0_5NetPnl": 446981.17,
+      "stress1_0NetPnl": 278063.14,
+      "profitFactor": 1.6198,
+      "maxDrawdown": 92975.39,
+      "directionalLossTrades": 493,
+      "amountInvested": { "minimum": 30169.75, "average": 51244.38, "maximum": 59982 },
+      "tradeNetPnl": { "minimum": -9385.81, "average": 734.09, "maximum": 127248.58 }
+    },
+    {
+      "key": "PREVIOUS_DAY_BREAK_CONFIRM_BE_10",
+      "label": "Previous-day break + breakeven after +10",
+      "trades": 869,
+      "normalNetPnl": 410004.45,
+      "stress0_5NetPnl": 222830.28,
+      "stress1_0NetPnl": 35656.10,
+      "profitFactor": 1.3843,
+      "maxDrawdown": 158908.69,
+      "directionalLossTrades": 507,
+      "amountInvested": { "minimum": 30355, "average": 52090.38, "maximum": 59982 },
+      "tradeNetPnl": { "minimum": -12224.13, "average": 471.81, "maximum": 69425.90 }
+    }
+  ]
+}

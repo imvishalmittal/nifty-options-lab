@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 const RAW_ROOT =
-  "https://raw.githubusercontent.com/imvishalmittal/nifty-options-lab/main/public/paper";
+  "https://raw.githubusercontent.com/imvishalmittal/nifty-options-lab/main/public";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +19,12 @@ async function fetchJson(path: string, required = true) {
 
 export async function GET() {
   try {
-    const [ledger, sessionJournal, openingRangeShadow] = await Promise.all([
-      fetchJson("trades.json"),
-      fetchJson("sessions.json", false),
-      fetchJson("opening-range-shadow.json", false),
+    const [ledger, sessionJournal, openingRangeShadow, profitOnlyPaper, profitOnlyBacktest] = await Promise.all([
+      fetchJson("paper/trades.json"),
+      fetchJson("paper/sessions.json", false),
+      fetchJson("paper/opening-range-shadow.json", false),
+      fetchJson("paper/profit-only-directional.json", false),
+      fetchJson("research/profit-only-directional-2020-2024.json", false),
     ]);
     return NextResponse.json(
       {
@@ -31,6 +33,8 @@ export async function GET() {
         sessions: Array.isArray(sessionJournal?.sessions) ? sessionJournal.sessions : [],
         sessionMeta: sessionJournal?.meta ?? {},
         openingRangeShadow: openingRangeShadow ?? { meta: {}, sessions: [] },
+        profitOnlyPaper: profitOnlyPaper ?? { meta: {}, sessions: [] },
+        profitOnlyBacktest: profitOnlyBacktest ?? { variants: [] },
       },
       { headers: { "Cache-Control": "no-store, max-age=0" } },
     );

@@ -17,7 +17,10 @@ before validation or paper observation.
 | Blocked on data or infrastructure | 3 | S1, S2, S3 |
 | Deterministic specification required | 1 | O2 |
 
-No More Ideas strategy has been promoted to validation or paper trading.
+No original 13-item More Ideas strategy has been promoted. The later profit-only
+extension produced two economically robust discovery candidates and starts a
+separate prospective paper lane on 8 September 2026 while untouched 2025–2026
+validation runs.
 
 ## Original queue results
 
@@ -79,33 +82,55 @@ gap-through fills remained real, while ordinary noise caused very early exits.
 CE-only slices were positive in several variants, but that asymmetry was observed
 after viewing the combined result and is not evidence for a CE-only promotion.
 
-## Profit-only directional suite
+## Profit-only directional suite — economic discovery passed
 
 This is another later extension: five NIFTY-derived CE/PE signals crossed with
 three protection overlays (15 frozen configurations), no ₹180 entry constraint,
 and the same normal/0.5/1-point cost stresses.
 
 [Run 34123588659](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/34123588659)
-is **operationally incomplete** as of this ledger snapshot. It produced 27
-monthly artifacts through March 2022; subsequent shards encountered Groww token
-resolution failures. The aggregate gate has not run, so partial P&L must not be
-reported or used for selection. This is neither a pass nor an economic rejection.
+completed all 60 monthly artifacts and the consolidated gate. The special
+zero-directional-loss hypothesis failed, but that is not an economic rejection:
+the following two variants were profitable after normal costs and both adverse
+slippage stresses.
+
+| Variant | Trades | Normal | 0.5 point | 1 point | PF / max DD |
+|---|---:|---:|---:|---:|---:|
+| Retest-15 + breakeven after +10 | 839 | +₹615,899.21 | +₹446,981.17 | +₹278,063.14 | 1.620 / ₹92,975.39 |
+| Previous-day break + breakeven after +10 | 869 | +₹410,004.45 | +₹222,830.28 | +₹35,656.10 | 1.384 / ₹158,908.69 |
+
+| Variant | Invested min / average / max | Trade net P&L min / average / max |
+|---|---:|---:|
+| Retest-15 + breakeven after +10 | ₹30,169.75 / ₹51,244.38 / ₹59,982.00 | −₹9,385.81 / +₹734.09 / +₹127,248.58 |
+| Previous-day break + breakeven after +10 | ₹30,355.00 / ₹52,090.38 / ₹59,982.00 | −₹12,224.13 / +₹471.81 / +₹69,425.90 |
+
+The model sizes whole lots within ₹60,000 capital per strategy. “Profit-only”
+never meant every trade was profitable: Retest-15 had 493 directional-loss
+trades and Previous-day break had 507. The economic edge came from infrequent
+large winners outweighing many small losses. Both CE and PE signals remain
+enabled. Results are stored in
+`public/research/profit-only-directional-2020-2024.json`.
+
+Untouched 2025–8 September 2026 validation is pending. A separate end-of-day
+paper journal begins prospectively on 8 September 2026 at
+`public/paper/profit-only-directional.json`; it is excluded from V2–V11 totals,
+does not backfill historical paper trades, and cannot place broker orders.
 
 ## Remaining execution order
 
-1. Recover or rerun the incomplete profit-only shards and evaluate only the
-   complete 60-month aggregate.
-2. Produce a clean repaired C3 discovery result.
-3. Run M3 after dated BANKNIFTY/FINNIFTY contract and lot-size provenance is
+1. Complete the untouched 2025–2026 profit-only validation; stop new paper
+   entries if neither selected variant remains profitable at all three stresses.
+2. Continue prospective profit-only paper observation without backfill.
+3. Produce a clean repaired C3 discovery result.
+4. Run M3 after dated BANKNIFTY/FINNIFTY contract and lot-size provenance is
    complete.
-4. Run C1 only after the generalized spread engine passes cross-underlying
+5. Run C1 only after the generalized spread engine passes cross-underlying
    integrity checks.
-5. Keep S1–S3 blocked and O2 unspecified until their stated evidence
+6. Keep S1–S3 blocked and O2 unspecified until their stated evidence
    requirements are met.
 
 ## Promotion boundary
 
-The existing V2–V11 paper strategies and journals are unchanged. Rejected
-discoveries stay rejected, incomplete runs produce no verdict, and no More Ideas
-strategy enters paper observation without passing its frozen discovery,
-validation, holdout, cost-stress, and integrity gates.
+The existing V2–V11 paper strategies and journals are unchanged. The selected
+profit-only variants are isolated paper observations with ₹60,000 model capital
+each, not live-trading authorization and not additive to V2–V11 account totals.
