@@ -83,7 +83,10 @@ levels. Four stepped-trailing variants—Retest-15 and Previous-day Break with
 8 September while their 2020–2024 discovery runs. They use ₹60,000 model capital,
 support CE and PE, place no broker orders, and have no historical paper backfill.
 The dedicated `/profit-only` dashboard separates discovery, validation, and
-paper results with day/month/year/all-time filters.
+paper results with day/month/year/all-time filters. Month-wise and year-wise
+tables compare CE and PE trade counts, win rates, and net P/L under normal,
+0.5-point, and 1-point execution scenarios. This is descriptive evidence and
+does not retrospectively authorize a PE-only rule.
 
 ### Remaining strategy research — terminal verdicts
 
