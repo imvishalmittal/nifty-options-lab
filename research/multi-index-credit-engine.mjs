@@ -14,6 +14,26 @@ export function parseIndexOptionContract(value, underlying) {
   return { symbol, expiryCode: match[1], strike: Number(match[2]), optionType: match[3], underlying };
 }
 
+export function indexLotSizeForExpiry(underlying, expiry) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(expiry))) throw new Error('expiry must be YYYY-MM-DD');
+  if (underlying === 'NIFTY') {
+    if (expiry < '2021-08-01') return 75;
+    if (expiry < '2024-05-02') return 50;
+    return 25;
+  }
+  if (underlying === 'BANKNIFTY') {
+    if (expiry < '2020-07-01') return 20;
+    if (expiry < '2023-07-01') return 25;
+    return 15;
+  }
+  if (underlying === 'FINNIFTY') {
+    if (expiry < '2021-01-01') return null;
+    if (expiry < '2024-05-02') return 40;
+    return 25;
+  }
+  throw new Error(`Unsupported underlying ${underlying}`);
+}
+
 export function selectListedIntervalCreditSpread(contracts, spot, direction, hedgeIntervals = MULTI_INDEX_SPREAD_RULES.hedgeIntervals) {
   if (!Number.isInteger(hedgeIntervals) || hedgeIntervals < 1) throw new Error('hedgeIntervals must be a positive integer');
   const optionType = direction === 'UP' ? 'PE' : direction === 'DOWN' ? 'CE' : null;
