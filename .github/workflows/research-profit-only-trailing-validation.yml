@@ -1,6 +1,9 @@
 name: Research - Profit-only trailing validation
 on:
   workflow_dispatch:
+  push:
+    branches: [agent/profit-only-trailing-validation-runs]
+    paths: [research/requests/profit-only-trailing-validation-rerun.json]
 permissions: { contents: read, actions: write }
 concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
 jobs:

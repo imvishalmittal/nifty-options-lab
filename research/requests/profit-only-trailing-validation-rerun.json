@@ -1,0 +1,6 @@
+{
+  "requestedAt": "2026-09-08T17:45:00Z",
+  "reason": "Rerun 2025-2026 validation after fixing partial-year month zero-padding",
+  "start": "2025-01-01",
+  "end": "2026-09-08"
+}
