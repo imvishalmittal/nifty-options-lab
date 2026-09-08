@@ -61,6 +61,9 @@ Active workflows are limited to:
 
 - `CI`: lint/build/site tests and strategy regression tests.
 - `NIFTY Paper Session`: one continuous weekday paper job starting around 09:20 IST.
+- `Profit-only Strategy Lab` (`/profit-only`): a separate read model for detailed
+  discovery, untouched validation, and prospective paper results. It never adds
+  counterfactual strategy P/L together.
 - `NIFTY Paper Post-Close Recovery`: a guarded 15:40 IST replay that runs only when the live session is non-terminal. It requires a passing integrity report and cannot overwrite `CLOSED`, `NO_TRADE`, or `AMBIGUOUS` live outcomes.
 - `NIFTY Paper Smoke`: manual paper/Groww operational validation.
 - `Experimental Opening-Range Shadow Paper`: guarded 15:25/16:05 IST after-market observation with no order path and no V2–V11 mutation.

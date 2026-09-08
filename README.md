@@ -92,6 +92,10 @@ Active GitHub Actions workflows are intentionally limited to:
 
 - `CI` — lint, build, rendered-site tests, and strategy regression tests.
 - `NIFTY Paper Session` — weekday continuous paper suite starting at about **09:20 IST**, producing V2–V11 shadow outcomes.
+- `/profit-only` — separate profit-only evidence dashboard with discovery,
+  validation, and experimental paper views by day, month, year, or all time.
+- `Profit-only directional paper` — post-close prospective shadow record for
+  the four 5/10-point trailing variants; no broker orders and no backfill.
 - `NIFTY Paper Post-Close Recovery` — at **15:40 IST**, causally replays only an incomplete data/infrastructure session, verifies it, and persists it without overwriting a terminal live outcome.
 - `NIFTY Paper Smoke` — manually checks paper mechanics, Groww authentication, and a small historical-data request.
 - `Research - NIFTY ...` opportunity workflows — four isolated strategy backtests, their suite chain, and comparison report.
