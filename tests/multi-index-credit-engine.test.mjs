@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MULTI_INDEX_SPREAD_RULES, parseIndexOptionContract, selectCrossingSkewedSpread, selectListedIntervalCreditSpread } from '../research/multi-index-credit-engine.mjs';
+import { MULTI_INDEX_SPREAD_RULES, indexLotSizeForExpiry, parseIndexOptionContract, selectCrossingSkewedSpread, selectListedIntervalCreditSpread } from '../research/multi-index-credit-engine.mjs';
 
 function ladder(type, strikes) {
   return strikes.map((strike) => ({ symbol: `x-${strike}-${type}`, strike, optionType: type }));
@@ -33,4 +33,14 @@ test('crossing agreement keeps ATM while disagreement shifts one interval OTM', 
   assert.equal(agree.short.strike, 350);
   assert.equal(disagree.short.strike, 300);
   assert.equal(disagree.long.strike, 150);
+});
+
+test('uses dated exchange lot schedules for all three indices', () => {
+  assert.equal(indexLotSizeForExpiry('NIFTY', '2020-06-25'), 75);
+  assert.equal(indexLotSizeForExpiry('NIFTY', '2024-05-30'), 25);
+  assert.equal(indexLotSizeForExpiry('BANKNIFTY', '2020-06-25'), 20);
+  assert.equal(indexLotSizeForExpiry('BANKNIFTY', '2020-07-30'), 25);
+  assert.equal(indexLotSizeForExpiry('BANKNIFTY', '2023-07-27'), 15);
+  assert.equal(indexLotSizeForExpiry('FINNIFTY', '2024-04-30'), 40);
+  assert.equal(indexLotSizeForExpiry('FINNIFTY', '2024-05-28'), 25);
 });
