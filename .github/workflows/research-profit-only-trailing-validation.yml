@@ -2,6 +2,9 @@ name: Research - Profit-only trailing validation
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: [Research - VIX-high opening-range credit]
+    types: [completed]
   push:
     branches: [agent/profit-only-trailing-validation-runs]
     paths: [research/requests/profit-only-trailing-validation.json]

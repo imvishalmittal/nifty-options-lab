@@ -2,6 +2,9 @@ name: Research - M3 multi-index opening-range credit
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: [Research - Profit-only trailing validation]
+    types: [completed]
   push:
     branches: [agent/more-ideas-m3-runs]
     paths: [research/requests/multi-index-opening-range-credit.json]
