@@ -1,6 +1,6 @@
 # More Ideas — execution results
 
-Status date: 7 September 2026
+Status date: 8 September 2026
 
 This is the result ledger for the ideas governed by
 `MORE_IDEAS_RESEARCH_PROTOCOL.md`. It separates completed economic evidence
@@ -111,27 +111,31 @@ large winners outweighing many small losses. Both CE and PE signals remain
 enabled. Results are stored in
 `public/research/profit-only-directional-2020-2024.json`.
 
-Untouched 2025–8 September 2026 validation is pending. A separate end-of-day
-paper journal begins prospectively on 8 September 2026 at
-`public/paper/profit-only-directional.json`; it is excluded from V2–V11 totals,
-does not backfill historical paper trades, and cannot place broker orders.
+Untouched 2025–8 September 2026 validation completed with 21/21 shards and a
+**STOP_NEW_PAPER_ENTRIES** verdict. Retest-15 lost ₹153,717 normally, ₹215,886
+at 0.5-point stress, and ₹278,055 at 1-point stress. Previous-day Break earned
+₹19,313 normally but lost ₹25,640 and ₹70,593 under the two stresses. New paper
+entries for these two rules are therefore stopped.
 
 ### Stepped-trailing follow-up
 
-Four discovery variants are scheduled over the same 2020–2024 monthly shards:
+Four discovery variants are running over the same 2020–2024 monthly shards:
 Retest-15 and Previous-day Break, each with a 5-point or 10-point stepped trail.
 The initial stop is the signal option candle's low. At +10 premium points the
 stop becomes entry; each later complete 5-point or 10-point rise moves the stop
 by the corresponding step. A stop calculated from a candle applies only from
-the next candle. Current paper rules remain unchanged until this study and its
-required validation pass.
+the next candle. They enter an explicitly experimental, isolated shadow journal
+from 8 September 2026 while discovery runs. This is not promotion: no broker
+orders are possible, results are excluded from V2–V11 totals, and a failed
+discovery gate stops the experiment.
 
 ## Remaining execution order
 
-1. Complete the untouched 2025–2026 profit-only validation; stop new paper
-   entries if neither selected variant remains profitable at all three stresses.
-2. Continue prospective profit-only paper observation without backfill.
-3. Produce a clean repaired C3 discovery result.
+1. Complete the four stepped-trailing discovery variants and evaluate their
+   frozen normal/0.5/1-point gates.
+2. Collect the experimental trailing paper journal without historical backfill.
+3. Produce a clean repaired C3 discovery result after the serialized Groww slot
+   is free.
 4. Run M3 after dated BANKNIFTY/FINNIFTY contract and lot-size provenance is
    complete.
 5. Run C1 only after the generalized spread engine passes cross-underlying
@@ -141,6 +145,7 @@ required validation pass.
 
 ## Promotion boundary
 
-The existing V2–V11 paper strategies and journals are unchanged. The selected
-profit-only variants are isolated paper observations with ₹60,000 model capital
-each, not live-trading authorization and not additive to V2–V11 account totals.
+The existing V2–V11 paper strategies and journals are unchanged. Profit-only
+observations use ₹60,000 model capital each, are not live-trading authorization,
+and are not additive to V2–V11 account totals. The dedicated dashboard route is
+`/profit-only`.

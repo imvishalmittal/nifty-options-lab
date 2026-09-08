@@ -74,6 +74,10 @@ Research changes must also run their workflow-specific tests and integrity gates
 
 - `CI` validates application and deterministic tests.
 - `NIFTY Paper Session` starts around 09:20 IST Monday-Friday and runs one continuous paper session.
+- `Profit-only directional paper` records the predeclared experimental trailing
+  variants after the 15:15 exit boundary so the entire session is available; the
+  observation is prospective because the rules and eligible date were committed
+  before the session, and it never places an order.
 - `NIFTY Paper Smoke` manually validates paper mechanics, Groww authentication, and a small historical-data request.
 - `Experimental Opening-Range Shadow Paper` records the current session after the frozen 15:15 exit and retries once after transient operational failure; it never sends orders or joins V2–V11 totals.
 - The isolated `Research - NIFTY ...` workflows run the four active opportunity studies, suite chain, and comparison.

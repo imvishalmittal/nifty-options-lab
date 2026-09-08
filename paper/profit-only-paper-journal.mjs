@@ -1,7 +1,9 @@
 export const PROFIT_ONLY_PAPER_START = '2026-09-08';
 export const PROFIT_ONLY_PAPER_VARIANTS = Object.freeze([
-  'RETEST15_CONFIRM_BE_10',
-  'PREVIOUS_DAY_BREAK_CONFIRM_BE_10',
+  'RETEST15_TRAIL_5_AFTER_BE_10',
+  'RETEST15_TRAIL_10_AFTER_BE_10',
+  'PREVIOUS_DAY_BREAK_TRAIL_5_AFTER_BE_10',
+  'PREVIOUS_DAY_BREAK_TRAIL_10_AFTER_BE_10',
 ]);
 
 export const PROFIT_ONLY_PAPER_META = Object.freeze({
@@ -11,8 +13,8 @@ export const PROFIT_ONLY_PAPER_META = Object.freeze({
   startedOn: PROFIT_ONLY_PAPER_START,
   capitalPerStrategy: 60000,
   variants: PROFIT_ONLY_PAPER_VARIANTS,
-  selectionBasis: 'Profitable in 2020-2024 at normal, 0.5-point, and 1-point stress',
-  validationStatus: 'PENDING_2025_2026',
+  selectionBasis: 'Experimental shadow observation while frozen 2020-2024 trailing discovery runs',
+  validationStatus: 'UNVERIFIED_TRAILING_DISCOVERY_RUNNING',
   excludedFromV2V11Totals: true,
 });
 

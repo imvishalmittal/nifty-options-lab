@@ -1,6 +1,6 @@
 # Strategy status and evidence ledger
 
-Last updated: 7 September 2026
+Last updated: 8 September 2026
 
 This is the repository's single status index for strategies that were reviewed, implemented, backtested, rejected, or placed in paper observation. Detailed frozen rules remain in the individual specifications; this file records outcomes and promotion status.
 
@@ -75,11 +75,15 @@ The detailed More Ideas queue, O1 evidence, close-entry configuration table,
 and operational status of the profit-only directional suite are maintained in
 [`MORE_IDEAS_RESULTS.md`](MORE_IDEAS_RESULTS.md).
 
-The two profit-only candidates begin an isolated prospective paper journal on
-8 September 2026. They use ₹60,000 model capital per strategy, both CE and PE,
-no broker orders, and no historical paper backfill. Untouched 2025–2026
-validation remains a required stop/continue decision and is displayed separately
-from forward paper performance.
+The two original profit-only candidates failed untouched 2025–8 September 2026
+validation and stop new paper entries. Retest-15 was negative under every cost
+scenario; Previous-day Break was positive normally but negative at both stress
+levels. Four stepped-trailing variants—Retest-15 and Previous-day Break with
+5-point and 10-point trails—begin isolated experimental shadow observation on
+8 September while their 2020–2024 discovery runs. They use ₹60,000 model capital,
+support CE and PE, place no broker orders, and have no historical paper backfill.
+The dedicated `/profit-only` dashboard separates discovery, validation, and
+paper results with day/month/year/all-time filters.
 
 ### Remaining strategy research — terminal verdicts
 

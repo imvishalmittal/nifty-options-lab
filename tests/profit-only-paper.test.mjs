@@ -19,11 +19,12 @@ test('selected strategies are compacted with capital and all stress outcomes', (
     entry: 200, exit: 220, peak: 230, result: 'SESSION_EXIT', pnlPerUnit: 20,
     money: { current: 6000, stress0_5: 5800, stress1_0: 5600 } };
   const result = { methodology: { capital: 60000, lotSize: 65 }, sessions: [{ date: '2026-09-08', status: 'PROCESSED' }],
-    variants: { RETEST15_CONFIRM_BE_10: { trades: [trade] }, PREVIOUS_DAY_BREAK_CONFIRM_BE_10: { trades: [] } } };
+    variants: { RETEST15_TRAIL_5_AFTER_BE_10: { trades: [trade] } } };
   const session = compactProfitOnlyPaperSession(result, '2026-09-08', '2026-09-08T10:01:00Z');
   assert.equal(session.status, 'TRADE');
-  assert.equal(session.strategies.RETEST15_CONFIRM_BE_10.amountInvested, 52000);
-  assert.equal(session.strategies.RETEST15_CONFIRM_BE_10.stress1_0NetPnl, 5600);
+  assert.equal(session.strategies.RETEST15_TRAIL_5_AFTER_BE_10.amountInvested, 52000);
+  assert.equal(session.strategies.RETEST15_TRAIL_5_AFTER_BE_10.stress1_0NetPnl, 5600);
+  assert.equal(Object.keys(session.strategies).length, 4);
   const journal = upsertProfitOnlyPaperJournal({ sessions: [] }, session);
   assert.equal(journal.meta.excludedFromV2V11Totals, true);
   assert.equal(journal.sessions.length, 1);
