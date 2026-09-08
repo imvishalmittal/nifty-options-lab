@@ -1,0 +1,28 @@
+name: Research - US close versus next NIFTY session
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/us-close-india-runs]
+    paths: [research/requests/us-close-india.json]
+permissions: { contents: read }
+jobs:
+  study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node --test tests/us-close-india-study.test.mjs
+      - name: Run causal cross-market study
+        run: >-
+          node research/us-close-india-study.mjs
+          --start=2022-01-01 --end=2026-09-08
+          --out=us-close-india-study-2022-2026.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: us-close-india-study-2022-2026
+          path: us-close-india-study-2022-2026.json
+          if-no-files-found: error
+          retention-days: 90
