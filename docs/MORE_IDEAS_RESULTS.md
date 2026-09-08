@@ -148,4 +148,5 @@ discovery gate stops the experiment.
 The existing V2–V11 paper strategies and journals are unchanged. Profit-only
 observations use ₹60,000 model capital each, are not live-trading authorization,
 and are not additive to V2–V11 account totals. The dedicated dashboard route is
-`/profit-only`.
+`/profit-only`, including CE-versus-PE comparison tables for every month and
+year in discovery, validation, and prospective paper observation.
