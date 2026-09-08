@@ -11,7 +11,7 @@ import {
 const BASE_URL='https://api.groww.in/v1';
 const CAPITAL=60000;
 const SIGNALS=['ORB15','RETEST15','PREVIOUS_DAY_BREAK','REGIME_ORB_DEEP_ITM','VWAP_CONTINUATION'];
-const EXITS=['IMMEDIATE_BE','CONFIRM_BE_10','FINANCE_HALF_10'];
+const EXITS=['IMMEDIATE_BE','CONFIRM_BE_10','FINANCE_HALF_10','TRAIL_5_AFTER_BE_10','TRAIL_10_AFTER_BE_10'];
 let lastRequestAt=0;
 const sleep=(ms)=>new Promise((resolve)=>setTimeout(resolve,ms));
 function addDays(text,days){const d=new Date(`${text}T00:00:00Z`);d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10);}

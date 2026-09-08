@@ -1,0 +1,10 @@
+{
+  "requestedAt": "2026-09-08T00:00:00Z",
+  "period": { "startDate": "2020-01-01", "endDate": "2024-12-31" },
+  "variants": [
+    "RETEST15_TRAIL_5_AFTER_BE_10",
+    "RETEST15_TRAIL_10_AFTER_BE_10",
+    "PREVIOUS_DAY_BREAK_TRAIL_5_AFTER_BE_10",
+    "PREVIOUS_DAY_BREAK_TRAIL_10_AFTER_BE_10"
+  ]
+}

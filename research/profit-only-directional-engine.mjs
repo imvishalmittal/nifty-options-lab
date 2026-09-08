@@ -93,7 +93,8 @@ export function evaluateImmediateBreakeven(optionRows, signalTimestamp, exitMode
   if (index < 0 || index + 1 >= optionRows.length) return null;
   const entry = optionRows[index].close;
   const signalLow = optionRows[index].low;
-  let activeStop = exitMode === 'CONFIRM_BE_10' ? signalLow : entry;
+  const trailingStep = exitMode === 'TRAIL_5_AFTER_BE_10' ? 5 : exitMode === 'TRAIL_10_AFTER_BE_10' ? 10 : null;
+  let activeStop = exitMode === 'CONFIRM_BE_10' || trailingStep ? signalLow : entry;
   let peak = entry;
   let financed = false;
   let firstExit = null;
@@ -103,11 +104,15 @@ export function evaluateImmediateBreakeven(optionRows, signalTimestamp, exitMode
     if (row.low <= activeStop) {
       const exit = stopFill(row, activeStop);
       return { entry, entryTime: optionRows[index + 1].timestamp, exit, exitTime: row.timestamp,
-        result: financed ? 'FINANCED_STOP' : (activeStop >= entry ? 'BREAKEVEN_STOP' : 'INITIAL_STOP'), peak, financed, firstExit,
+        result: financed ? 'FINANCED_STOP' : (activeStop > entry ? 'TRAILING_STOP' : activeStop === entry ? 'BREAKEVEN_STOP' : 'INITIAL_STOP'), peak, financed, firstExit,
         pnlPerUnit: financed ? ((firstExit - entry) + (exit - entry)) / 2 : exit - entry };
     }
     peak = Math.max(peak, row.high);
     if (exitMode === 'CONFIRM_BE_10' && activeStop < entry && peak >= entry + 10) activeStop = entry;
+    if (trailingStep && peak >= entry + 10) {
+      const completedSteps = Math.floor((peak - (entry + 10)) / trailingStep);
+      activeStop = Math.max(activeStop, entry + completedSteps * trailingStep);
+    }
     if (exitMode === 'FINANCE_HALF_10' && !financed && peak >= entry + rules.financingTriggerPoints) {
       financed = true;
       firstExit = entry + rules.financingTriggerPoints;
