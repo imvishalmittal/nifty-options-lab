@@ -1,0 +1,86 @@
+name: Research - M3 multi-index opening-range credit
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [Research - Profit-only trailing validation]
+    types: [completed]
+  push:
+    branches: [agent/more-ideas-m3-runs]
+    paths: [research/requests/multi-index-opening-range-credit.json]
+
+permissions: { contents: read }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs: { matrix: "${{ steps.months.outputs.matrix }}" }
+    steps:
+      - id: months
+        run: |
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const include=[];
+          for(let year=2020;year<=2024;year+=1) for(let month=1;month<=12;month+=1) {
+            const key=`${year}-${String(month).padStart(2,'0')}`;
+            include.push({month:key,start:`${key}-01`,end:`${key}-${new Date(Date.UTC(year,month,0)).getUTCDate()}`});
+          }
+          console.log(`matrix=${JSON.stringify({include})}`);
+          NODE
+
+  shard:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: "${{ fromJSON(needs.prepare.outputs.matrix) }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node --test tests/multi-index-credit-engine.test.mjs tests/multi-index-credit-pipeline.test.mjs
+      - name: Resolve Groww token
+        env:
+          GROWW_ACCESS_TOKEN: "${{ secrets.GROWW_ACCESS_TOKEN }}"
+          GROWW_TOTP_TOKEN: "${{ secrets.GROWW_TOTP_TOKEN }}"
+          GROWW_TOTP_SECRET: "${{ secrets.GROWW_TOTP_SECRET }}"
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run monthly M3 shard
+        run: >-
+          node research/groww-multi-index-opening-range-backtest.mjs
+          --mode=M3 --underlying=ALL --start=${{ matrix.start }} --end=${{ matrix.end }}
+          --out=m3-${{ matrix.month }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m3-${{ matrix.month }}
+          path: m3-${{ matrix.month }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+  finalize:
+    needs: shard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with: { pattern: "m3-*", path: shards, merge-multiple: true }
+      - run: >-
+          node research/merge-multi-index-credit-shards.mjs --in=shards
+          --start=2020-01-01 --end=2024-12-31 --expected=60 --out=m3.json
+      - run: node research/multi-index-credit-gates.mjs --in=m3.json --out=m3-gate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m3-discovery-2020-2024
+          path: |
+            m3.json
+            m3-gate.json
+          if-no-files-found: error
+          retention-days: 90
+      - run: node research/multi-index-credit-gates.mjs --in=m3.json --out=m3-gate.json --enforce=true
