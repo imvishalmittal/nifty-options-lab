@@ -1,6 +1,9 @@
 name: Research - C1 NIFTY 180 spread skew
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: [Research - M3 multi-index opening-range credit]
+    types: [completed]
   push:
     branches: [agent/more-ideas-c1-runs]
     paths: [research/requests/nifty-180-spread-skew.json]

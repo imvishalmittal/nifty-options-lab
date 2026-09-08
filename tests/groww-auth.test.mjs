@@ -51,3 +51,29 @@ test('paper automation can prefer TOTP while keeping manual fallback until provi
   }, async () => { throw new Error('should not call Groww token endpoint'); });
   assert.deepEqual(fallback, { token: 'manual-token', source: 'manual' });
 });
+
+test('retries rate-limited TOTP requests with bounded backoff', async () => {
+  let attempts = 0;
+  const delays = [];
+  const result = await resolveGrowwAccessToken({
+    GROWW_TOTP_TOKEN: 'totp-api-key',
+    GROWW_TOTP_SECRET: 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ',
+    GROWW_TOKEN_MAX_ATTEMPTS: '3',
+    GROWW_TOKEN_RETRY_DELAY_MS: '25',
+  }, async () => {
+    attempts += 1;
+    if (attempts < 3) {
+      return {
+        ok: false,
+        status: 429,
+        headers: { get: () => null },
+        json: async () => ({ message: 'rate limited' }),
+      };
+    }
+    return { ok: true, status: 200, json: async () => ({ token: 'generated-token' }) };
+  }, async (delay) => { delays.push(delay); });
+
+  assert.deepEqual(result, { token: 'generated-token', source: 'totp' });
+  assert.equal(attempts, 3);
+  assert.deepEqual(delays, [25, 50]);
+});
