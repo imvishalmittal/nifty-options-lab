@@ -1,0 +1,7 @@
+{
+  "study": "profit-only-initial-risk-caps-validation",
+  "period": { "startDate": "2025-01-01", "endDate": "2026-09-08" },
+  "discoveryRun": 34329645951,
+  "discoveryCandidateCount": 14,
+  "requestedAt": "2026-09-09T00:00:00Z"
+}
