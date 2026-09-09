@@ -23,7 +23,9 @@ export function evaluateDualSideValidation(result) {
       Object.values(year).every((scenario) => scenario.trades > 0 && scenario.totalNetPnl > 0));
     return [key, {
       candidatePairs: paired.candidatePairs,
+      completePairs: paired.completePairs,
       executablePairs: paired.pairs.length,
+      skippedForMissingLeg: paired.skippedForMissingLeg,
       skippedForCapital: paired.skippedForCapital,
       summary: paired.summary,
       annual: annualResults,
