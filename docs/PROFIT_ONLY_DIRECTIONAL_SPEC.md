@@ -56,6 +56,9 @@ approve it.
 - Total modeled capital stays ₹60,000: ₹30,000 is allocated independently to
   each side, using whole historical 65-unit lots. If either side cannot buy one
   lot, the pair is a no-trade.
+- If either option lacks an exact signal-time candle, the complete pair is an
+  auditable no-trade with the missing side recorded; a single available leg is
+  never traded and does not abort the remaining validation period.
 - Each leg has its own signal-low/capped initial stop, +10 breakeven activation,
   and 15:15 exit. One leg exiting never closes the other.
 - Brokerage, taxes and 0/0.5/1-point slippage are charged to both legs.
