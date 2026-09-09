@@ -32,3 +32,22 @@ Test sparse CE and PE purchases whose intended stop permits only trading-expense
 ## Discovery gates
 
 At least 100 trades, zero gross directional-loss trades, positive net P&L and profit factor above one under normal, 0.5-point and 1-point slippage. Passing discovery advances only to validation review.
+
+## Dashboard evidence
+
+The `/profit-only` dashboard publishes all 25 tested combinations formed from
+the five signal families and five exit/protection modes. Discovery, validation,
+and prospective paper observations remain separate. A top-level option-side
+selector defaults to **Both** and can restrict every summary and trade table to
+**CE only** or **PE only**. Side-only views are descriptive post-result slices;
+they do not retroactively become untouched validation.
+
+## Next bounded-risk experiment
+
+The next proposed experiment applies to both previously profitable discovery
+signals—`RETEST15` and `PREVIOUS_DAY_BREAK`—and retains both CE and PE so side
+results can be evaluated without silently discarding evidence. It will compare
+the existing signal-candle-low initial stop with maximum initial premium risks
+of 5, 10, and 15 points. Every variant retains the completed-candle entry,
+breakeven activation after +10, and 15:15 exit. This is a new hypothesis and has
+not yet been backtested or authorized for paper trading.

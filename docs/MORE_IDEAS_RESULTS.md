@@ -1,6 +1,6 @@
 # More Ideas — execution results
 
-Status date: 8 September 2026
+Status date: 9 September 2026
 
 This is the result ledger for the ideas governed by
 `MORE_IDEAS_RESEARCH_PROTOCOL.md`. It separates completed economic evidence
@@ -119,15 +119,25 @@ entries for these two rules are therefore stopped.
 
 ### Stepped-trailing follow-up
 
-Four discovery variants are running over the same 2020–2024 monthly shards:
+Four discovery variants completed over the same 2020–2024 monthly shards:
 Retest-15 and Previous-day Break, each with a 5-point or 10-point stepped trail.
 The initial stop is the signal option candle's low. At +10 premium points the
 stop becomes entry; each later complete 5-point or 10-point rise moves the stop
 by the corresponding step. A stop calculated from a candle applies only from
 the next candle. They enter an explicitly experimental, isolated shadow journal
-from 8 September 2026 while discovery runs. This is not promotion: no broker
-orders are possible, results are excluded from V2–V11 totals, and a failed
-discovery gate stops the experiment.
+from 8 September 2026. Discovery and the repaired 2025–8 September 2026 run
+both completed with integrity-clean artifacts, but the frozen economic gates
+rejected the variants. This is not promotion: no broker orders are possible
+and results remain excluded from V2–V11 totals.
+
+### Dashboard completeness and side views
+
+The dedicated `/profit-only` dashboard now contains trade-level discovery and
+validation data for all 25 tested signal/exit combinations, rather than only
+the two original +10-breakeven candidates. Its top-level selector provides
+**Both** (default), **CE only**, and **PE only** views across summaries, trade
+details, and monthly/yearly comparisons. CE/PE filtering is explicitly
+post-result analysis and does not change any historical gate verdict.
 
 ## Remaining execution order
 
