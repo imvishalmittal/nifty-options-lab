@@ -41,6 +41,18 @@ test('an unaffordable leg makes the pair a no-trade', () => {
   assert.equal(paired.skippedForCapital, 1);
 });
 
+test('a missing opposite-side candle is an auditable pair-level no-trade', () => {
+  const paired = summarizePairedTrades([
+    leg('2026-07-07', 'CE', { current: 100, stress0_5: 90, stress1_0: 80 }),
+  ]);
+  assert.equal(paired.candidatePairs, 1);
+  assert.equal(paired.completePairs, 0);
+  assert.equal(paired.pairs.length, 0);
+  assert.equal(paired.skippedForMissingLeg, 1);
+  assert.deepEqual(paired.dataNoTrades[0].missingSides, ['PE']);
+  assert.equal(paired.dataNoTrades[0].reason, 'MISSING_PE_OPTION_CANDLE');
+});
+
 test('workflow runs only the declared 2025-2026 validation period', async () => {
   const workflow = await readFile(new URL('../.github/workflows/research-profit-only-dual-side-validation.yml', import.meta.url), 'utf8');
   assert.match(workflow, /--start=2025-01-01 --end=2026-09-08 --expected=21/);

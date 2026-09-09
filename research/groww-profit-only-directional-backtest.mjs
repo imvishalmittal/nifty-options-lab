@@ -51,7 +51,21 @@ export function summarizePairedTrades(rows) {
   }
   const complete = [...pairs.entries()].filter(([, legs]) => legs.length === 2
     && new Set(legs.map((leg) => leg.side)).size === 2);
-  if (complete.length !== pairs.size) throw new Error('Incomplete CE/PE pairs: ' + complete.length + '/' + pairs.size);
+  const incomplete = [...pairs.entries()].filter(([pairId]) => !complete.some(([completeId]) => completeId === pairId));
+  const dataNoTrades = incomplete.map(([pairId, legs]) => {
+    const presentSides = [...new Set(legs.map((leg) => leg.side))].sort();
+    const missingSides = ['CE', 'PE'].filter((side) => !presentSides.includes(side));
+    return {
+      pairId,
+      date: legs[0]?.date ?? pairId.slice(0, 10),
+      strategy: legs[0]?.strategy ?? null,
+      signalTime: legs[0]?.signalTime ?? null,
+      status: 'NO_TRADE',
+      reason: missingSides.length ? `MISSING_${missingSides.join('_AND_')}_OPTION_CANDLE` : 'INVALID_CE_PE_PAIR',
+      presentSides,
+      missingSides,
+    };
+  });
   const executable = complete.filter(([, legs]) => legs.every((leg) =>
     ['current', 'stress0_5', 'stress1_0'].every((scenario) => Number.isFinite(leg.money[scenario]))));
   const portfolioRows = executable.map(([pairId, legs]) => ({
@@ -65,7 +79,10 @@ export function summarizePairedTrades(rows) {
     ])),
   }));
   return {
-    candidatePairs: complete.length,
+    candidatePairs: pairs.size,
+    completePairs: complete.length,
+    dataNoTrades,
+    skippedForMissingLeg: dataNoTrades.length,
     skippedForCapital: complete.length - executable.length,
     summary: {
       current: summary(portfolioRows, 'current'),
