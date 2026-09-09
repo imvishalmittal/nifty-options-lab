@@ -1,0 +1,53 @@
+name: Research - Profit-only simultaneous CE+PE validation
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/profit-only-dual-side-validation-runs]
+    paths: [research/requests/profit-only-dual-side-validation.json]
+permissions: { contents: read }
+concurrency: { group: groww-opportunity-backtest-api, cancel-in-progress: false }
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node --test tests/profit-only-directional-engine.test.mjs tests/profit-only-directional-pipeline.test.mjs tests/profit-only-dual-side-validation.test.mjs
+      - name: Resolve one Groww token for the complete run
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run all validation-only shards
+        run: |
+          set -euo pipefail
+          mkdir -p shards
+          for year in 2025 2026; do
+            last=12; [ "$year" = 2026 ] && last=9
+            for month_number in $(seq 1 "$last"); do
+              month=$(printf '%02d' "$month_number")
+              key="$year-$month"
+              end=$(node -e "const [y,m]=process.argv[1].split('-').map(Number); console.log(new Date(Date.UTC(y,m,0)).toISOString().slice(0,10))" "$key")
+              [ "$key" = 2026-09 ] && end=2026-09-08
+              node research/groww-profit-only-directional-backtest.mjs \
+                --start="$key-01" --end="$end" --lot-size=65 \
+                --signals=RETEST15,PREVIOUS_DAY_BREAK \
+                --exits=CONFIRM_BE_10,CONFIRM_BE_10_CAP_10 \
+                --trade-both-sides=true \
+                --out="shards/profit-only-dual-side-$key.json"
+            done
+          done
+      - run: node research/merge-profit-only-directional-shards.mjs --in=shards --start=2025-01-01 --end=2026-09-08 --expected=21 --out=profit-only-dual-side-validation.json
+      - run: node research/profit-only-dual-side-validation-gates.mjs --in=profit-only-dual-side-validation.json --out=profit-only-dual-side-validation-gate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: profit-only-dual-side-validation-2025-2026
+          path: |
+            profit-only-dual-side-validation.json
+            profit-only-dual-side-validation-gate.json
+          if-no-files-found: warn

@@ -107,7 +107,7 @@ export function evaluateImmediateBreakeven(optionRows, signalTimestamp, exitMode
     if (timeOf(row) > rules.sessionExit) break;
     if (row.low <= activeStop) {
       const exit = stopFill(row, activeStop);
-      return { entry, entryTime: optionRows[index + 1].timestamp, exit, exitTime: row.timestamp,
+      return { entry, entryTime: optionRows[index].timestamp, exit, exitTime: row.timestamp,
         result: financed ? 'FINANCED_STOP' : (activeStop > entry ? 'TRAILING_STOP' : activeStop === entry ? 'BREAKEVEN_STOP' : 'INITIAL_STOP'), peak, financed, firstExit,
         pnlPerUnit: financed ? ((firstExit - entry) + (exit - entry)) / 2 : exit - entry };
     }
@@ -125,7 +125,7 @@ export function evaluateImmediateBreakeven(optionRows, signalTimestamp, exitMode
   const eligible = optionRows.filter((row) => row.timestamp > signalTimestamp && timeOf(row) <= rules.sessionExit);
   const last = eligible.at(-1);
   if (!last) return null;
-  return { entry, entryTime: optionRows[index + 1].timestamp, exit: last.close, exitTime: last.timestamp,
+  return { entry, entryTime: optionRows[index].timestamp, exit: last.close, exitTime: last.timestamp,
     result: 'SESSION_EXIT', peak, financed, firstExit,
     pnlPerUnit: financed ? ((firstExit - entry) + (last.close - entry)) / 2 : last.close - entry };
 }
