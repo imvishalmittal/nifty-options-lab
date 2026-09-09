@@ -42,6 +42,30 @@ selector defaults to **Both** and can restrict every summary and trade table to
 **CE only** or **PE only**. Side-only views are descriptive post-result slices;
 they do not retroactively become untouched validation.
 
+## Simultaneous CE + PE validation-only experiment
+
+The paired experiment is intentionally evaluated only from 1 January 2025
+through 8 September 2026. Discovery-period results are not used to select or
+approve it.
+
+- Candidates: Retest-15 with `CONFIRM_BE_10_CAP_10`, and Previous-day Break
+  with `CONFIRM_BE_10`.
+- When either candidate produces its normal completed-candle signal, buy both
+  the 200-point-ITM CE and the 200-point-ITM PE at their option prices at that
+  same signal-candle close.
+- Total modeled capital stays ₹60,000: ₹30,000 is allocated independently to
+  each side, using whole historical 65-unit lots. If either side cannot buy one
+  lot, the pair is a no-trade.
+- Each leg has its own signal-low/capped initial stop, +10 breakeven activation,
+  and 15:15 exit. One leg exiting never closes the other.
+- Brokerage, taxes and 0/0.5/1-point slippage are charged to both legs.
+- Results are reported per two-leg pair, separately for 2025 and the partial
+  2026 period. Promotion review requires positive aggregate P&L and profit
+  factor above one at every stress level, plus positive P&L in each calendar
+  period at every stress level.
+
+This is a comparison experiment, not a paper-trading authorization.
+
 ## Next bounded-risk experiment
 
 The next proposed experiment applies to both previously profitable discovery

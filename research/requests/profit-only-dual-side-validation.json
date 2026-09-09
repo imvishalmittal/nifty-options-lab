@@ -1,0 +1,10 @@
+{
+  "requestedAt": "2026-09-09T00:00:00Z",
+  "scope": "validation-only-2025-through-2026-09-08",
+  "capital": 60000,
+  "allocation": { "CE": 30000, "PE": 30000 },
+  "signals": ["RETEST15", "PREVIOUS_DAY_BREAK"],
+  "exits": ["CONFIRM_BE_10", "CONFIRM_BE_10_CAP_10"],
+  "entry": "Both CE and PE at their signal-candle closing premiums",
+  "management": "Each leg exits independently; one leg exiting does not close the other"
+}
