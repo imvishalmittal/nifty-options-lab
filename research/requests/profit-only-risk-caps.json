@@ -1,0 +1,10 @@
+{
+  "study": "profit-only-initial-risk-caps",
+  "period": { "startDate": "2020-01-01", "endDate": "2024-12-31" },
+  "signals": ["RETEST15", "PREVIOUS_DAY_BREAK"],
+  "sides": ["CE", "PE", "combined"],
+  "initialStops": ["signal-candle-low", "max-5-points", "max-10-points", "max-15-points"],
+  "breakevenTriggerPoints": 10,
+  "sessionExit": "15:15",
+  "requestedAt": "2026-09-09T00:00:00Z"
+}
