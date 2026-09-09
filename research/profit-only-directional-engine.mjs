@@ -94,7 +94,11 @@ export function evaluateImmediateBreakeven(optionRows, signalTimestamp, exitMode
   const entry = optionRows[index].close;
   const signalLow = optionRows[index].low;
   const trailingStep = exitMode === 'TRAIL_5_AFTER_BE_10' ? 5 : exitMode === 'TRAIL_10_AFTER_BE_10' ? 10 : null;
-  let activeStop = exitMode === 'CONFIRM_BE_10' || trailingStep ? signalLow : entry;
+  const capMatch = exitMode.match(/^CONFIRM_BE_10_CAP_(5|10|15)$/);
+  const initialRiskCap = capMatch ? Number(capMatch[1]) : null;
+  let activeStop = exitMode === 'CONFIRM_BE_10' || trailingStep || initialRiskCap
+    ? Math.max(signalLow, initialRiskCap ? entry - initialRiskCap : -Infinity)
+    : entry;
   let peak = entry;
   let financed = false;
   let firstExit = null;
@@ -108,7 +112,7 @@ export function evaluateImmediateBreakeven(optionRows, signalTimestamp, exitMode
         pnlPerUnit: financed ? ((firstExit - entry) + (exit - entry)) / 2 : exit - entry };
     }
     peak = Math.max(peak, row.high);
-    if (exitMode === 'CONFIRM_BE_10' && activeStop < entry && peak >= entry + 10) activeStop = entry;
+    if ((exitMode === 'CONFIRM_BE_10' || initialRiskCap) && activeStop < entry && peak >= entry + 10) activeStop = entry;
     if (trailingStep && peak >= entry + 10) {
       const completedSteps = Math.floor((peak - (entry + 10)) / trailingStep);
       activeStop = Math.max(activeStop, entry + completedSteps * trailingStep);
