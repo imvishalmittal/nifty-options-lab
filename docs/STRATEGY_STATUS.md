@@ -68,8 +68,8 @@ Amounts below include the repository's normal cost model. “0.5” and “1.0�
 | O1 VIX-low NIFTY ₹180 filter, V2 | 2020–2024, 60 valid monthly shards | +₹41,372 | −₹67,515 | −₹176,402 | **REJECTED** — positive normal result failed both stress-profitability gates |
 | O1 VIX-low NIFTY ₹180 filter, V3-10 | 2020–2024, 60 valid monthly shards | +₹116,512 | +₹7,625 | −₹101,262 | **REJECTED** — failed the frozen 1-point stress-profitability gate |
 | ₹180-touch, signal-close entry stop suite | 2020–2024, 967 trades per configuration | Best: −₹74,042, PF 0.928 | Best: −₹351,262 | Best: −₹628,483 | **REJECTED** — all 10 stop/exit configurations lost normally and under stress |
-| Retest-15 + breakeven after +10 | 2020–2024, 839 trades | +₹615,899.21, PF 1.620 | +₹446,981.17 | +₹278,063.14 | **PAPER / VALIDATION PENDING** — economic discovery passed all stresses; zero-loss hypothesis failed |
-| Previous-day break + breakeven after +10 | 2020–2024, 869 trades | +₹410,004.45, PF 1.384 | +₹222,830.28 | +₹35,656.10 | **PAPER / VALIDATION PENDING** — economic discovery passed all stresses; zero-loss hypothesis failed |
+| Retest-15 + breakeven after +10 | 2020–2024 discovery, 839 trades | +₹615,899.21, PF 1.620 | +₹446,981.17 | +₹278,063.14 | **VALIDATION REJECTED** — discovery passed, but untouched 2025–8 Sep 2026 lost money at every stress level |
+| Previous-day break + breakeven after +10 | 2020–2024 discovery, 869 trades | +₹410,004.45, PF 1.384 | +₹222,830.28 | +₹35,656.10 | **VALIDATION REJECTED** — positive normal validation P&L did not survive 0.5/1-point stress |
 
 The detailed More Ideas queue, O1 evidence, close-entry configuration table,
 and operational status of the profit-only directional suite are maintained in
@@ -87,6 +87,17 @@ paper results with day/month/year/all-time filters. Month-wise and year-wise
 tables compare CE and PE trade counts, win rates, and net P/L under normal,
 0.5-point, and 1-point execution scenarios. This is descriptive evidence and
 does not retrospectively authorize a PE-only rule.
+
+The risk-cap extension and validation-only simultaneous CE+PE experiment are
+also terminal. Maximum initial-risk caps of 5, 10 and 15 premium points did not
+produce a candidate that passed untouched validation. Corrected paired run
+[34386881890](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/34386881890)
+completed all 21 validation shards. Retest-15 produced 281 executable pairs and
+lost ₹71,976.62 normally, ₹142,850.00 at 0.5-point stress and ₹213,723.37 at
+1-point stress. Previous-day Break produced 183 executable pairs and lost
+₹43,611.07, ₹82,458.82 and ₹121,306.58 respectively. The verdict is
+**DO_NOT_PROMOTE**. Only 11 of 476 complete pair candidates were skipped for
+capital, so capital was not the economic failure mechanism.
 
 ### Remaining strategy research — terminal verdicts
 

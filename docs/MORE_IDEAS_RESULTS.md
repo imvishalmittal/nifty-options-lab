@@ -1,6 +1,6 @@
 # More Ideas — execution results
 
-Status date: 9 September 2026
+Status date: 10 September 2026
 
 This is the result ledger for the ideas governed by
 `MORE_IDEAS_RESEARCH_PROTOCOL.md`. It separates completed economic evidence
@@ -130,6 +130,31 @@ both completed with integrity-clean artifacts, but the frozen economic gates
 rejected the variants. This is not promotion: no broker orders are possible
 and results remain excluded from V2–V11 totals.
 
+### Initial-risk caps and simultaneous CE+PE validation
+
+The 5-, 10- and 15-premium-point maximum-initial-risk variants completed both
+discovery and untouched validation. None passed the validation gates, so no
+risk-cap variant is promoted.
+
+The separate simultaneous-side experiment used only the validation period
+(1 January 2025–8 September 2026), with ₹30,000 allocated to CE and ₹30,000 to
+PE at the same signal-candle close. Each leg retained independent stop,
+breakeven and 15:15 exit processing. Missing opposite-side exact-time quotes
+were recorded as pair-level no-trades rather than silently trading one leg.
+
+[Corrected run 34386881890](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/34386881890)
+completed all 21 shards and returned **DO_NOT_PROMOTE**:
+
+| Candidate | Executable pairs | Winning pairs | Normal | 0.5 point | 1 point |
+|---|---:|---:|---:|---:|---:|
+| Retest-15 + BE10 + 10-point cap | 281 | 22 (7.83%) | −₹71,976.62 | −₹142,850.00 | −₹213,723.37 |
+| Previous-day Break + BE10 | 183 | 16 (8.74%) | −₹43,611.07 | −₹82,458.82 | −₹121,306.58 |
+
+Across the two candidates, 476 complete pairs were available and only 11
+(2.31%) were skipped for insufficient per-side capital. The losses therefore
+were not caused by the ₹60,000 portfolio limit; weak paired expectancy and the
+cost of entering both legs were decisive.
+
 ### Dashboard completeness and side views
 
 The dedicated `/profit-only` dashboard now contains trade-level discovery and
@@ -141,16 +166,15 @@ post-result analysis and does not change any historical gate verdict.
 
 ## Remaining execution order
 
-1. Complete the four stepped-trailing discovery variants and evaluate their
-   frozen normal/0.5/1-point gates.
-2. Collect the experimental trailing paper journal without historical backfill.
-3. Produce a clean repaired C3 discovery result after the serialized Groww slot
+1. Continue collecting the experimental trailing paper journal without
+   historical backfill; this is observation, not another historical backtest.
+2. Produce a clean repaired C3 discovery result after the serialized Groww slot
    is free.
-4. Run M3 after dated BANKNIFTY/FINNIFTY contract and lot-size provenance is
+3. Run M3 after dated BANKNIFTY/FINNIFTY contract and lot-size provenance is
    complete.
-5. Run C1 only after the generalized spread engine passes cross-underlying
+4. Run C1 only after the generalized spread engine passes cross-underlying
    integrity checks.
-6. Keep S1–S3 blocked and O2 unspecified until their stated evidence
+5. Keep S1–S3 blocked and O2 unspecified until their stated evidence
    requirements are met.
 
 ## Promotion boundary

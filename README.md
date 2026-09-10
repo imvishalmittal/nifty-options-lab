@@ -26,6 +26,8 @@ The hosted Sites build can lag GitHub `main`; source readiness and public deploy
 - **Inconclusive:** the assumption-explicit Williams %R/EMA bear-call replication produced only one 2025 trade and no post-publication 2026 trades.
 - **Completed/rejected:** the assumption-explicit 30-minute opening-range ATM credit spread failed sample, 1-point stress, clustered-confidence, and concentration gates; an isolated prospective shadow journal does not change that verdict.
 - **Terminal option-selling research:** the weekly 0.08-delta NIFTY smart condor is rejected; the monthly large-cap RSI condor is rejected as untestable after producing zero trades. New ideas and their frozen/blocked states are tracked separately.
+- **Profit-only research:** the two discovery winners failed untouched validation; their 5/10-point trails, 5/10/15-point initial-risk caps, and validation-only simultaneous CE+PE variants also failed promotion gates. Experimental paper rows remain isolated observations, not live authorization.
+- **Executable More Ideas remaining:** C3 VIX-high opening-range credit discovery, followed by M3 multi-index opening-range spreads and C1 ₹180-crossing spread skew. S1–S3 remain data/infrastructure blocked and O2 remains unspecified.
 
 See [Strategy status and evidence ledger](docs/STRATEGY_STATUS.md) for samples, P&L, profit factors, failure reasons, and the exact paper suite.
 
