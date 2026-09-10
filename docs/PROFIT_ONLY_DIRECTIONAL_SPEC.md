@@ -1,6 +1,8 @@
 # Profit-only directional option research specification
 
-Status: frozen discovery specification; not approved for paper or live trading.
+Status: frozen research specification; historical studies complete and not
+approved for live trading. Selected variants remain isolated prospective paper
+observations only.
 
 ## Objective
 
@@ -69,12 +71,20 @@ approve it.
 
 This is a comparison experiment, not a paper-trading authorization.
 
-## Next bounded-risk experiment
+## Completed bounded-risk experiment
 
-The next proposed experiment applies to both previously profitable discovery
+The bounded-risk experiment applied to both previously profitable discovery
 signals—`RETEST15` and `PREVIOUS_DAY_BREAK`—and retains both CE and PE so side
-results can be evaluated without silently discarding evidence. It will compare
+results can be evaluated without silently discarding evidence. It compared
 the existing signal-candle-low initial stop with maximum initial premium risks
 of 5, 10, and 15 points. Every variant retains the completed-candle entry,
-breakeven activation after +10, and 15:15 exit. This is a new hypothesis and has
-not yet been backtested or authorized for paper trading.
+breakeven activation after +10, and 15:15 exit. Discovery and untouched
+validation are complete; no candidate passed the validation gates, and none is
+authorized for promotion.
+
+The simultaneous CE+PE experiment also completed after missing-leg handling was
+repaired. Its final evidence is run
+[34386881890](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/34386881890):
+both candidates lost money normally and under 0.5/1-point stress, producing a
+`DO_NOT_PROMOTE` verdict. Capital skips affected only 11 of 476 complete pair
+candidates and do not explain the losses.
