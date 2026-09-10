@@ -14,7 +14,7 @@
     "selectionBasis": "Experimental shadow observation while frozen 2020-2024 trailing discovery runs",
     "validationStatus": "UNVERIFIED_TRAILING_DISCOVERY_RUNNING",
     "excludedFromV2V11Totals": true,
-    "updatedAt": "2026-09-09T14:25:59.166Z"
+    "updatedAt": "2026-09-10T14:17:32.899Z"
   },
   "sessions": [
     {
@@ -65,6 +65,56 @@
           "stress0_5NetPnl": -1102.0672559814989,
           "stress1_0NetPnl": -1296.9239309814989
         }
+      }
+    },
+    {
+      "date": "2026-09-10",
+      "status": "TRADE",
+      "reason": null,
+      "updatedAt": "2026-09-10T14:17:32.899Z",
+      "strategies": {
+        "RETEST15_TRAIL_5_AFTER_BE_10": {
+          "side": "PE",
+          "contract": "NSE-NIFTY-15Sep26-23700-PE",
+          "expiry": "15Sep26",
+          "strike": 23700,
+          "signalTime": "2026-09-10T10:50:00+05:30",
+          "entryTime": "2026-09-10T10:50:00+05:30",
+          "exitTime": "2026-09-10T11:10:00+05:30",
+          "entryPremium": 267.35,
+          "exitPremium": 256.15,
+          "peakPremium": 275.4,
+          "exitReason": "INITIAL_STOP",
+          "lots": 3,
+          "lotSize": 65,
+          "amountInvested": 52133.25,
+          "directionalPnlPerUnit": -11.200000000000045,
+          "normalNetPnl": -2350.6068263050092,
+          "stress0_5NetPnl": -2545.4635013050092,
+          "stress1_0NetPnl": -2740.320176305009
+        },
+        "RETEST15_TRAIL_10_AFTER_BE_10": {
+          "side": "PE",
+          "contract": "NSE-NIFTY-15Sep26-23700-PE",
+          "expiry": "15Sep26",
+          "strike": 23700,
+          "signalTime": "2026-09-10T10:50:00+05:30",
+          "entryTime": "2026-09-10T10:50:00+05:30",
+          "exitTime": "2026-09-10T11:10:00+05:30",
+          "entryPremium": 267.35,
+          "exitPremium": 256.15,
+          "peakPremium": 275.4,
+          "exitReason": "INITIAL_STOP",
+          "lots": 3,
+          "lotSize": 65,
+          "amountInvested": 52133.25,
+          "directionalPnlPerUnit": -11.200000000000045,
+          "normalNetPnl": -2350.6068263050092,
+          "stress0_5NetPnl": -2545.4635013050092,
+          "stress1_0NetPnl": -2740.320176305009
+        },
+        "PREVIOUS_DAY_BREAK_TRAIL_5_AFTER_BE_10": null,
+        "PREVIOUS_DAY_BREAK_TRAIL_10_AFTER_BE_10": null
       }
     }
   ]
