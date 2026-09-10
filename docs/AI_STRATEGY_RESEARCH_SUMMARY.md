@@ -236,7 +236,7 @@ The uploaded ideas holding pen was reconciled into [`MORE_IDEAS_RESEARCH_PROTOCO
 - An RBI MPC/Budget exclusion retained 237 condor trades but lost ₹46,375.04 at normal costs (PF 0.421).
 - A fixed six-name Morning Tea liquidity proxy failed 0.25-point stress in both 2025 (−₹3,199.10, PF 0.928) and Jan–Aug 2026 (−₹8,617.27, PF 0.804). Historical candles do not prove bid/ask-quality or limit-order fills.
 
-These tests do not change any paper lane. VIX-filter and multi-index variants remain frozen pending verified data/provenance; PEAD, buy-write, and earnings-IV-crush remain blocked by point-in-time data and overnight accounting requirements.
+These tests do not change any paper lane. The VIX-filter and multi-index variants completed their discovery runs and were rejected by their enforced gates; PEAD, buy-write, and earnings-IV-crush remain blocked by point-in-time data and overnight accounting requirements.
 
 ## 12. Authoritative references
 

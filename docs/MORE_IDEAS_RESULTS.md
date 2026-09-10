@@ -12,8 +12,8 @@ before validation or paper observation.
 
 | State | Count | Ideas |
 |---|---:|---|
-| Completed / rejected | 6 | M1, M2, C2, S4, O1, O3 |
-| Executable research pending | 3 | C3, M3, C1 |
+| Completed / rejected | 9 | M1, M2, M3, C1, C2, C3, S4, O1, O3 |
+| Executable research pending | 0 | — |
 | Blocked on data or infrastructure | 3 | S1, S2, S3 |
 | Deterministic specification required | 1 | O2 |
 
@@ -28,10 +28,10 @@ validation runs.
 |---|---|---|
 | M1 | **REJECTED** | The smart-condor rolling-IV gate retained 91 trades and lost ₹15,785.99 normally, ₹32,277.99 at 0.5-point stress, and ₹48,769.99 at 1-point stress. |
 | M2 | **REJECTED** | RBI/Budget exclusion retained 237 trades and lost ₹46,375.04 normally; all stress cases and years remained negative. |
-| M3 | **PENDING** | Multi-index opening-range spread still needs dated contract and lot-size provenance plus a clean discovery run. |
-| C1 | **PENDING** | ₹180-crossing spread-skew rule is frozen but has not completed discovery. |
+| M3 | **REJECTED** | All 60 monthly shards, merge, artifact and gate completed in [run 34260990228](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/34260990228); the enforced discovery gate failed. |
+| C1 | **REJECTED** | All 60 monthly shards, merge, artifact and gate completed in [run 34263248509](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/34263248509); the enforced discovery gate failed. |
 | C2 | **REJECTED** | The fixed six-name Morning Tea liquidity proxy failed the 0.25-point decision stress in both 2025 and Jan–Aug 2026. |
-| C3 | **OPERATIONALLY INCOMPLETE** | The first run failed because Groww limits one-minute requests to 30 days. The fetch and monthly-shard repair is merged, but no complete repaired result or gate exists. |
+| C3 | **REJECTED** | The repaired run completed all 60 monthly shards, merge, artifact and gate in [run 34223363777](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/34223363777); the enforced discovery gate failed. |
 | S1 | **BLOCKED** | Requires point-in-time earnings data, release timestamps, dated options, and overnight accounting. |
 | S2 | **BLOCKED** | Requires an underlying portfolio, monthly rolls, dividends, assignment, and portfolio capital accounting. |
 | S3 | **BLOCKED** | Requires a point-in-time earnings calendar, historical IV surfaces, and overnight-gap execution. |
@@ -164,18 +164,17 @@ the two original +10-breakeven candidates. Its top-level selector provides
 details, and monthly/yearly comparisons. CE/PE filtering is explicitly
 post-result analysis and does not change any historical gate verdict.
 
-## Remaining execution order
+## Remaining work
 
 1. Continue collecting the experimental trailing paper journal without
    historical backfill; this is observation, not another historical backtest.
-2. Produce a clean repaired C3 discovery result after the serialized Groww slot
-   is free.
-3. Run M3 after dated BANKNIFTY/FINNIFTY contract and lot-size provenance is
-   complete.
-4. Run C1 only after the generalized spread engine passes cross-underlying
-   integrity checks.
-5. Keep S1–S3 blocked and O2 unspecified until their stated evidence
+2. Keep S1–S3 blocked and O2 unspecified until their stated evidence
    requirements are met.
+
+No executable historical backtest remains in the original More Ideas queue.
+C3, M3 and C1 are terminal discovery rejections, not operationally incomplete
+runs. Their GitHub workflows appear red because the final `--enforce=true` step
+correctly returns failure when acceptance gates do not pass.
 
 ## Promotion boundary
 
