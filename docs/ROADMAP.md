@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 1 September 2026
+Last updated: 11 September 2026
 
 ## Current operating state
 
@@ -44,10 +44,18 @@ There is no fully specified, implemented strategy waiting for its first clean ba
 
 1. Continue V2–V11 prospective paper observation without backfill or rule changes.
 2. Treat the Williams %R/EMA bear-call replication as inconclusive: one 2025 trade and zero post-publication trades are insufficient for promotion or tuning.
-3. Convert only genuinely incomplete ideas into deterministic specifications before implementation:
-   - 30-minute breakout with ATM option selling;
-   - monthly “Ramesh–Suresh” strangle/iron condor;
-   - smart strangle near 0.08 delta.
+3. Treat the original More Ideas executable queue as complete. Keep S1–S3
+   blocked and O2 unspecified until their evidence requirements are met.
+4. Use the [profitable-trader provenance review](PROFITABLE_TRADER_PROVENANCE.md)
+   as the boundary for new trader-derived ideas. No public individual strategy
+   passed the complete multi-year provenance screen.
+5. Specify the next aggregate-evidence hypothesis before implementation:
+   a low-turnover positional NIFTY futures trend benchmark. Confirm actual
+   contract rolls, overnight fills, margin/capital accounting, costs, discovery,
+   validation, holdout, and robustness gates before running it.
+6. Keep longer-DTE directional options, IV-minus-realized-volatility spreads,
+   and futures-versus-options expression tests blocked behind their documented
+   data and infrastructure prerequisites.
 
 ## Promotion sequence
 
