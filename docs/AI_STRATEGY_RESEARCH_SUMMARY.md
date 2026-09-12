@@ -3,13 +3,13 @@
 ```yaml
 document_type: ai_project_handoff
 repository: imvishalmittal/nifty-options-lab
-as_of: 2026-09-11
+as_of: 2026-09-12
 primary_objective: Find causal, executable, cost-robust NIFTY/options strategies suitable for unchanged forward paper observation.
 live_trading_authorized: false
 live_selected_strategies: 0
 paper_suite: V2-V11 counterfactual NIFTY premium-entry outcomes
 experimental_shadow: 30-minute opening-range ATM credit spread
-active_research: []
+active_research: [P1 positional NIFTY futures discovery 2016-2022]
 remaining_option_selling_research: terminal; no candidate passed
 source_of_truth: docs/STRATEGY_STATUS.md
 ```
@@ -27,8 +27,8 @@ and rules published before the result.
 Do not infer that the profitable cohort consisted of option sellers or copy a
 social-media strategy into this repository. The first defensible new hypothesis
 is a low-turnover positional NIFTY futures trend benchmark, motivated only by
-SEBI's descriptive product/turnover patterns. It still requires a frozen
-specification and overnight futures infrastructure before any run. See
+SEBI's descriptive product/turnover patterns. Its rules, period boundary and
+gates are now frozen and its actual-contract discovery is queued. See
 [`PROFITABLE_TRADER_PROVENANCE.md`](PROFITABLE_TRADER_PROVENANCE.md).
 
 ## 1. Read this first

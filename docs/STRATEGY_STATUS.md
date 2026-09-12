@@ -1,6 +1,6 @@
 # Strategy status and evidence ledger
 
-Last updated: 8 September 2026
+Last updated: 12 September 2026
 
 This is the repository's single status index for strategies that were reviewed, implemented, backtested, rejected, or placed in paper observation. Detailed frozen rules remain in the individual specifications; this file records outcomes and promotion status.
 
@@ -13,6 +13,17 @@ This is the repository's single status index for strategies that were reviewed, 
 - **INCOMPLETE SPEC** — the source idea lacks enough deterministic rules for a defensible backtest.
 
 A strategy is never promoted because its zero-slippage result alone is positive. Its frozen acceptance gates, costs, stress scenarios, data completeness, robustness, and drawdown must all pass.
+
+## Active research
+
+| Strategy | Frozen period | Current status | Paper impact |
+|---|---|---|---|
+| P1 low-turnover positional NIFTY futures trend benchmark | 2016–2022 discovery; 2023–2024 validation sealed; 2025–11 Sep 2026 holdout sealed | **ACTIVE RESEARCH** — rules, actual-contract engine, costs, stress and gates frozen before results | None; no broker order and no paper-lane change |
+
+P1 uses completed NIFTY daily closes, an SMA100 ± 0.5 ATR20 hysteresis
+signal, next-session execution and actual official NSE `FUTIDX` contracts.
+The full pre-result definition is in
+[`POSITIONAL_NIFTY_FUTURES_SPEC.md`](POSITIONAL_NIFTY_FUTURES_SPEC.md).
 
 ## What is in paper trading now
 
