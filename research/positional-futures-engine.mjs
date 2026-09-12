@@ -92,6 +92,12 @@ export function backtestPositionalFutures(rawRows, { startDate = '2016-01-01', e
   let missingSessions = 0;
 
   for (const row of rows) {
+    if (row.date < startDate) {
+      currentDirection = desiredDirection(row, currentDirection);
+      pendingDirection = currentDirection;
+      continue;
+    }
+    if (row.date > endDate) break;
     const inPeriod = row.date >= startDate && row.date <= endDate;
     const selected = selectFrontContract(row.contracts ?? [], row.date);
     if (inPeriod) eligibleSessions += 1;
