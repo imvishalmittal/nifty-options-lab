@@ -31,7 +31,7 @@ The hosted Sites build can lag GitHub `main`; source readiness and public deploy
 - **Profitable-trader provenance:** SEBI's roughly 7% profitable cohort cannot
   be mapped to exact strategies from public data. No public individual strategy
   passed the complete multi-year provenance screen; the next candidate is a
-  still-unspecified low-turnover positional NIFTY futures benchmark.
+  frozen low-turnover positional NIFTY futures benchmark now entering discovery.
 
 See [Strategy status and evidence ledger](docs/STRATEGY_STATUS.md) for samples, P&L, profit factors, failure reasons, and the exact paper suite.
 

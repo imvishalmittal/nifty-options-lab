@@ -1,0 +1,50 @@
+name: Research - P1 positional NIFTY futures
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/positional-futures-runs]
+    paths: [research/requests/positional-nifty-futures.json]
+permissions: { contents: read }
+jobs:
+  history:
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        year: [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node --test tests/positional-futures-engine.test.mjs
+      - run: node research/download-nse-futures-history.mjs --start=${{ matrix.year }}-01-01 --end=${{ matrix.year }}-12-31 --out=nifty-futures-${{ matrix.year }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nifty-futures-${{ matrix.year }}
+          path: nifty-futures-${{ matrix.year }}.json
+          if-no-files-found: error
+          retention-days: 90
+  finalize:
+    needs: history
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with: { pattern: 'nifty-futures-*', path: shards, merge-multiple: true }
+      - run: node research/run-positional-futures-backtest.mjs --in=shards --start=2016-01-01 --end=2022-12-31 --out=positional-nifty-futures-discovery.json
+      - run: node research/positional-futures-gates.mjs --in=positional-nifty-futures-discovery.json --out=positional-nifty-futures-gates.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: positional-nifty-futures-discovery-2016-2022
+          path: |
+            positional-nifty-futures-discovery.json
+            positional-nifty-futures-gates.json
+          if-no-files-found: error
+          retention-days: 90
+      - run: node research/positional-futures-gates.mjs --in=positional-nifty-futures-discovery.json --out=positional-nifty-futures-gates.json --enforce=true

@@ -40,7 +40,7 @@ They should not be rerun merely to search for a profitable parameter. A material
 
 ## Research backlog
 
-There is no fully specified, implemented strategy waiting for its first clean backtest.
+P1 is fully specified and implemented; its discovery is the active research run.
 
 1. Continue V2–V11 prospective paper observation without backfill or rule changes.
 2. Treat the Williams %R/EMA bear-call replication as inconclusive: one 2025 trade and zero post-publication trades are insufficient for promotion or tuning.
@@ -49,10 +49,9 @@ There is no fully specified, implemented strategy waiting for its first clean ba
 4. Use the [profitable-trader provenance review](PROFITABLE_TRADER_PROVENANCE.md)
    as the boundary for new trader-derived ideas. No public individual strategy
    passed the complete multi-year provenance screen.
-5. Specify the next aggregate-evidence hypothesis before implementation:
-   a low-turnover positional NIFTY futures trend benchmark. Confirm actual
-   contract rolls, overnight fills, margin/capital accounting, costs, discovery,
-   validation, holdout, and robustness gates before running it.
+5. Complete P1's frozen low-turnover positional NIFTY futures discovery. Use
+   actual dated contracts and rolls, next-session fills, date-correct lots,
+   costs, discovery/validation/holdout separation, and frozen robustness gates.
 6. Keep longer-DTE directional options, IV-minus-realized-volatility spreads,
    and futures-versus-options expression tests blocked behind their documented
    data and infrastructure prerequisites.

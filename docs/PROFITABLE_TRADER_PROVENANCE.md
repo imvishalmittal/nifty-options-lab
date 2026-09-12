@@ -123,14 +123,14 @@ They are not claimed to be the secret strategies of profitable traders.
 
 | Priority | Candidate | Why it is worth testing | Current readiness |
 |---|---|---|---|
-| P1 | Low-turnover positional NIFTY futures trend benchmark | Directly tests the higher futures profit incidence and lower cost share without option decay or weekly-option microstructure | **Needs specification and overnight futures engine** |
+| P1 | Low-turnover positional NIFTY futures trend benchmark | Directly tests the higher futures profit incidence and lower cost share without option decay or weekly-option microstructure | **Frozen and implemented; discovery queued** |
 | P2 | Low-turnover, 20–45 DTE directional NIFTY options | Tests whether an underlying-based multi-day signal with fewer trades survives costs better than the rejected intraday/weekly families | **Needs overnight positions, dated option-chain coverage, and gap fills** |
 | P3 | Causal IV-minus-realized-volatility defined-risk spread | Tests volatility risk premium only when the observed IV/realized-volatility gap is sufficiently large, rather than selling premium every week | **Blocked on point-in-time IV surface, bid/ask, Greeks, and synchronized legs** |
 | P4 | Futures-versus-options expression experiment | Runs the same underlying signal through futures and defined-risk options to isolate whether signal or instrument/cost causes the difference | **Depends on P1/P2 infrastructure** |
 
-P1 is the first candidate to specify because it tests the strongest official
-descriptive pattern with the fewest new data assumptions. It should begin as a
-benchmark, not as a presumption that futures will be profitable.
+P1 is now frozen in [`POSITIONAL_NIFTY_FUTURES_SPEC.md`](POSITIONAL_NIFTY_FUTURES_SPEC.md)
+and implemented against official dated NSE futures bhavcopies. It remains a
+benchmark, not a presumption that futures will be profitable.
 
 ## Frozen design requirements before any run
 
@@ -152,9 +152,6 @@ deletion, and no paper promotion based only on a positive headline P&L.
 
 ## Operational decision
 
-No backtest or paper strategy is scheduled by this provenance review. Doing so
-now would require inventing an individual trader's rules or selecting parameters
-after observing outcomes. The next legitimate step is to freeze P1's positional
-futures specification and confirm historical futures/roll/margin data coverage.
-P2–P4 remain behind their stated infrastructure and data prerequisites.
-
+P1 discovery is scheduled with its rules and gates frozen before results.
+P2–P4 remain behind their stated infrastructure and data prerequisites. No
+paper strategy or broker order is authorized by this change.
