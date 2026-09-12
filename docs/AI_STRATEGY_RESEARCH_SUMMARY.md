@@ -14,7 +14,7 @@ remaining_option_selling_research: terminal; no candidate passed
 source_of_truth: docs/STRATEGY_STATUS.md
 ```
 
-### 11 September 2026 provenance update
+### 12 September 2026 provenance and new-generation update
 
 The follow-up review of the roughly 7% of individual Indian equity-F&O
 accounts that were profitable over FY22–FY24 found no public dataset linking
@@ -42,6 +42,7 @@ The most important current conclusions are:
 4. **A positive profit factor above 1.0 is not sufficient.** A result can still fail on sample size, slippage, drawdown, temporal instability, concentration, bootstrap confidence, or data quality.
 5. **The 30-minute opening-range ATM credit spread remains historically rejected.** A separately authorized prospective shadow journal is collecting observations, but it is not a promotion or a live strategy.
 6. **The remaining option-selling discoveries are terminal.** The weekly smart condor was decisively negative; the monthly RSI condor produced zero trades and failed as an untestable frozen hypothesis. Neither advances to 2025/2026.
+7. **The P1–P7 new-generation cycle is terminal.** P1, P2, P5 and P6 failed discovery; P4 is descriptive only; P3 and P7 remain data-blocked. No validation, holdout, or paper promotion was opened.
 
 ## 2. Objective and operating constraints
 
@@ -75,7 +76,7 @@ Failure at any decisive gate stops that path. A rejected discovery does not acce
 
 ### Common option-selling discovery gates
 
-The currently active option-selling studies use these frozen gates:
+The completed option-selling studies used these frozen gates:
 
 | Gate | Requirement |
 |---|---|
@@ -101,6 +102,8 @@ The currently active option-selling studies use these frozen gates:
 | `REJECTED` | Completed evidence failed at least one predeclared gate |
 | `INCONCLUSIVE` | Valid implementation produced too little evidence for a decision |
 | `INCOMPLETE SPEC` | Source idea lacks deterministic rules for a defensible test |
+| `DATA_BLOCKED` | The required point-in-time or executable historical data is unavailable; no performance claim may be fabricated |
+| `DESCRIPTIVE_ONLY` | A comparison is informative but cannot independently qualify for promotion |
 | `SELECTED` | Passed the required evidence stages; currently no strategy has this status |
 
 ## 4. What is currently in paper observation
@@ -136,6 +139,13 @@ Amounts below include the repository's normal cost model. `0.5` and `1.0` denote
 
 | Strategy | Rules in one sentence | Evidence | Key result | Verdict and reason |
 |---|---|---|---|---|
+| P1 positional NIFTY futures | SMA100 ± 0.5 ATR20 trend through dated futures | 2016–2022; 117 segments | Normal +₹494,416, PF 1.405; DD ₹309,966; bootstrap lower −₹2,777 | **REJECTED:** drawdown, yearly stability/concentration and bootstrap gates failed |
+| P2 20–45 DTE directional options | Same underlying signal through ATM CE/PE closest to 30 DTE; exit on underlying reversal | 2016–2022; 117 segments | Normal +₹96,082, PF 1.115; bootstrap lower −₹3,746 | **REJECTED:** PF missed 1.20 and bootstrap lower bound was negative |
+| P3 IV-minus-realized-vol spread | Sell measurable volatility premium with defined-risk hedges | Not run | Required point-in-time volatility and executable multi-leg history unavailable | **DATA_BLOCKED:** settlement-only data prohibited |
+| P4 futures-versus-options comparison | Compare P1 and P2 on the identical completed-close signal | 117 matched segments per track | Futures PF 1.405 versus options PF 1.115 | **DESCRIPTIVE_ONLY:** P1 and P2 both failed independently |
+| P5 US-close-conditioned futures | Long after both US indices ≥+0.5%; short after both ≤−0.5% | 2016–2022; 768 sessions | Normal −₹190,391, PF 0.916; 2-point −₹346,833 | **REJECTED:** negative under every execution scenario |
+| P6 35% option-premium stop | P2 expression with a predeclared premium stop instead of underlying-reversal exit | 2016–2022; 30 trades | Normal +₹258,930, PF 2.632; bootstrap lower −₹3,713; top 10% supplied 90.22% of gains | **REJECTED:** extreme concentration and negative bootstrap lower bound |
+| P7 calendar/term-structure relative value | Systematic volatility term-structure spread | Not run | Required IV, Greeks, synchronized bid/ask and executable legs unavailable | **DATA_BLOCKED:** settlement-only data prohibited |
 | NIFTY ₹180 Premium V1 | Buy selected option near ₹180 with fixed stop/target | 153 sessions; 72 trades | Normal +₹199.84; 0.5 −₹4,477.22; 1.0 −₹9,154.28 | **REJECTED:** negligible normal edge disappeared under stress; 11 sessions missing |
 | Opening-range sweep/reversal control | Trade reversals around opening-range sweeps | 2020–Aug 2026; best 15-minute variant; 604 trades | +13.62R total; 2025 −16.08R; 2026 +19.25R | **REJECTED:** tiny, unstable edge |
 | Defined-risk Batman | Bounded multi-leg Batman replication | 2025; 47 trades | Normal −₹44,330, PF 0.652; 1.0 −₹89,122, PF 0.452 | **REJECTED:** negative under every scenario |
@@ -257,6 +267,10 @@ These tests do not change any paper lane. The VIX-filter and multi-index variant
 ## 12. Authoritative references
 
 - [`STRATEGY_STATUS.md`](STRATEGY_STATUS.md) — outcome and promotion-status ledger
+- [`NEW_GENERATION_RESULTS.md`](NEW_GENERATION_RESULTS.md) — terminal P1–P7 economics, gates, stability, concentration, coverage and run authority
+- [`POSITIONAL_NIFTY_FUTURES_SPEC.md`](POSITIONAL_NIFTY_FUTURES_SPEC.md) — frozen P1 rules and terminal result
+- [`LONGER_DTE_OPTIONS_SPEC.md`](LONGER_DTE_OPTIONS_SPEC.md) — frozen P2/P4/P6 rules and terminal results
+- [`EVENT_CONDITIONED_FUTURES_SPEC.md`](EVENT_CONDITIONED_FUTURES_SPEC.md) — frozen P5 rules and terminal result
 - [`STRATEGY_SPEC.md`](STRATEGY_SPEC.md) — V2–V11 deterministic paper rules
 - [`PAPER_RISK_2026_DIAGNOSTIC.md`](PAPER_RISK_2026_DIAGNOSTIC.md) — matched ₹160/₹170 diagnostic protocol
 - [`REMAINING_OPTION_SELLING_PROTOCOL.md`](REMAINING_OPTION_SELLING_PROTOCOL.md) — frozen opening-range and condor rules/gates
