@@ -30,7 +30,8 @@ export function evaluatePositionalFutures(result) {
     concentration: concentration != null && concentration <= POSITIONAL_FUTURES_GATES.maximumYearPositiveContribution,
     clusteredBootstrap: normal.clusteredMeanConfidence.lower > 0,
   };
-  return { schemaVersion: 1, decision: Object.values(checks).every(Boolean) ? 'PASS_DISCOVERY' : 'REJECT_DISCOVERY', frozenGates: POSITIONAL_FUTURES_GATES, checks, diagnostics: { positiveYears: positiveYears.length, yearPositiveContribution: concentration }, normal: normal.performance, stress1: stress1.performance, stress2: stress2.performance };
+  const decision = !checks.coverage ? 'INVALID_DATA' : Object.values(checks).every(Boolean) ? 'PASS_DISCOVERY' : 'REJECT_DISCOVERY';
+  return { schemaVersion: 1, decision, frozenGates: POSITIONAL_FUTURES_GATES, checks, diagnostics: { positiveYears: positiveYears.length, yearPositiveContribution: concentration }, normal: normal.performance, stress1: stress1.performance, stress2: stress2.performance };
 }
 
 async function main() {

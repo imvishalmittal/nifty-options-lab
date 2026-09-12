@@ -20,6 +20,11 @@ export function bhavcopyUrl(date) {
   return `https://nsearchives.nseindia.com/content/historical/DERIVATIVES/${year}/${month}/fo${day}${month}${year}bhav.csv.zip`;
 }
 
+export function bhavcopyUrls(date) {
+  const primary = bhavcopyUrl(date);
+  return [primary.replace('nsearchives.nseindia.com', 'archives.nseindia.com'), primary];
+}
+
 function parseCsvLine(line) {
   const out = []; let current = ''; let quoted = false;
   for (let index = 0; index < line.length; index += 1) {
@@ -90,8 +95,15 @@ async function fetchIndex(start, end) {
 }
 
 async function fetchContracts(date, directory, { includeOptions = false, spot = null } = {}) {
-  const response = await fetch(bhavcopyUrl(date), { headers: { 'user-agent': 'nifty-options-lab/1.0' } });
-  if (!response.ok) throw new Error(`NSE bhavcopy ${date} failed: HTTP ${response.status}`);
+  let response = null; let lastError = null;
+  for (const url of bhavcopyUrls(date)) {
+    try {
+      const candidate = await fetch(url, { headers: { 'user-agent': 'nifty-options-lab/1.0' }, signal: AbortSignal.timeout(45_000) });
+      if (candidate.ok) { response = candidate; break; }
+      lastError = new Error(`${url} returned HTTP ${candidate.status}`);
+    } catch (error) { lastError = error; }
+  }
+  if (!response) throw new Error(`NSE bhavcopy ${date} failed: ${lastError?.message ?? 'both archive hosts unavailable'}`);
   const file = join(directory, `${date}.zip`); await writeFile(file, Buffer.from(await response.arrayBuffer()));
   const csv = execFileSync('unzip', ['-p', file], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
   return { futures: parseNiftyFuturesCsv(csv), options: includeOptions ? parseNiftyOptionsCsv(csv, { date, spot }) : undefined };
@@ -102,17 +114,22 @@ async function main() {
   if (!args.start || !args.end || !args.out) throw new Error('--start, --end and --out are required');
   const index = await fetchIndex(args.start, args.end); const directory = await mkdtemp(join(tmpdir(), 'nifty-futures-'));
   const includeOptions = args['include-options'] === 'true';
-  const rows = [];
+  const rows = Array(index.length); const concurrency = Math.max(1, Number(args.concurrency ?? 2));
   try {
-    for (const [i, day] of index.entries()) {
-      let snapshot = null; let error = null;
-      for (let attempt = 0; attempt < 3 && !snapshot; attempt += 1) {
-        try { snapshot = await fetchContracts(day.date, directory, { includeOptions, spot: day.close }); }
-        catch (caught) { error = caught; if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1))); }
+    let cursor = 0; let completed = 0;
+    async function worker() {
+      while (cursor < index.length) {
+        const i = cursor; cursor += 1; const day = index[i];
+        let snapshot = null; let error = null;
+        for (let attempt = 0; attempt < 3 && !snapshot; attempt += 1) {
+          try { snapshot = await fetchContracts(day.date, directory, { includeOptions, spot: day.close }); }
+          catch (caught) { error = caught; if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1))); }
+        }
+        rows[i] = { date: day.date, index: day, contracts: snapshot?.futures ?? [], ...(includeOptions ? { options: snapshot?.options ?? [] } : {}), ...(snapshot ? {} : { error: String(error?.message ?? error) }) };
+        completed += 1; if (completed % 25 === 0) console.error(`Downloaded ${completed}/${index.length} sessions`);
       }
-      rows.push({ date: day.date, index: day, contracts: snapshot?.futures ?? [], ...(includeOptions ? { options: snapshot?.options ?? [] } : {}), ...(snapshot ? {} : { error: String(error?.message ?? error) }) });
-      if ((i + 1) % 25 === 0) console.error(`Downloaded ${i + 1}/${index.length} sessions`);
     }
+    await Promise.all(Array.from({ length: Math.min(concurrency, index.length) }, () => worker()));
   } finally { await rm(directory, { recursive: true, force: true }); }
   await writeFile(args.out, `${JSON.stringify({ schemaVersion: 1, source: { index: 'Yahoo Finance ^NSEI', futures: 'Official NSE derivatives bhavcopy' }, period: { start: args.start, end: args.end }, rows }, null, 2)}\n`);
   console.log(JSON.stringify({ out: args.out, sessions: rows.length, complete: rows.filter((row) => row.contracts.length).length }, null, 2));
