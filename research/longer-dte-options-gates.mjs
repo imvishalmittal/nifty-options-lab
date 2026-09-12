@@ -12,7 +12,8 @@ export function evaluateLongerDteCandidate(result) {
     onePointPositive: one.performance.total > 0,
     clusteredBootstrap: normal.clusteredMeanConfidence.lower > 0,
   };
-  return { decision: Object.values(checks).every(Boolean) ? 'PASS_DISCOVERY' : 'REJECT_DISCOVERY', frozenGates: LONGER_DTE_GATES, checks, normal: normal.performance, stress: stress.performance, onePoint: one.performance };
+  const decision = !checks.coverage ? 'INVALID_DATA' : Object.values(checks).every(Boolean) ? 'PASS_DISCOVERY' : 'REJECT_DISCOVERY';
+  return { decision, frozenGates: LONGER_DTE_GATES, checks, normal: normal.performance, stress: stress.performance, onePoint: one.performance };
 }
 
 const args = Object.fromEntries(process.argv.slice(2).filter((value) => value.startsWith('--')).map((value) => { const [key, ...rest] = value.slice(2).split('='); return [key, rest.join('=')]; }));
