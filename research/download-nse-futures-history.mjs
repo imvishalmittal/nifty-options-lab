@@ -51,6 +51,23 @@ export function parseNiftyFuturesCsv(csv) {
   });
 }
 
+export function parseNiftyOptionsCsv(csv, { date, spot, minimumDte = 7, maximumDte = 50 } = {}) {
+  const lines = csv.trim().split(/\r?\n/);
+  const headers = parseCsvLine(lines.shift()).map((value) => value.toUpperCase());
+  const index = Object.fromEntries(headers.map((value, i) => [value, i]));
+  return lines.flatMap((line) => {
+    const row = parseCsvLine(line);
+    if (row[index.INSTRUMENT] !== 'OPTIDX' || row[index.SYMBOL] !== 'NIFTY') return [];
+    const expiry = expiryIso(row[index.EXPIRY_DT]); const strike = Number(row[index.STRIKE_PR]);
+    const open = Number(row[index.OPEN]); const low = Number(row[index.LOW]); const settle = Number(row[index.SETTLE_PR] ?? row[index.CLOSE]);
+    const optionType = row[index.OPTION_TYP];
+    const dte = expiry && date ? (Date.parse(`${expiry}T00:00:00Z`) - Date.parse(`${date}T00:00:00Z`)) / DAY_MS : null;
+    if (!expiry || !['CE', 'PE'].includes(optionType) || ![strike, open, low, settle, dte].every(Number.isFinite)) return [];
+    if (dte < minimumDte || dte > maximumDte || (Number.isFinite(spot) && Math.abs(strike / spot - 1) > 0.10)) return [];
+    return [{ expiry, strike, optionType, open, low, settle }];
+  });
+}
+
 export function normalizeYahooChart(payload) {
   const result = payload?.chart?.result?.[0]; const quote = result?.indicators?.quote?.[0];
   if (!result?.timestamp || !quote) throw new Error('Yahoo returned no NIFTY daily data');
@@ -72,27 +89,28 @@ async function fetchIndex(start, end) {
   return normalizeYahooChart(await response.json());
 }
 
-async function fetchContracts(date, directory) {
+async function fetchContracts(date, directory, { includeOptions = false, spot = null } = {}) {
   const response = await fetch(bhavcopyUrl(date), { headers: { 'user-agent': 'nifty-options-lab/1.0' } });
   if (!response.ok) throw new Error(`NSE bhavcopy ${date} failed: HTTP ${response.status}`);
   const file = join(directory, `${date}.zip`); await writeFile(file, Buffer.from(await response.arrayBuffer()));
   const csv = execFileSync('unzip', ['-p', file], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
-  return parseNiftyFuturesCsv(csv);
+  return { futures: parseNiftyFuturesCsv(csv), options: includeOptions ? parseNiftyOptionsCsv(csv, { date, spot }) : undefined };
 }
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (!args.start || !args.end || !args.out) throw new Error('--start, --end and --out are required');
   const index = await fetchIndex(args.start, args.end); const directory = await mkdtemp(join(tmpdir(), 'nifty-futures-'));
+  const includeOptions = args['include-options'] === 'true';
   const rows = [];
   try {
     for (const [i, day] of index.entries()) {
-      let contracts = null; let error = null;
-      for (let attempt = 0; attempt < 3 && !contracts; attempt += 1) {
-        try { contracts = await fetchContracts(day.date, directory); }
+      let snapshot = null; let error = null;
+      for (let attempt = 0; attempt < 3 && !snapshot; attempt += 1) {
+        try { snapshot = await fetchContracts(day.date, directory, { includeOptions, spot: day.close }); }
         catch (caught) { error = caught; if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1))); }
       }
-      rows.push({ date: day.date, index: day, contracts: contracts ?? [], ...(contracts ? {} : { error: String(error?.message ?? error) }) });
+      rows.push({ date: day.date, index: day, contracts: snapshot?.futures ?? [], ...(includeOptions ? { options: snapshot?.options ?? [] } : {}), ...(snapshot ? {} : { error: String(error?.message ?? error) }) });
       if ((i + 1) % 25 === 0) console.error(`Downloaded ${i + 1}/${index.length} sessions`);
     }
   } finally { await rm(directory, { recursive: true, force: true }); }
