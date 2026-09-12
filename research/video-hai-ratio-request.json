@@ -1,0 +1,7 @@
+{
+  "requestedAt": "2026-08-29T18:10:00Z",
+  "strategy": "video-hai-call-ratio-1x3x2",
+  "startDate": "2025-09-01",
+  "endDate": "2026-08-21",
+  "reason": "Retry exact frozen replication after generic canonical strike gap-fill repair; no strategy parameter changes"
+}
