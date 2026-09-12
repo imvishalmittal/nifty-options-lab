@@ -1,7 +1,18 @@
 # P1 — positional NIFTY futures trend benchmark
 
-Status: **FROZEN DISCOVERY — implementation ready**  
+Status: **REJECT_DISCOVERY — terminal**  
 Frozen: 12 September 2026, before discovery results
+
+## Terminal result — 12 September 2026
+
+The unchanged 2016–2022 discovery completed in [run 34687277815](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/34687277815).
+
+- 117 completed segments; normal net P&L **+₹494,416.22**, PF **1.4051**, and maximum drawdown **₹309,966.01**.
+- Net P&L remained positive at 1-point (**+₹486,391.64**) and 2-point (**+₹470,342.49**) execution stress.
+- The candidate nevertheless failed the frozen drawdown gate, profitable-year gate (4/7), year-concentration gate (53.79%), and monthly-clustered bootstrap lower bound (**−₹2,777.06**).
+- Coverage passed with 1 missing session out of 1,724 (0.0580%).
+
+The 2023–2024 validation and 2025–2026 holdout remain sealed. Nothing from P1 was added to paper or live trading. See [the consolidated new-generation results](NEW_GENERATION_RESULTS.md) for complete annual, stability, concentration, and integrity evidence.
 
 ## Question
 
