@@ -38,8 +38,11 @@ function parseCsvLine(line) {
 }
 
 function expiryIso(value) {
-  const parsed = Date.parse(String(value).replace(/-/g, ' '));
-  return Number.isFinite(parsed) ? new Date(parsed).toISOString().slice(0, 10) : null;
+  const match = String(value).trim().toUpperCase().match(/^(\d{1,2})[- ]([A-Z]{3})[- ](\d{4})$/);
+  if (!match) return null;
+  const month = MONTHS.indexOf(match[2]); const day = Number(match[1]); const year = Number(match[3]);
+  if (month < 0 || day < 1 || day > 31) return null;
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
 export function parseNiftyFuturesCsv(csv) {
@@ -56,7 +59,7 @@ export function parseNiftyFuturesCsv(csv) {
   });
 }
 
-export function parseNiftyOptionsCsv(csv, { date, spot, minimumDte = 7, maximumDte = 50 } = {}) {
+export function parseNiftyOptionsCsv(csv, { date, minimumDte = 7, maximumDte = 50 } = {}) {
   const lines = csv.trim().split(/\r?\n/);
   const headers = parseCsvLine(lines.shift()).map((value) => value.toUpperCase());
   const index = Object.fromEntries(headers.map((value, i) => [value, i]));
@@ -68,7 +71,11 @@ export function parseNiftyOptionsCsv(csv, { date, spot, minimumDte = 7, maximumD
     const optionType = row[index.OPTION_TYP];
     const dte = expiry && date ? (Date.parse(`${expiry}T00:00:00Z`) - Date.parse(`${date}T00:00:00Z`)) / DAY_MS : null;
     if (!expiry || !['CE', 'PE'].includes(optionType) || ![strike, open, low, settle, dte].every(Number.isFinite)) return [];
-    if (dte < minimumDte || dte > maximumDte || (Number.isFinite(spot) && Math.abs(strike / spot - 1) > 0.10)) return [];
+    // Keep the complete NIFTY strike surface inside the required expiry window.
+    // Filtering each day's archive around that day's spot can silently remove a
+    // previously selected contract after a large underlying move, making an
+    // otherwise valid held position impossible to price.
+    if (dte < minimumDte || dte > maximumDte) return [];
     return [{ expiry, strike, optionType, open, low, settle }];
   });
 }

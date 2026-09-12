@@ -17,7 +17,7 @@ function dte(date, expiry) { return (Date.parse(`${expiry}T00:00:00Z`) - Date.pa
 
 export function selectLongerDteOption(options, { date, spot, direction }) {
   const type = direction === 'LONG' ? 'CE' : 'PE';
-  return options.filter((row) => row.optionType === type && dte(date, row.expiry) >= 20 && dte(date, row.expiry) <= 45 && Number.isFinite(row.open))
+  return options.filter((row) => row.optionType === type && dte(date, row.expiry) >= 20 && dte(date, row.expiry) <= 45 && Number.isFinite(row.open) && row.open > 0)
     .sort((a, b) => Math.abs(dte(date, a.expiry) - 30) - Math.abs(dte(date, b.expiry) - 30) || Math.abs(a.strike - spot) - Math.abs(b.strike - spot))[0] ?? null;
 }
 
@@ -29,29 +29,44 @@ function closeTrade(position, exitDate, exitPrice, reason, scenario) {
 export function backtestLongerDteOptions(rawRows, { startDate = '2016-01-01', endDate = '2022-12-31', premiumStop = false } = {}) {
   const rows = addIndicators([...rawRows].sort((a, b) => a.date.localeCompare(b.date)));
   const scenarios = [0, 0.5, 1]; const tradesByScenario = Object.fromEntries(scenarios.map((value) => [String(value), []]));
-  let direction = null; let pending = null; let position = null; let stoppedDirection = null; let eligibleSessions = 0; let missingSessions = 0;
+  let direction = null; let pending = null; let position = null; let stoppedDirection = null; let eligibleSessions = 0;
+  const missingDates = new Set(); const missingByReason = {};
+  const recordMissing = (date, reason) => { missingDates.add(date); missingByReason[reason] = (missingByReason[reason] ?? 0) + 1; };
   for (const row of rows) {
     if (row.date < startDate) { pending = desiredDirection(row, pending); direction = pending; continue; }
     if (row.date > endDate) break;
     eligibleSessions += 1;
     if (position) {
       const held = (row.options ?? []).find((option) => option.expiry === position.expiry && option.strike === position.strike && option.optionType === position.optionType);
-      if (!held) { missingSessions += 1; continue; }
       const reversed = pending && pending !== position.direction;
       const roll = dte(row.date, position.expiry) <= 7;
       const stopPrice = position.entryPrice * 0.65;
-      const stopped = premiumStop && (held.open <= stopPrice || held.low <= stopPrice);
-      if (reversed || roll || stopped) {
-        const exitPrice = stopped ? Math.min(held.open, stopPrice) : held.open;
-        for (const scenario of scenarios) tradesByScenario[String(scenario)].push(closeTrade(position, row.date, exitPrice, stopped ? 'PREMIUM_STOP_35' : reversed ? 'UNDERLYING_REVERSAL' : 'ROLL', scenario));
-        if (stopped) stoppedDirection = position.direction;
+      const needsDailyQuote = premiumStop;
+      const needsExitQuote = reversed || roll;
+      const hasOpen = Number.isFinite(held?.open) && held.open > 0;
+      const hasLow = Number.isFinite(held?.low) && held.low > 0;
+      if ((needsExitQuote && !hasOpen) || (needsDailyQuote && (!hasOpen || !hasLow))) {
+        recordMissing(row.date, needsExitQuote ? 'HELD_EXIT_QUOTE' : 'HELD_STOP_PATH');
+        // The affected segment is not economically scored. Resetting it keeps a
+        // single unavailable observation from freezing the position forever and
+        // contaminating all later, independent samples.
+        stoppedDirection = premiumStop ? position.direction : null;
         position = null;
+      }
+      const stopped = position && premiumStop && (held.open <= stopPrice || held.low <= stopPrice);
+      if (reversed || roll || stopped) {
+        if (position) {
+          const exitPrice = stopped ? Math.min(held.open, stopPrice) : held.open;
+          for (const scenario of scenarios) tradesByScenario[String(scenario)].push(closeTrade(position, row.date, exitPrice, stopped ? 'PREMIUM_STOP_35' : reversed ? 'UNDERLYING_REVERSAL' : 'ROLL', scenario));
+          if (stopped) stoppedDirection = position.direction;
+          position = null;
+        }
       }
     }
     if (pending && stoppedDirection && pending !== stoppedDirection) stoppedDirection = null;
     if (!position && pending && !stoppedDirection) {
       const selected = selectLongerDteOption(row.options ?? [], { date: row.date, spot: row.index.open, direction: pending });
-      if (!selected) { missingSessions += 1; }
+      if (!selected) { recordMissing(row.date, 'ENTRY_QUOTE'); }
       else position = { direction: pending, optionType: selected.optionType, expiry: selected.expiry, strike: selected.strike, entryDate: row.date, entryPrice: selected.open, lotSize: niftyLotSizeForExpiry(selected.expiry) };
     }
     direction = pending; pending = desiredDirection(row, direction);
@@ -59,8 +74,9 @@ export function backtestLongerDteOptions(rawRows, { startDate = '2016-01-01', en
   const last = rows.filter((row) => row.date >= startDate && row.date <= endDate).at(-1);
   if (position && last) {
     const held = (last.options ?? []).find((option) => option.expiry === position.expiry && option.strike === position.strike && option.optionType === position.optionType);
-    if (held) for (const scenario of scenarios) tradesByScenario[String(scenario)].push(closeTrade(position, last.date, held.settle, 'PERIOD_END', scenario));
-    else missingSessions += 1;
+    if (Number.isFinite(held?.settle) && held.settle > 0) for (const scenario of scenarios) tradesByScenario[String(scenario)].push(closeTrade(position, last.date, held.settle, 'PERIOD_END', scenario));
+    else recordMissing(last.date, 'PERIOD_END_QUOTE');
   }
-  return { schemaVersion: 1, study: premiumStop ? 'P6 longer-DTE premium-stop comparator' : 'P2 longer-DTE underlying-invalidation baseline', period: { startDate, endDate }, rules: LONGER_DTE_RULES, coverage: { eligibleSessions, missingSessions, missingRate: eligibleSessions ? missingSessions / eligibleSessions : null }, summary: Object.fromEntries(scenarios.map((scenario) => [String(scenario), robustnessReport(tradesByScenario[String(scenario)], { value: (trade) => trade.netPnl, cluster: (trade) => trade.exitDate.slice(0, 7) })])), trades: tradesByScenario['0'] };
+  const missingSessions = missingDates.size;
+  return { schemaVersion: 1, study: premiumStop ? 'P6 longer-DTE premium-stop comparator' : 'P2 longer-DTE underlying-invalidation baseline', period: { startDate, endDate }, rules: LONGER_DTE_RULES, coverage: { eligibleSessions, missingSessions, missingRate: eligibleSessions ? missingSessions / eligibleSessions : null, missingByReason, missingDates: [...missingDates] }, summary: Object.fromEntries(scenarios.map((scenario) => [String(scenario), robustnessReport(tradesByScenario[String(scenario)], { value: (trade) => trade.netPnl, cluster: (trade) => trade.exitDate.slice(0, 7) })])), trades: tradesByScenario['0'] };
 }
