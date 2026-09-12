@@ -28,6 +28,10 @@ The hosted Sites build can lag GitHub `main`; source readiness and public deploy
 - **Terminal option-selling research:** the weekly 0.08-delta NIFTY smart condor is rejected; the monthly large-cap RSI condor is rejected as untestable after producing zero trades. New ideas and their frozen/blocked states are tracked separately.
 - **Profit-only research:** the two discovery winners failed untouched validation; their 5/10-point trails, 5/10/15-point initial-risk caps, and validation-only simultaneous CE+PE variants also failed promotion gates. Experimental paper rows remain isolated observations, not live authorization.
 - **More Ideas queue:** all executable historical backtests are complete. C3 VIX-high opening-range credit, M3 multi-index opening-range spreads and C1 ₹180-crossing spread skew failed their enforced discovery gates. S1–S3 remain data/infrastructure blocked and O2 remains unspecified.
+- **Profitable-trader provenance:** SEBI's roughly 7% profitable cohort cannot
+  be mapped to exact strategies from public data. No public individual strategy
+  passed the complete multi-year provenance screen; the next candidate is a
+  still-unspecified low-turnover positional NIFTY futures benchmark.
 
 See [Strategy status and evidence ledger](docs/STRATEGY_STATUS.md) for samples, P&L, profit factors, failure reasons, and the exact paper suite.
 
@@ -156,6 +160,7 @@ Research workflows also run monthly integrity gates.
 - [AI strategy-research handoff](docs/AI_STRATEGY_RESEARCH_SUMMARY.md)
 - [Strategy status and evidence ledger](docs/STRATEGY_STATUS.md)
 - [More Ideas research protocol](docs/MORE_IDEAS_RESEARCH_PROTOCOL.md)
+- [Profitable-trader strategy provenance](docs/PROFITABLE_TRADER_PROVENANCE.md)
 - [Current paper-family specification](docs/STRATEGY_SPEC.md)
 - [Stepped-trail research](docs/STEPPED_TRAIL_RESEARCH.md)
 - [Architecture](docs/ARCHITECTURE.md)

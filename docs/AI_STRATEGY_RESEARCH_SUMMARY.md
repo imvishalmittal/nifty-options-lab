@@ -3,7 +3,7 @@
 ```yaml
 document_type: ai_project_handoff
 repository: imvishalmittal/nifty-options-lab
-as_of: 2026-09-02
+as_of: 2026-09-11
 primary_objective: Find causal, executable, cost-robust NIFTY/options strategies suitable for unchanged forward paper observation.
 live_trading_authorized: false
 live_selected_strategies: 0
@@ -13,6 +13,23 @@ active_research: []
 remaining_option_selling_research: terminal; no candidate passed
 source_of_truth: docs/STRATEGY_STATUS.md
 ```
+
+### 11 September 2026 provenance update
+
+The follow-up review of the roughly 7% of individual Indian equity-F&O
+accounts that were profitable over FY22–FY24 found no public dataset linking
+those outcomes to deterministic strategies. SEBI provides product, activity,
+P&L, cost, and demographic aggregates, but not buyer/writer direction, exact
+rules, identities, or trade ledgers. No public individual located in the review
+combined a complete multi-year broker-verified record with all accounts/hedges
+and rules published before the result.
+
+Do not infer that the profitable cohort consisted of option sellers or copy a
+social-media strategy into this repository. The first defensible new hypothesis
+is a low-turnover positional NIFTY futures trend benchmark, motivated only by
+SEBI's descriptive product/turnover patterns. It still requires a frozen
+specification and overnight futures infrastructure before any run. See
+[`PROFITABLE_TRADER_PROVENANCE.md`](PROFITABLE_TRADER_PROVENANCE.md).
 
 ## 1. Read this first
 
