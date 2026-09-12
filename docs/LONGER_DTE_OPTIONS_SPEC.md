@@ -1,7 +1,19 @@
 # P2 / P4 / P6 — longer-DTE directional expression study
 
-Status: **FROZEN DISCOVERY — implementation ready**  
+Status: **TERMINAL — P2/P6 rejected; P4 descriptive only**  
 Frozen: 12 September 2026, before discovery results
+
+## Terminal results — 12 September 2026
+
+The unchanged 2016–2022 discovery completed in [run 34687277815](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/34687277815).
+
+| ID | Samples | Normal economics | Terminal decision |
+|---|---:|---|---|
+| P2 | 117 | +₹96,082.23; PF 1.1147; drawdown ₹219,998.07 | **REJECT_DISCOVERY** — PF missed the frozen 1.20 minimum and the bootstrap lower bound was −₹3,745.99 |
+| P4 | 117 matched signal segments per instrument | Futures +₹494,416.22/PF 1.4051 versus options +₹96,082.23/PF 1.1147 | **DESCRIPTIVE_ONLY** — P1 and P2 both failed independently |
+| P6 | 30 | +₹258,929.71; PF 2.6315; drawdown ₹71,553.63 | **REJECT_DISCOVERY** — bootstrap lower bound was −₹3,713.21 and the top 10% of trades supplied 90.22% of gross gains |
+
+P2 and P6 remained profitable under their frozen 0.5- and 1-point stresses, and their missing coverage stayed below 2%. Those facts did not override the failed decisive gates. Validation and holdout remain sealed, and nothing was added to paper or live trading. See [the consolidated new-generation results](NEW_GENERATION_RESULTS.md) for complete stress, annual, concentration, coverage, and integrity evidence.
 
 This shared study holds the underlying signal constant and tests three related
 questions without a parameter sweep.
