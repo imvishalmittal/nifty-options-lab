@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 11 September 2026
+Last updated: 12 September 2026
 
 ## Current operating state
 
@@ -40,7 +40,7 @@ They should not be rerun merely to search for a profitable parameter. A material
 
 ## Research backlog
 
-P1 is fully specified and implemented; its discovery is the active research run.
+The runnable P1/P2/P4/P5/P6 generation is complete. P1, P2, P5 and P6 were rejected at discovery; P4 is descriptive only. No candidate opens validation or holdout. See [`NEW_GENERATION_RESULTS.md`](NEW_GENERATION_RESULTS.md).
 
 1. Continue V2–V11 prospective paper observation without backfill or rule changes.
 2. Treat the Williams %R/EMA bear-call replication as inconclusive: one 2025 trade and zero post-publication trades are insufficient for promotion or tuning.
@@ -49,13 +49,9 @@ P1 is fully specified and implemented; its discovery is the active research run.
 4. Use the [profitable-trader provenance review](PROFITABLE_TRADER_PROVENANCE.md)
    as the boundary for new trader-derived ideas. No public individual strategy
    passed the complete multi-year provenance screen.
-5. Complete P1's frozen low-turnover positional NIFTY futures discovery. Use
-   actual dated contracts and rolls, next-session fills, date-correct lots,
-   costs, discovery/validation/holdout separation, and frozen robustness gates.
-6. Run the frozen shared P2/P4/P6 longer-DTE options study after P1 discovery
-   is operationally valid.
-7. Run P5's frozen symmetric US-close-conditioned actual-futures discovery.
-8. Keep P3 IV-minus-realized-volatility and P7 calendar/term-structure tests
+5. Treat P1/P2/P4/P5/P6 as terminal under their frozen definitions; do not tune
+   or rerun them merely to search for a pass.
+6. Keep P3 IV-minus-realized-volatility and P7 calendar/term-structure tests
    blocked until point-in-time IV, synchronized bid/ask, Greeks and executable
    multi-leg history are available.
 

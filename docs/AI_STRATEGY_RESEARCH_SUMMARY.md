@@ -9,7 +9,7 @@ live_trading_authorized: false
 live_selected_strategies: 0
 paper_suite: V2-V11 counterfactual NIFTY premium-entry outcomes
 experimental_shadow: 30-minute opening-range ATM credit spread
-active_research: [P1 positional NIFTY futures discovery 2016-2022]
+active_research: []
 remaining_option_selling_research: terminal; no candidate passed
 source_of_truth: docs/STRATEGY_STATUS.md
 ```
@@ -25,11 +25,10 @@ combined a complete multi-year broker-verified record with all accounts/hedges
 and rules published before the result.
 
 Do not infer that the profitable cohort consisted of option sellers or copy a
-social-media strategy into this repository. The first defensible new hypothesis
-is a low-turnover positional NIFTY futures trend benchmark, motivated only by
-SEBI's descriptive product/turnover patterns. Its rules, period boundary and
-gates are now frozen and its actual-contract discovery is queued. See
-[`PROFITABLE_TRADER_PROVENANCE.md`](PROFITABLE_TRADER_PROVENANCE.md).
+social-media strategy into this repository. The evidence-derived P1/P2/P4/P5/P6
+generation completed on 12 September 2026 without a discovery pass. P1, P2, P5
+and P6 were rejected, P4 is descriptive only, and P3/P7 remain data-blocked.
+See [`NEW_GENERATION_RESULTS.md`](NEW_GENERATION_RESULTS.md).
 
 ## 1. Read this first
 

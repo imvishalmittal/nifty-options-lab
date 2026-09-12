@@ -30,10 +30,11 @@ The hosted Sites build can lag GitHub `main`; source readiness and public deploy
 - **More Ideas queue:** all executable historical backtests are complete. C3 VIX-high opening-range credit, M3 multi-index opening-range spreads and C1 ₹180-crossing spread skew failed their enforced discovery gates. S1–S3 remain data/infrastructure blocked and O2 remains unspecified.
 - **Profitable-trader provenance:** SEBI's roughly 7% profitable cohort cannot
   be mapped to exact strategies from public data. No public individual strategy
-  passed the complete multi-year provenance screen; the next candidate is a
-  frozen low-turnover positional NIFTY futures benchmark now entering discovery.
+  passed the complete multi-year provenance screen. The resulting P1/P2/P4/P5/P6
+  generation is now terminal: no candidate passed every frozen discovery gate;
+  P3 and P7 remain data-blocked.
 
-See [Strategy status and evidence ledger](docs/STRATEGY_STATUS.md) for samples, P&L, profit factors, failure reasons, and the exact paper suite.
+See [Strategy status and evidence ledger](docs/STRATEGY_STATUS.md) and [new-generation results](docs/NEW_GENERATION_RESULTS.md) for samples, P&L, profit factors, failure reasons, and the exact paper suite.
 
 ## Forward paper suite — V2 through V11
 
