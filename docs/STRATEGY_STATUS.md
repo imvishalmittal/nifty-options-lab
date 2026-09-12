@@ -14,16 +14,18 @@ This is the repository's single status index for strategies that were reviewed, 
 
 A strategy is never promoted because its zero-slippage result alone is positive. Its frozen acceptance gates, costs, stress scenarios, data completeness, robustness, and drawdown must all pass.
 
-## Active research
+## New-generation research — terminal
 
 | Strategy | Frozen period | Current status | Paper impact |
 |---|---|---|---|
-| P1 low-turnover positional NIFTY futures trend benchmark | 2016–2022 discovery; 2023–2024 validation sealed; 2025–11 Sep 2026 holdout sealed | **ACTIVE RESEARCH** — rules, actual-contract engine, costs, stress and gates frozen before results | None; no broker order and no paper-lane change |
+| P1 low-turnover positional NIFTY futures trend benchmark | 2016–2022 discovery | **REJECTED** — drawdown, year stability/concentration and clustered bootstrap failed | None |
+| P2 20–45 DTE directional options | 2016–2022 discovery | **REJECTED** — normal PF 1.115 missed the 1.20 gate and bootstrap lower bound was negative | None |
+| P4 same-signal futures versus options | 2016–2022 discovery | **DESCRIPTIVE ONLY** — P1 and P2 both failed independently | None |
+| P5 US-close-conditioned futures | 2016–2022 discovery | **REJECTED** — negative at normal and both stresses | None |
+| P6 underlying invalidation versus 35% premium stop | 2016–2022 discovery | **REJECTED** — negative bootstrap lower bound and extreme winner concentration | None |
+| P3 IV-minus-realized-volatility spread; P7 term structure | Not run | **DATA_BLOCKED** — requires point-in-time IV, Greeks, synchronized bid/ask and executable multi-leg history | None |
 
-P1 uses completed NIFTY daily closes, an SMA100 ± 0.5 ATR20 hysteresis
-signal, next-session execution and actual official NSE `FUTIDX` contracts.
-The full pre-result definition is in
-[`POSITIONAL_NIFTY_FUTURES_SPEC.md`](POSITIONAL_NIFTY_FUTURES_SPEC.md).
+The final repaired discovery [run 34687277815](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/34687277815) completed with valid coverage after integrity-only [PR #99](https://github.com/imvishalmittal/nifty-options-lab/pull/99). No candidate advances to validation or holdout. Exact samples, P&L, PF, drawdowns, stress results, stability, bootstrap, concentration, coverage and artifact digest are in [`NEW_GENERATION_RESULTS.md`](NEW_GENERATION_RESULTS.md).
 
 ## What is in paper trading now
 

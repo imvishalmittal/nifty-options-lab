@@ -123,17 +123,15 @@ They are not claimed to be the secret strategies of profitable traders.
 
 | Priority | Candidate | Why it is worth testing | Current readiness |
 |---|---|---|---|
-| P1 | Low-turnover positional NIFTY futures trend benchmark | Directly tests the higher futures profit incidence and lower cost share without option decay or weekly-option microstructure | **Frozen and implemented; discovery queued** |
-| P2 | Low-turnover, 20–45 DTE directional NIFTY options | Tests whether an underlying-based multi-day signal with fewer trades survives costs better than the rejected intraday/weekly families | **Frozen and implemented; discovery next** |
+| P1 | Low-turnover positional NIFTY futures trend benchmark | Directly tests the higher futures profit incidence and lower cost share without option decay or weekly-option microstructure | **REJECT_DISCOVERY** |
+| P2 | Low-turnover, 20–45 DTE directional NIFTY options | Tests whether an underlying-based multi-day signal with fewer trades survives costs better than the rejected intraday/weekly families | **REJECT_DISCOVERY** |
 | P3 | Causal IV-minus-realized-volatility defined-risk spread | Tests volatility risk premium only when the observed IV/realized-volatility gap is sufficiently large, rather than selling premium every week | **Blocked on point-in-time IV surface, bid/ask, Greeks, and synchronized legs** |
-| P4 | Futures-versus-options expression experiment | Runs the same underlying signal through futures and defined-risk options to isolate whether signal or instrument/cost causes the difference | **Implemented inside the shared P2/P4/P6 study** |
-| P5 | US-close-conditioned directional futures | Tests completed US-close conditions without confusing association with causation | **Frozen and implemented; discovery next** |
-| P6 | Underlying-invalidation versus premium-stop exit | Separates underlying signal failure from noisy option-premium stops | **Implemented inside the shared P2/P4/P6 study** |
+| P4 | Futures-versus-options expression experiment | Runs the same underlying signal through futures and defined-risk options to isolate whether signal or instrument/cost causes the difference | **DESCRIPTIVE_ONLY; both tracks rejected** |
+| P5 | US-close-conditioned directional futures | Tests completed US-close conditions without confusing association with causation | **REJECT_DISCOVERY** |
+| P6 | Underlying-invalidation versus premium-stop exit | Separates underlying signal failure from noisy option-premium stops | **REJECT_DISCOVERY** |
 | P7 | Calendar/term-structure relative value | Tests systematic term structure rather than outright direction | **Blocked on point-in-time IV, synchronized bid/ask, Greeks, and executable multi-leg data** |
 
-P1 is now frozen in [`POSITIONAL_NIFTY_FUTURES_SPEC.md`](POSITIONAL_NIFTY_FUTURES_SPEC.md)
-and implemented against official dated NSE futures bhavcopies. It remains a
-benchmark, not a presumption that futures will be profitable.
+The complete terminal evidence is in [`NEW_GENERATION_RESULTS.md`](NEW_GENERATION_RESULTS.md). The results did not support promotion of futures, longer-DTE options, event conditioning, or the premium-stop comparator.
 
 ## Frozen design requirements before any run
 
@@ -155,9 +153,4 @@ deletion, and no paper promotion based only on a positive headline P&L.
 
 ## Operational decision
 
-P1 discovery is scheduled with its rules and gates frozen before results.
-P2, P4 and P6 share one frozen actual-contract discovery implementation. P3
-and P7 remain blocked by the same point-in-time volatility-surface and
-execution-data gap; P5 is now frozen as a symmetric ±0.5% same-direction US
-close test using actual NIFTY futures. No
-paper strategy or broker order is authorized by this work.
+P1, P2, P5 and P6 completed discovery and were rejected; P4 remains descriptive only. P3 and P7 remain blocked by the same point-in-time volatility-surface and execution-data gap. No validation or holdout was opened, and no paper strategy or broker order is authorized by this work.
