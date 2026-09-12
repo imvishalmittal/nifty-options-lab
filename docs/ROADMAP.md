@@ -54,9 +54,10 @@ P1 is fully specified and implemented; its discovery is the active research run.
    costs, discovery/validation/holdout separation, and frozen robustness gates.
 6. Run the frozen shared P2/P4/P6 longer-DTE options study after P1 discovery
    is operationally valid.
-7. Keep P3 IV-minus-realized-volatility and P7 calendar/term-structure tests
+7. Run P5's frozen symmetric US-close-conditioned actual-futures discovery.
+8. Keep P3 IV-minus-realized-volatility and P7 calendar/term-structure tests
    blocked until point-in-time IV, synchronized bid/ask, Greeks and executable
-   multi-leg history are available. Freeze P5's causal event rule separately.
+   multi-leg history are available.
 
 ## Promotion sequence
 
