@@ -1,7 +1,18 @@
 # P5 — US-close-conditioned NIFTY futures
 
-Status: **FROZEN DISCOVERY — implementation ready**  
+Status: **REJECT_DISCOVERY — terminal**  
 Frozen: 12 September 2026, before strategy results
+
+## Terminal result — 12 September 2026
+
+The unchanged 2016–2022 discovery completed in [run 34687277815](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/34687277815).
+
+- 768 event sessions with zero missing coverage.
+- Normal execution lost **₹190,390.98**, with PF **0.9158**, maximum drawdown **₹218,480.51**, and win rate **49.48%**.
+- The 1-point and 2-point stress cases lost **₹242,538.24** and **₹346,832.76** respectively.
+- Only 3 of 7 years were profitable, and the monthly-clustered bootstrap interval was **−₹800.85 to ₹282.86**.
+
+This was an economic rejection, not an infrastructure or coverage failure. The simple symmetric US-close direction rule did not produce an executable edge after costs. Validation and holdout remain sealed, and P5 was not added to paper or live trading. See [the consolidated new-generation results](NEW_GENERATION_RESULTS.md).
 
 This study converts the earlier descriptive US-close/NIFTY association into a
 causal trading test. For each India session it uses only the latest completed
