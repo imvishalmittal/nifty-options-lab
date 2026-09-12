@@ -1,0 +1,42 @@
+name: Research - P5 event-conditioned futures
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/event-conditioned-futures-runs]
+    paths: [research/requests/event-conditioned-futures.json]
+permissions: { contents: read }
+jobs:
+  history:
+    strategy: { fail-fast: false, max-parallel: 4, matrix: { year: [2016, 2017, 2018, 2019, 2020, 2021, 2022] } }
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node --test tests/event-conditioned-futures-engine.test.mjs
+      - run: node research/download-nse-futures-history.mjs --start=${{ matrix.year }}-01-01 --end=${{ matrix.year }}-12-31 --out=nifty-futures-${{ matrix.year }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: 'p5-nifty-futures-${{ matrix.year }}', path: 'nifty-futures-${{ matrix.year }}.json', if-no-files-found: error, retention-days: 90 }
+  finalize:
+    needs: history
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with: { pattern: 'p5-nifty-futures-*', path: shards, merge-multiple: true }
+      - run: node research/run-event-conditioned-futures.mjs --in=shards --start=2016-01-01 --end=2022-12-31 --out=event-conditioned-futures.json
+      - run: node research/event-conditioned-futures-gates.mjs --in=event-conditioned-futures.json --out=event-conditioned-futures-gates.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: event-conditioned-futures-discovery-2016-2022
+          path: |
+            event-conditioned-futures.json
+            event-conditioned-futures-gates.json
+          if-no-files-found: error
+          retention-days: 90
+      - run: node research/event-conditioned-futures-gates.mjs --in=event-conditioned-futures.json --out=event-conditioned-futures-gates.json --enforce=true

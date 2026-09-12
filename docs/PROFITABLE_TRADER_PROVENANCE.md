@@ -127,7 +127,7 @@ They are not claimed to be the secret strategies of profitable traders.
 | P2 | Low-turnover, 20–45 DTE directional NIFTY options | Tests whether an underlying-based multi-day signal with fewer trades survives costs better than the rejected intraday/weekly families | **Frozen and implemented; discovery next** |
 | P3 | Causal IV-minus-realized-volatility defined-risk spread | Tests volatility risk premium only when the observed IV/realized-volatility gap is sufficiently large, rather than selling premium every week | **Blocked on point-in-time IV surface, bid/ask, Greeks, and synchronized legs** |
 | P4 | Futures-versus-options expression experiment | Runs the same underlying signal through futures and defined-risk options to isolate whether signal or instrument/cost causes the difference | **Implemented inside the shared P2/P4/P6 study** |
-| P5 | Overnight/event-conditioned directional futures | Tests US-close and gap conditions without confusing association with causation | **Underlying alignment exists; deterministic trading rule still to freeze** |
+| P5 | US-close-conditioned directional futures | Tests completed US-close conditions without confusing association with causation | **Frozen and implemented; discovery next** |
 | P6 | Underlying-invalidation versus premium-stop exit | Separates underlying signal failure from noisy option-premium stops | **Implemented inside the shared P2/P4/P6 study** |
 | P7 | Calendar/term-structure relative value | Tests systematic term structure rather than outright direction | **Blocked on point-in-time IV, synchronized bid/ask, Greeks, and executable multi-leg data** |
 
@@ -158,5 +158,6 @@ deletion, and no paper promotion based only on a positive headline P&L.
 P1 discovery is scheduled with its rules and gates frozen before results.
 P2, P4 and P6 share one frozen actual-contract discovery implementation. P3
 and P7 remain blocked by the same point-in-time volatility-surface and
-execution-data gap; P5 still needs a deterministic causal trading rule. No
+execution-data gap; P5 is now frozen as a symmetric ±0.5% same-direction US
+close test using actual NIFTY futures. No
 paper strategy or broker order is authorized by this work.
