@@ -28,13 +28,17 @@ test('lot size is mandatory so points are never mistaken for rupee P&L', () => {
   assert.throws(() => calculateLongOptionRoundTripCosts({ entryPremium: 180, exitPremium: 220, lotSize: 0 }), /lotSize/);
 });
 
-test('STT schedule switches on 1 April 2026 without changing strategy economics', () => {
+test('STT schedule includes the 1 October 2024 and 1 April 2026 changes', () => {
+  assert.equal(growwOptionRatesForTradeDate('2024-09-30').sttSellRate, 0.000625);
+  assert.equal(growwOptionRatesForTradeDate('2024-10-01').sttSellRate, 0.0010);
   assert.equal(growwOptionRatesForTradeDate('2026-03-31').sttSellRate, 0.0010);
   assert.equal(growwOptionRatesForTradeDate('2026-04-01').sttSellRate, 0.0015);
+
+  const september = calculateLongOptionRoundTripCosts({ entryPremium: 180, exitPremium: 220, lotSize: 25, tradeDate: '2024-09-30' });
+  const october = calculateLongOptionRoundTripCosts({ entryPremium: 180, exitPremium: 220, lotSize: 25, tradeDate: '2024-10-01' });
   const march = calculateLongOptionRoundTripCosts({ entryPremium: 180, exitPremium: 220, lotSize: 65, tradeDate: '2026-03-31' });
   const april = calculateLongOptionRoundTripCosts({ entryPremium: 180, exitPremium: 220, lotSize: 65, tradeDate: '2026-04-01' });
-  assert.equal(march.sttSellRate, 0.0010);
-  assert.equal(april.sttSellRate, 0.0015);
+  assert.ok(september.netPnl > october.netPnl);
   assert.ok(march.netPnl > april.netPnl);
 });
 

@@ -1,0 +1,159 @@
+name: NIFTY 180 Hybrid Loss-Control Study
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/nifty-180-hybrid-loss-control-study.yml'
+      - 'research/nifty-180-hybrid-strategies.mjs'
+      - 'research/groww-backtest-nifty-180-hybrids.mjs'
+      - 'research/HYBRID_LOSS_CONTROL_PLAN.md'
+      - 'tests/nifty-180-hybrid-strategies.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hybrid-loss-control-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  month:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - period: '2025-01'
+            start: '2025-01-01'
+            end: '2025-01-31'
+            lot_size: 75
+          - period: '2025-02'
+            start: '2025-02-01'
+            end: '2025-02-28'
+            lot_size: 75
+          - period: '2025-03'
+            start: '2025-03-01'
+            end: '2025-03-31'
+            lot_size: 75
+          - period: '2025-04'
+            start: '2025-04-01'
+            end: '2025-04-30'
+            lot_size: 75
+          - period: '2025-05'
+            start: '2025-05-01'
+            end: '2025-05-31'
+            lot_size: 75
+          - period: '2025-06'
+            start: '2025-06-01'
+            end: '2025-06-30'
+            lot_size: 75
+          - period: '2025-07'
+            start: '2025-07-01'
+            end: '2025-07-31'
+            lot_size: 75
+          - period: '2025-08'
+            start: '2025-08-01'
+            end: '2025-08-31'
+            lot_size: 75
+          - period: '2025-09'
+            start: '2025-09-01'
+            end: '2025-09-30'
+            lot_size: 75
+          - period: '2025-11'
+            start: '2025-11-01'
+            end: '2025-11-30'
+            lot_size: 75
+          - period: '2026-01'
+            start: '2026-01-01'
+            end: '2026-01-31'
+            lot_size: 65
+          - period: '2026-02'
+            start: '2026-02-01'
+            end: '2026-02-28'
+            lot_size: 65
+          - period: '2026-04'
+            start: '2026-04-01'
+            end: '2026-04-30'
+            lot_size: 65
+          - period: '2026-05'
+            start: '2026-05-01'
+            end: '2026-05-31'
+            lot_size: 65
+          - period: '2026-06'
+            start: '2026-06-01'
+            end: '2026-06-30'
+            lot_size: 65
+          - period: '2026-08'
+            start: '2026-08-01'
+            end: '2026-08-14'
+            lot_size: 65
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate frozen hybrid semantics
+        run: node --test tests/nifty-180-hybrid-strategies.test.mjs
+
+      - name: Run actual-contract hybrid study
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_REQUEST_SPACING_MS: '1500'
+        run: |
+          node research/groww-backtest-nifty-180-hybrids.mjs \
+            --start=${{ matrix.start }} \
+            --end=${{ matrix.end }} \
+            --lot-size=${{ matrix.lot_size }} \
+            --out=hybrid-result.json \
+            > hybrid-stdout.json
+
+      - name: Require complete ledgers and cohort invariants
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const result = JSON.parse(fs.readFileSync('hybrid-result.json', 'utf8'));
+          const strategies = ['S1', 'S2', 'S3'];
+          const variants = ['V2', 'V3_5', 'V3_10'];
+          for (const strategy of strategies) {
+            const ledger = result.sessionLedgers?.[strategy];
+            if (!Array.isArray(ledger) || ledger.length === 0) throw new Error(`${strategy} session ledger missing`);
+            const counts = variants.map((variant) => result.combinations?.[`${strategy}_${variant}`]?.trades?.length);
+            if (counts.some((value) => !Number.isInteger(value))) throw new Error(`${strategy} combination ledger missing`);
+            if (new Set(counts).size !== 1) throw new Error(`${strategy} V2/V3 trade cohorts differ: ${counts.join(',')}`);
+          }
+          const s1 = result.sessionLedgers.S1;
+          const s2 = result.sessionLedgers.S2;
+          if (s1.length !== s2.length) throw new Error('S1/S2 session counts differ');
+          for (let i = 0; i < s1.length; i += 1) {
+            for (const key of ['date', 'status', 'signalSource', 'side', 'signalTime', 'entryTime', 'entry']) {
+              if (s1[i][key] !== s2[i][key]) throw new Error(`S1/S2 entry mismatch ${s1[i].date} ${key}: ${s1[i][key]} != ${s2[i][key]}`);
+            }
+          }
+          for (const [key, combo] of Object.entries(result.combinations)) {
+            for (const scenario of ['oneLot', 'affordable', 'risk1Pct', 'risk2Pct']) {
+              if (!combo.summary?.[scenario]) throw new Error(`${key} missing ${scenario} summary`);
+            }
+          }
+          console.log(JSON.stringify({ period: result.period, statusCounts: result.sessionStatusCounts, tradeCounts: Object.fromEntries(Object.entries(result.combinations).map(([key, value]) => [key, value.trades.length])) }, null, 2));
+          NODE
+
+      - name: Upload monthly result
+        uses: actions/upload-artifact@v4
+        with:
+          name: nifty-180-hybrid-${{ matrix.period }}-${{ github.run_id }}
+          path: hybrid-result.json
+          retention-days: 30

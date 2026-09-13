@@ -1,0 +1,150 @@
+name: NIFTY 180 Hybrid 2024 Holdout
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/nifty-180-hybrid-2024-holdout.yml'
+      - 'research/nifty-180-hybrid-strategies.mjs'
+      - 'research/groww-backtest-nifty-180-hybrids.mjs'
+      - 'research/groww-option-costs.mjs'
+      - 'tests/nifty-180-hybrid-strategies.test.mjs'
+      - 'tests/groww-option-costs.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hybrid-2024-holdout-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  month:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - period: '2024-01'
+            start: '2024-01-01'
+            end: '2024-01-31'
+            lot_size: 25
+          - period: '2024-02'
+            start: '2024-02-01'
+            end: '2024-02-29'
+            lot_size: 25
+          - period: '2024-03'
+            start: '2024-03-01'
+            end: '2024-03-31'
+            lot_size: 25
+          - period: '2024-04'
+            start: '2024-04-01'
+            end: '2024-04-30'
+            lot_size: 25
+          - period: '2024-05'
+            start: '2024-05-01'
+            end: '2024-05-31'
+            lot_size: 25
+          - period: '2024-06'
+            start: '2024-06-01'
+            end: '2024-06-30'
+            lot_size: 25
+          - period: '2024-07'
+            start: '2024-07-01'
+            end: '2024-07-31'
+            lot_size: 25
+          - period: '2024-08'
+            start: '2024-08-01'
+            end: '2024-08-31'
+            lot_size: 25
+          - period: '2024-09'
+            start: '2024-09-01'
+            end: '2024-09-30'
+            lot_size: 25
+          - period: '2024-10'
+            start: '2024-10-01'
+            end: '2024-10-31'
+            lot_size: 25
+          - period: '2024-11'
+            start: '2024-11-01'
+            end: '2024-11-30'
+            lot_size: 25
+          - period: '2024-12-old-lot'
+            start: '2024-12-01'
+            end: '2024-12-26'
+            lot_size: 25
+          - period: '2024-12-new-lot'
+            start: '2024-12-27'
+            end: '2024-12-31'
+            lot_size: 75
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate frozen strategy and historical costs
+        run: |
+          node --test tests/nifty-180-hybrid-strategies.test.mjs
+          node --test tests/groww-option-costs.test.mjs
+
+      - name: Run untouched actual-contract 2024 holdout
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_REQUEST_SPACING_MS: '1500'
+        run: |
+          node research/groww-backtest-nifty-180-hybrids.mjs \
+            --start=${{ matrix.start }} \
+            --end=${{ matrix.end }} \
+            --lot-size=${{ matrix.lot_size }} \
+            --out=holdout-result.json \
+            > holdout-stdout.json
+
+      - name: Require complete ledgers and frozen-cohort invariants
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const result = JSON.parse(fs.readFileSync('holdout-result.json', 'utf8'));
+          const strategies = ['S1', 'S2', 'S3'];
+          const variants = ['V2', 'V3_5', 'V3_10'];
+          for (const strategy of strategies) {
+            const ledger = result.sessionLedgers?.[strategy];
+            if (!Array.isArray(ledger) || ledger.length === 0) throw new Error(`${strategy} session ledger missing`);
+            const counts = variants.map((variant) => result.combinations?.[`${strategy}_${variant}`]?.trades?.length);
+            if (counts.some((value) => !Number.isInteger(value))) throw new Error(`${strategy} combination ledger missing`);
+            if (new Set(counts).size !== 1) throw new Error(`${strategy} V2/V3 trade cohorts differ: ${counts.join(',')}`);
+          }
+          const s1 = result.sessionLedgers.S1;
+          const s2 = result.sessionLedgers.S2;
+          if (s1.length !== s2.length) throw new Error('S1/S2 session counts differ');
+          for (let i = 0; i < s1.length; i += 1) {
+            for (const key of ['date', 'status', 'signalSource', 'side', 'signalTime', 'entryTime', 'entry']) {
+              if (s1[i][key] !== s2[i][key]) throw new Error(`S1/S2 entry mismatch ${s1[i].date} ${key}`);
+            }
+          }
+          console.log(JSON.stringify({
+            period: result.period,
+            historicalLotSize: result.methodology?.historicalLotSize,
+            statusCounts: result.sessionStatusCounts,
+            tradeCounts: Object.fromEntries(Object.entries(result.combinations).map(([key, value]) => [key, value.trades.length])),
+          }, null, 2));
+          NODE
+
+      - name: Upload holdout result
+        uses: actions/upload-artifact@v4
+        with:
+          name: nifty-180-hybrid-holdout-${{ matrix.period }}-${{ github.run_id }}
+          path: holdout-result.json
+          retention-days: 30
