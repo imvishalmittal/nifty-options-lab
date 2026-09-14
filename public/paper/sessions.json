@@ -5,7 +5,7 @@
       "BASE",
       "V4"
     ],
-    "updatedAt": "2026-09-14T04:05:23.875Z"
+    "updatedAt": "2026-09-14T09:20:56.404Z"
   },
   "sessions": [
     {
@@ -1679,7 +1679,7 @@
       ],
       "status": "NO_SESSION",
       "reason": "No completed 09:25 NIFTY candle",
-      "updatedAt": "2026-09-14T04:05:23.875Z",
+      "updatedAt": "2026-09-14T09:20:56.404Z",
       "spot925": null,
       "expiry": null,
       "referencePremium": null,
@@ -1703,7 +1703,7 @@
       ],
       "status": "NO_TRADE",
       "reason": "No completed 09:25 NIFTY candle",
-      "updatedAt": "2026-09-14T04:05:22.643Z",
+      "updatedAt": "2026-09-14T09:20:55.537Z",
       "spot925": null,
       "expiry": null,
       "referencePremium": null,
