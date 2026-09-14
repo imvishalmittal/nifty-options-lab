@@ -7,7 +7,7 @@ export function mergeProfitOnlyShards(documents, startDate, endDate, expected = 
   const months = new Set(documents.map((document) => document.period?.startDate?.slice(0, 7)));
   if (months.size !== expected) throw new Error(`Expected ${expected} unique months, received ${months.size}`);
   const keys = Object.keys(documents[0]?.variants ?? {}).sort();
-  if (![2, 4, 8, 15, 25].includes(keys.length)) throw new Error(`Expected 2, 4, 8, 15, or 25 configurations, received ${keys.length}`);
+  if (![1, 2, 4, 8, 15, 25].includes(keys.length)) throw new Error(`Expected 1, 2, 4, 8, 15, or 25 configurations, received ${keys.length}`);
   for (const document of documents) {
     if (JSON.stringify(Object.keys(document.variants ?? {}).sort()) !== JSON.stringify(keys)) {
       throw new Error(`Variant mismatch ${document.period?.startDate}`);
