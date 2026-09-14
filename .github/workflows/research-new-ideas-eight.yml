@@ -2,6 +2,9 @@ name: Research - Reviewed new ideas 1 through 8
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths: [research/requests/new-ideas-eight.json]
   push:
     branches: [main, agent/new-ideas-eight-runs, agent/new-ideas-eight-review]
     paths: [research/requests/new-ideas-eight.json]
