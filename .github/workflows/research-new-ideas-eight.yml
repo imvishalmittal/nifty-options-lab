@@ -3,7 +3,7 @@ name: Research - Reviewed new ideas 1 through 8
 on:
   workflow_dispatch:
   push:
-    branches: [agent/new-ideas-eight-runs, agent/new-ideas-eight-review]
+    branches: [main, agent/new-ideas-eight-runs, agent/new-ideas-eight-review]
     paths: [research/requests/new-ideas-eight.json]
 
 permissions: { contents: read }
