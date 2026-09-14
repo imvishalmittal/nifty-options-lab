@@ -1,0 +1,124 @@
+name: Research - Reviewed new ideas 1 through 8
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, agent/new-ideas-eight-runs, agent/new-ideas-eight-review]
+    paths: [research/requests/new-ideas-eight.json]
+
+permissions: { contents: read }
+concurrency: { group: groww-new-ideas-eight, cancel-in-progress: false }
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - id: matrix
+        shell: bash
+        run: |
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const include = [];
+          for (const source of [
+            { id: 'nifty', underlying: 'NIFTY', spot: 'NSE-NIFTY' },
+            { id: 'banknifty', underlying: 'BANKNIFTY', spot: 'NSE-BANKNIFTY' },
+            { id: 'v2', underlying: 'NIFTY', spot: 'NSE-NIFTY' },
+          ]) {
+            for (let year = 2020; year <= 2024; year += 1) {
+              for (let month = 1; month <= 12; month += 1) {
+                const key = `${year}-${String(month).padStart(2, '0')}`;
+                include.push({ ...source, month: key, start: `${key}-01`, end: `${key}-${new Date(Date.UTC(year, month, 0)).getUTCDate()}` });
+              }
+            }
+          }
+          console.log(`matrix=${JSON.stringify({ include })}`);
+          NODE
+
+  shard:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Resolve Groww token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run frozen Retest host shard
+        if: matrix.id != 'v2'
+        run: >-
+          node research/groww-profit-only-directional-backtest.mjs
+          --start=${{ matrix.start }} --end=${{ matrix.end }}
+          --underlying=${{ matrix.underlying }} --spot-symbol=${{ matrix.spot }}
+          --lot-size=auto --signals=RETEST15 --exits=CONFIRM_BE_10
+          --out=${{ matrix.id }}-${{ matrix.month }}.json
+      - name: Run frozen V2 confirmation host shard
+        if: matrix.id == 'v2'
+        run: >-
+          node research/groww-backtest-nifty-180-momentum.mjs
+          --start=${{ matrix.start }} --end=${{ matrix.end }}
+          --lot-size=auto --out=${{ matrix.id }}-${{ matrix.month }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: new-ideas-${{ matrix.id }}-${{ matrix.month }}
+          path: ${{ matrix.id }}-${{ matrix.month }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+  finalize:
+    needs: shard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with: { pattern: 'new-ideas-*', path: shards, merge-multiple: true }
+      - name: Separate and verify shard sets
+        run: |
+          mkdir nifty banknifty v2
+          find shards -maxdepth 1 -name 'nifty-*.json' -exec cp {} nifty/ \;
+          find shards -maxdepth 1 -name 'banknifty-*.json' -exec cp {} banknifty/ \;
+          find shards -maxdepth 1 -name 'v2-*.json' -exec cp {} v2/ \;
+          test "$(find nifty -name '*.json' | wc -l)" -eq 60
+          test "$(find banknifty -name '*.json' | wc -l)" -eq 60
+          test "$(find v2 -name '*.json' | wc -l)" -eq 60
+      - name: Merge NIFTY host and evaluate Ideas 1, 2 and 5
+        run: |
+          node research/merge-profit-only-directional-shards.mjs --in=nifty --start=2020-01-01 --end=2024-12-31 --expected=60 --out=nifty-host.json
+          node research/new-ideas-overlays.mjs --in=nifty-host.json --out=ideas-1-2-5.json
+      - name: Merge and gate Idea 6 BANKNIFTY
+        run: |
+          node research/merge-profit-only-directional-shards.mjs --in=banknifty --start=2020-01-01 --end=2024-12-31 --expected=60 --out=idea-6-banknifty.json
+          node research/new-ideas-banknifty-gates.mjs --in=idea-6-banknifty.json --out=idea-6-banknifty-gates.json
+      - name: Merge V2 host and evaluate Idea 4 confirmation
+        run: |
+          node research/merge-new-ideas-v2-shards.mjs --in=v2 --start=2020-01-01 --end=2024-12-31 --expected=60 --out=v2-host.json
+          node research/new-ideas-confirmation.mjs --v2=v2-host.json --retest=nifty-host.json --out=idea-4-confirmation.json
+      - name: Run corrected existing-data Idea 8 audit
+        run: node research/new-ideas-expiry-audit.mjs --in=public/paper/trades.json --out=idea-8-expiry-audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reviewed-new-ideas-discovery
+          path: |
+            nifty-host.json
+            ideas-1-2-5.json
+            idea-6-banknifty.json
+            idea-6-banknifty-gates.json
+            v2-host.json
+            idea-4-confirmation.json
+            idea-8-expiry-audit.json
+          if-no-files-found: error
+          retention-days: 90

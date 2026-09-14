@@ -2,12 +2,14 @@ import fs from 'node:fs';
 import { backtestNifty180, normalizeCandles } from './groww-backtest-nifty-180.mjs';
 import { evaluateMomentumPosition, lotsAffordable } from './nifty-180-momentum-trail.mjs';
 import { calculateLongOptionRoundTripCosts } from './groww-option-costs.mjs';
+import { indexLotSizeForExpiry } from './multi-index-credit-engine.mjs';
 
 const BASE_URL = 'https://api.groww.in/v1';
 const DEFAULT_SPACING_MS = 1500;
 const TRAIL_GAPS = Object.freeze([5, 10, 15, 20]);
 const CAPITALS = Object.freeze([50000, 60000, 70000]);
 let lastRequestAt = 0;
+let momentumRequestRetries = 0;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -22,6 +24,7 @@ async function apiGet(token, endpoint, params, spacingMs) {
     const body = await response.json().catch(() => ({}));
     if (response.ok && body.status !== 'FAILURE') return body.payload ?? body;
     if ((response.status === 429 || response.status >= 500) && attempt < 8) {
+      momentumRequestRetries += 1;
       const retryAfter = Number(response.headers.get('retry-after'));
       await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : Math.min(5000 * (2 ** attempt), 60000));
       continue;
@@ -88,7 +91,8 @@ function summarize(rows, capital) {
 }
 
 export async function backtestMomentum({ token, startDate, endDate, historicalLotSize, spacingMs = DEFAULT_SPACING_MS }) {
-  if (!(historicalLotSize > 0)) throw new Error('historicalLotSize is required');
+  if (historicalLotSize !== 'auto' && !(historicalLotSize > 0)) throw new Error('historicalLotSize is required');
+  momentumRequestRetries = 0;
   const baseline = await backtestNifty180({ token, startDate, endDate, maxCandidatesPerSide: 8, lotSize: null, requestSpacingMsOverride: spacingMs });
   const baselineTrades = baseline.results.filter((r) => r.status === 'TRADE');
   const fullSessionCache = new Map();
@@ -102,6 +106,10 @@ export async function backtestMomentum({ token, startDate, endDate, historicalLo
     const candles = fullSessionCache.get(key);
     const signal = candles.find((c) => c.timestamp === trade.signalTime);
     if (!signal) continue;
+    const datedLotSize = historicalLotSize === 'auto'
+      ? indexLotSizeForExpiry('NIFTY', trade.expiry)
+      : Number(historicalLotSize);
+    if (!(datedLotSize > 0)) continue;
 
     for (const gap of TRAIL_GAPS) {
       const position = evaluateMomentumPosition(candles, signal, { trailGapPoints: gap });
@@ -114,9 +122,10 @@ export async function backtestMomentum({ token, startDate, endDate, historicalLo
         expiry: trade.expiry,
         signalTime: trade.signalTime,
         signalClose: trade.signalClose,
+        historicalLotSize: datedLotSize,
         trailGapPoints: gap,
         ...position,
-        capitalScenarios: moneyScenarios(position, trade.date, historicalLotSize),
+        capitalScenarios: moneyScenarios(position, trade.date, datedLotSize),
       });
     }
   }
@@ -135,6 +144,7 @@ export async function backtestMomentum({ token, startDate, endDate, historicalLo
     },
     period: { startDate, endDate },
     baselineDiagnostics: baseline.diagnostics,
+    momentumDiagnostics: { requestRetries: momentumRequestRetries },
     variants: Object.fromEntries(TRAIL_GAPS.map((gap) => [gap, {
       summary: Object.fromEntries(CAPITALS.map((capital) => [capital, summarize(variants[gap], capital)])),
       trades: variants[gap],
@@ -154,8 +164,8 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const startDate = args.start;
   const endDate = args.end;
-  const historicalLotSize = Number(args['lot-size']);
-  if (!startDate || !endDate || !(historicalLotSize > 0)) throw new Error('--start, --end and --lot-size are required');
+  const historicalLotSize = args['lot-size'] === 'auto' ? 'auto' : Number(args['lot-size']);
+  if (!startDate || !endDate || (historicalLotSize !== 'auto' && !(historicalLotSize > 0))) throw new Error('--start, --end and --lot-size are required');
   const result = await backtestMomentum({ token, startDate, endDate, historicalLotSize, spacingMs: Number(process.env.GROWW_REQUEST_SPACING_MS || DEFAULT_SPACING_MS) });
   if (args.out) fs.writeFileSync(args.out, JSON.stringify(result, null, 2));
   process.stdout.write(JSON.stringify(result, null, 2));
