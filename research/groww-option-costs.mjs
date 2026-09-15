@@ -1,4 +1,4 @@
-// Groww NSE equity-option charges used for the 2026 validation path.
+// Groww NSE equity-option charges used for historical validation.
 // Rates are configurable so older periods can use historically correct schedules.
 export const GROWW_OPTION_RATES_2026 = Object.freeze({
   brokeragePerOrder: 20,
@@ -12,15 +12,21 @@ export const GROWW_OPTION_RATES_2026 = Object.freeze({
 
 export const GROWW_OPTION_RATES_PRE_APRIL_2026 = Object.freeze({
   ...GROWW_OPTION_RATES_2026,
-  sttSellRate: 0.0010,            // 0.10% option premium sell through 2026-03-31
+  sttSellRate: 0.0010,             // 0.10% option premium sell from 2024-10-01 through 2026-03-31
+});
+
+export const GROWW_OPTION_RATES_PRE_OCTOBER_2024 = Object.freeze({
+  ...GROWW_OPTION_RATES_2026,
+  sttSellRate: 0.000625,           // 0.0625% option premium sell through 2024-09-30
 });
 
 export function growwOptionRatesForTradeDate(tradeDate = null) {
   if (tradeDate == null) return GROWW_OPTION_RATES_2026;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(tradeDate))) throw new Error('tradeDate must be YYYY-MM-DD');
-  return String(tradeDate) < '2026-04-01'
-    ? GROWW_OPTION_RATES_PRE_APRIL_2026
-    : GROWW_OPTION_RATES_2026;
+  const date = String(tradeDate);
+  if (date < '2024-10-01') return GROWW_OPTION_RATES_PRE_OCTOBER_2024;
+  if (date < '2026-04-01') return GROWW_OPTION_RATES_PRE_APRIL_2026;
+  return GROWW_OPTION_RATES_2026;
 }
 
 export function calculateLongOptionRoundTripCosts({
