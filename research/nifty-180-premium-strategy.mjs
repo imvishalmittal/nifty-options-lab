@@ -42,13 +42,15 @@ function timeOf(timestamp) {
   return m[1];
 }
 
+// Research-only signal definition for the first-close study. Once the
+// contract has been selected by closest 09:25 premium, a prior <=180 close is
+// NOT required. The first completed 1-minute candle in the signal window that
+// closes above 180 is the confirmation candle.
 function firstConfirmation(candles, start = PREMIUM_RULES.signalStart, level = PREMIUM_RULES.referencePremium, forcedExit = PREMIUM_RULES.forcedExit) {
-  for (let i = 1; i < candles.length; i++) {
-    const c = candles[i];
-    const prev = candles[i - 1];
+  for (const c of candles) {
     const t = timeOf(c.timestamp);
     if (t < start || t >= forcedExit) continue;
-    if (prev.close <= level && c.close > level) return c;
+    if (c.close > level) return c;
   }
   return null;
 }
@@ -112,9 +114,9 @@ function evaluatePosition(candles, signal, rules = PREMIUM_RULES) {
 export function evaluatePremiumDay({ call, put, callCandles, putCandles, rules = PREMIUM_RULES }) {
   const callSignal = firstConfirmation(callCandles, rules.signalStart, rules.referencePremium, rules.forcedExit);
   const putSignal = firstConfirmation(putCandles, rules.signalStart, rules.referencePremium, rules.forcedExit);
-  if (!callSignal && !putSignal) return { status: 'NO_TRADE', reason: 'No post-window crossing above reference premium' };
+  if (!callSignal && !putSignal) return { status: 'NO_TRADE', reason: 'No completed 1-minute close above reference premium in signal window' };
   if (callSignal && putSignal && callSignal.timestamp === putSignal.timestamp) {
-    return { status: 'AMBIGUOUS', reason: 'CE and PE crossed and confirmed above reference premium in the same minute' };
+    return { status: 'AMBIGUOUS', reason: 'CE and PE first closed above reference premium in the same minute' };
   }
 
   const side = !putSignal || (callSignal && callSignal.timestamp < putSignal.timestamp) ? 'CE' : 'PE';
