@@ -5,7 +5,7 @@
       "BASE",
       "V4"
     ],
-    "updatedAt": "2026-09-15T04:16:04.692Z"
+    "updatedAt": "2026-09-16T08:52:18.506Z"
   },
   "sessions": [
     {
@@ -1784,6 +1784,82 @@
         "strike": 23650,
         "optionType": "PE",
         "premium": 183.8
+      },
+      "side": null,
+      "strike": null,
+      "entry": null,
+      "entryTime": null,
+      "signalSource": null,
+      "tradeCount": 0,
+      "totalPnl": null,
+      "strategyOutcomes": {}
+    },
+    {
+      "date": "2026-09-16",
+      "thread": "BASE",
+      "strategyVersions": [
+        "V2",
+        "V3-5",
+        "V3-10",
+        "V6",
+        "V7",
+        "V8",
+        "V9",
+        "V10-5",
+        "V10-10",
+        "V11"
+      ],
+      "status": "NO_TRADE",
+      "reason": "No valid ₹180 crossing before 09:45",
+      "updatedAt": "2026-09-16T08:52:12.861Z",
+      "spot925": 23235.9,
+      "expiry": "2026-09-22",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-22Sep26-23250-CE",
+        "strike": 23250,
+        "optionType": "CE",
+        "premium": 170.65
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-22Sep26-23300-PE",
+        "strike": 23300,
+        "optionType": "PE",
+        "premium": 175.15
+      },
+      "side": null,
+      "strike": null,
+      "entry": null,
+      "entryTime": null,
+      "signalSource": null,
+      "tradeCount": 0,
+      "totalPnl": null,
+      "strategyOutcomes": {}
+    },
+    {
+      "date": "2026-09-16",
+      "thread": "V4",
+      "strategyVersions": [
+        "V4",
+        "V5"
+      ],
+      "status": "NO_TRADE",
+      "reason": "No V4 option signal with matching NIFTY confirmation before 09:45",
+      "updatedAt": "2026-09-16T08:52:18.506Z",
+      "spot925": 23235.9,
+      "expiry": "2026-09-22",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-22Sep26-23250-CE",
+        "strike": 23250,
+        "optionType": "CE",
+        "premium": 170.65
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-22Sep26-23300-PE",
+        "strike": 23300,
+        "optionType": "PE",
+        "premium": 175.15
       },
       "side": null,
       "strike": null,
