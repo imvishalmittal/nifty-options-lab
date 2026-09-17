@@ -14,7 +14,7 @@
     "selectionBasis": "Experimental shadow observation while frozen 2020-2024 trailing discovery runs",
     "validationStatus": "UNVERIFIED_TRAILING_DISCOVERY_RUNNING",
     "excludedFromV2V11Totals": true,
-    "updatedAt": "2026-09-16T14:49:20.509Z"
+    "updatedAt": "2026-09-17T14:52:10.290Z"
   },
   "sessions": [
     {
@@ -212,6 +212,56 @@
           "normalNetPnl": -164.467280299,
           "stress0_5NetPnl": -359.323955299,
           "stress1_0NetPnl": -554.180630299
+        },
+        "PREVIOUS_DAY_BREAK_TRAIL_5_AFTER_BE_10": null,
+        "PREVIOUS_DAY_BREAK_TRAIL_10_AFTER_BE_10": null
+      }
+    },
+    {
+      "date": "2026-09-17",
+      "status": "TRADE",
+      "reason": null,
+      "updatedAt": "2026-09-17T14:52:10.290Z",
+      "strategies": {
+        "RETEST15_TRAIL_5_AFTER_BE_10": {
+          "side": "CE",
+          "contract": "NSE-NIFTY-22Sep26-23000-CE",
+          "expiry": "22Sep26",
+          "strike": 23000,
+          "signalTime": "2026-09-17T09:50:00+05:30",
+          "entryTime": "2026-09-17T09:50:00+05:30",
+          "exitTime": "2026-09-17T10:15:00+05:30",
+          "entryPremium": 336,
+          "exitPremium": 366,
+          "peakPremium": 377.35,
+          "exitReason": "TRAILING_STOP",
+          "lots": 2,
+          "lotSize": 65,
+          "amountInvested": 43680,
+          "directionalPnlPerUnit": 30,
+          "normalNetPnl": 3741.75079316,
+          "stress0_5NetPnl": 3611.84634316,
+          "stress1_0NetPnl": 3481.94189316
+        },
+        "RETEST15_TRAIL_10_AFTER_BE_10": {
+          "side": "CE",
+          "contract": "NSE-NIFTY-22Sep26-23000-CE",
+          "expiry": "22Sep26",
+          "strike": 23000,
+          "signalTime": "2026-09-17T09:50:00+05:30",
+          "entryTime": "2026-09-17T09:50:00+05:30",
+          "exitTime": "2026-09-17T10:15:00+05:30",
+          "entryPremium": 336,
+          "exitPremium": 366,
+          "peakPremium": 377.35,
+          "exitReason": "TRAILING_STOP",
+          "lots": 2,
+          "lotSize": 65,
+          "amountInvested": 43680,
+          "directionalPnlPerUnit": 30,
+          "normalNetPnl": 3741.75079316,
+          "stress0_5NetPnl": 3611.84634316,
+          "stress1_0NetPnl": 3481.94189316
         },
         "PREVIOUS_DAY_BREAK_TRAIL_5_AFTER_BE_10": null,
         "PREVIOUS_DAY_BREAK_TRAIL_10_AFTER_BE_10": null
