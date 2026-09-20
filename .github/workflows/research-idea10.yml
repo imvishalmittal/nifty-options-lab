@@ -1,0 +1,107 @@
+name: Research - Idea 10 dual-chart EMA confirmation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/idea10-underlying-option-confirmation]
+  pull_request:
+    branches: [main]
+    paths:
+      - research/groww-idea10-backtest-v2.mjs
+      - .github/workflows/research-idea10.yml
+
+permissions: { contents: read }
+concurrency: { group: groww-idea10, cancel-in-progress: false }
+
+jobs:
+  shard:
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - id: A-discovery
+            variant: A
+            start: 2020-01-01
+            end: 2024-12-31
+          - id: B-discovery
+            variant: B
+            start: 2020-01-01
+            end: 2024-12-31
+          - id: A-validation
+            variant: A
+            start: 2025-01-01
+            end: 2025-12-31
+          - id: B-validation
+            variant: B
+            start: 2025-01-01
+            end: 2025-12-31
+          - id: A-holdout
+            variant: A
+            start: 2026-01-01
+            end: 2026-12-31
+          - id: B-holdout
+            variant: B
+            start: 2026-01-01
+            end: 2026-12-31
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Resolve Groww token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run frozen Idea 10 shard
+        run: |
+          node research/groww-idea10-backtest-v2.mjs \
+            --start=${{ matrix.start }} --end=${{ matrix.end }} \
+            --variant=${{ matrix.variant }} \
+            --out=idea10-${{ matrix.id }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: idea10-${{ matrix.id }}
+          path: idea10-${{ matrix.id }}.json
+          retention-days: 90
+
+  evaluate:
+    needs: shard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: idea10-*
+          path: results
+          merge-multiple: true
+      - name: Evaluate discovery, validation and holdout separately
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const files=fs.readdirSync('results').filter(x=>x.endsWith('.json')).sort();
+          const out={};
+          for(const f of files){
+            const r=JSON.parse(fs.readFileSync('results/'+f,'utf8'));
+            out[f]={
+              variant:r.variant,period:r.period,ema:r.ema,
+              trades:r.tradeCount,stopOutRate:r.stopOutRate,
+              summaries:r.summaries,bootstrap:r.bootstrap,
+              stopRule:r.stopRule
+            };
+          }
+          fs.writeFileSync('idea10-summary.json',JSON.stringify(out,null,2));
+          for(const [f,r] of Object.entries(out)){
+            console.log(JSON.stringify({file:f,...r.summaries.current},null,2));
+          }
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: idea10-final-review
+          path: idea10-summary.json
+          retention-days: 90
