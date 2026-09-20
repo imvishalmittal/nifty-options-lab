@@ -43,7 +43,7 @@ jobs:
           - id: B-holdout
             variant: B
             start: 2026-01-01
-            end: 2026-12-31
+            end: 2026-09-19
     runs-on: ubuntu-latest
     timeout-minutes: 300
     steps:
