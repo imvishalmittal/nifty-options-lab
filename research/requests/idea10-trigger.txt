@@ -1,0 +1,1 @@
+Idea 10 workflow trigger: discovery, validation, holdout; research-only; no paper/live execution.\n
