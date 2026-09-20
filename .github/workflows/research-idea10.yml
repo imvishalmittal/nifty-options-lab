@@ -39,7 +39,7 @@ jobs:
           - id: A-holdout
             variant: A
             start: 2026-01-01
-            end: 2026-12-31
+            end: 2026-09-19
           - id: B-holdout
             variant: B
             start: 2026-01-01
