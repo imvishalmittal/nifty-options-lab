@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 
-import { createGrowwPaperClient, completedCandles, indiaParts, sleep, timeOf } from './groww-paper-client.mjs';
+import { createGrowwPaperClient, completedCandles, indiaParts, sleep } from './groww-paper-client.mjs';
 import { paperOptionCosts } from './option-costs.mjs';
-import { nearestExpiry } from './paper-engine.mjs';
+import { nearestExpiry, timeOf } from './paper-engine.mjs';
 import { indexLotSizeForExpiry, parseIndexOptionContract } from '../research/multi-index-credit-engine.mjs';
 
 const JOURNAL = 'public/paper/idea10-trades.json';
@@ -164,6 +164,7 @@ async function main() {
   }
 
   let exit = null;
+  let exitTimestamp = null;
   let exitReason = null;
   let processed = new Set();
 
@@ -178,16 +179,19 @@ async function main() {
       if (candle.timestamp <= entered.entryTime || processed.has(candle.timestamp)) continue;
       if (timeOf(candle.timestamp) >= EOD_TIME) {
         exit = candle.close;
+        exitTimestamp = candle.timestamp;
         exitReason = 'EOD';
         break;
       }
       if (entered.direction === 'UP' && candle.low <= entered.stop) {
         exit = candle.open <= entered.stop ? candle.open : entered.stop;
+        exitTimestamp = candle.timestamp;
         exitReason = 'OPTION_CONFIRMATION_BAR_STOP';
         break;
       }
       if (entered.direction === 'DOWN' && candle.high >= entered.stop) {
         exit = candle.open >= entered.stop ? candle.open : entered.stop;
+        exitTimestamp = candle.timestamp;
         exitReason = 'OPTION_CONFIRMATION_BAR_STOP';
         break;
       }
@@ -199,6 +203,7 @@ async function main() {
       const last = optionCandles.at(-1);
       if (last) {
         exit = last.close;
+        exitTimestamp = last.timestamp;
         exitReason = 'LAST_AVAILABLE';
       }
       break;
@@ -224,7 +229,7 @@ async function main() {
     entryTime: timeOf(entered.entryTime),
     entryPremium: entered.entry,
     initialStop: entered.stop,
-    exitTime: timeOf(optionCandles.find((candle) => candle.close === exit)?.timestamp ?? optionCandles.at(-1)?.timestamp),
+    exitTime: timeOf(exitTimestamp),
     exitPremium: exit,
     exitReason,
     lots: entered.lots,
