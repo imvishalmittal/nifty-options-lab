@@ -114,8 +114,6 @@ async function main() {
       if (signalTimestamp === processedSignalTimestamp) continue;
       const direction = crossedDirection(spotCandles, fast, slow, i);
       if (!direction) continue;
-      processedSignalTimestamp = signalTimestamp;
-
       const chosen = atm(contracts, spotCandles[i].close, direction);
       if (!chosen) continue;
 
@@ -127,6 +125,7 @@ async function main() {
       const optionSlow = ema(optionCandles, SLOW);
       const j = optionCandles.findIndex((row) => row.timestamp === signalTimestamp);
       if (j < SLOW || j < 1) continue;
+      processedSignalTimestamp = signalTimestamp;
 
       const optionDirection = crossedDirection(optionCandles, optionFast, optionSlow, j);
       if (optionDirection !== direction) continue;
