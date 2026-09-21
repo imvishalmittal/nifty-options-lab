@@ -152,10 +152,10 @@ export function createGrowwPaperClient({
     throw new Error(`Groww ${endpoint} exhausted retries`);
   }
 
-  async function fetchCandles(segment, symbol, date, startClock, endClock) {
+  async function fetchCandles(segment, symbol, date, startClock, endClock, candleInterval = '1minute') {
     const payload = await apiGet('/historical/candles', {
       exchange: 'NSE', segment, groww_symbol: symbol,
-      start_time: `${date} ${startClock}:00`, end_time: `${date} ${endClock}:00`, candle_interval: '1minute',
+      start_time: `${date} ${startClock}:00`, end_time: `${date} ${endClock}:00`, candle_interval: candleInterval,
     });
     return normalizeCandles(payload.candles ?? []);
   }
