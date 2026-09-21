@@ -48,7 +48,7 @@ jobs:
           GROWW_PREFER_TOTP: 'true'
         run: node scripts/resolve-groww-token.mjs
 
-      - name: Run base and V4 paper sessions
+      - name: Run base, V4, and isolated Idea 10A paper sessions
         if: steps.guard.outputs.run == 'true'
         env:
           GROWW_REQUEST_SPACING_MS: '1500'
@@ -58,25 +58,35 @@ jobs:
           base_pid=$!
           node paper/run-v4-session.mjs > /tmp/v4-paper.log 2>&1 &
           v4_pid=$!
+          node paper/run-idea10-session.mjs > /tmp/idea10-paper.log 2>&1 &
+          idea10_pid=$!
 
           wait "$base_pid"
           base_rc=$?
           wait "$v4_pid"
           v4_rc=$?
+          wait "$idea10_pid"
+          idea10_rc=$?
           set -e
 
           echo "===== Base paper session ====="
           cat /tmp/base-paper.log
           echo "===== V4 paper session ====="
           cat /tmp/v4-paper.log
+          echo "===== Idea 10A paper shadow ====="
+          cat /tmp/idea10-paper.log
 
           node paper/merge-v4-ledger.mjs
           outcome_rc=0
           node paper/assert-session-outcome.mjs || outcome_rc=$?
 
           if [ "$base_rc" -ne 0 ] || [ "$v4_rc" -ne 0 ] || [ "$outcome_rc" -ne 0 ]; then
-            echo "Paper runner failure: base=$base_rc v4=$v4_rc outcome=$outcome_rc"
+            echo "Paper runner failure: base=$base_rc v4=$v4_rc outcome=$outcome_rc (Idea10A=$idea10_rc)"
             exit 1
+          fi
+
+          if [ "$idea10_rc" -ne 0 ]; then
+            echo "Idea 10A paper shadow failed; existing base/V4 paper session remains authoritative."
           fi
 
       - name: Persist paper journal
@@ -84,7 +94,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/paper/trades.json public/paper/session-status.json public/paper/v4-trades.json public/paper/v4-session-status.json public/paper/sessions.json
+          git add public/paper/trades.json public/paper/session-status.json public/paper/v4-trades.json public/paper/v4-session-status.json public/paper/sessions.json public/paper/idea10-trades.json public/paper/idea10-session-status.json
           if git diff --cached --quiet; then
             echo "No paper journal change"
           else
