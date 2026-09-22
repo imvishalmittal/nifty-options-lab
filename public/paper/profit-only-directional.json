@@ -14,7 +14,7 @@
     "selectionBasis": "Experimental shadow observation while frozen 2020-2024 trailing discovery runs",
     "validationStatus": "UNVERIFIED_TRAILING_DISCOVERY_RUNNING",
     "excludedFromV2V11Totals": true,
-    "updatedAt": "2026-09-21T16:24:25.955Z"
+    "updatedAt": "2026-09-22T14:41:24.142Z"
   },
   "sessions": [
     {
@@ -289,6 +289,56 @@
         "RETEST15_TRAIL_10_AFTER_BE_10": null,
         "PREVIOUS_DAY_BREAK_TRAIL_5_AFTER_BE_10": null,
         "PREVIOUS_DAY_BREAK_TRAIL_10_AFTER_BE_10": null
+      }
+    },
+    {
+      "date": "2026-09-22",
+      "status": "TRADE",
+      "reason": null,
+      "updatedAt": "2026-09-22T14:41:24.142Z",
+      "strategies": {
+        "RETEST15_TRAIL_5_AFTER_BE_10": null,
+        "RETEST15_TRAIL_10_AFTER_BE_10": null,
+        "PREVIOUS_DAY_BREAK_TRAIL_5_AFTER_BE_10": {
+          "side": "CE",
+          "contract": "NSE-NIFTY-22Sep26-23200-CE",
+          "expiry": "22Sep26",
+          "strike": 23200,
+          "signalTime": "2026-09-22T10:05:00+05:30",
+          "entryTime": "2026-09-22T10:05:00+05:30",
+          "exitTime": "2026-09-22T10:20:00+05:30",
+          "entryPremium": 266.75,
+          "exitPremium": 256.1,
+          "peakPremium": 269.15,
+          "exitReason": "INITIAL_STOP",
+          "lots": 3,
+          "lotSize": 65,
+          "amountInvested": 52016.25,
+          "directionalPnlPerUnit": -10.649999999999977,
+          "normalNetPnl": -2243.2854012954954,
+          "stress0_5NetPnl": -2438.1420762954954,
+          "stress1_0NetPnl": -2632.9987512954954
+        },
+        "PREVIOUS_DAY_BREAK_TRAIL_10_AFTER_BE_10": {
+          "side": "CE",
+          "contract": "NSE-NIFTY-22Sep26-23200-CE",
+          "expiry": "22Sep26",
+          "strike": 23200,
+          "signalTime": "2026-09-22T10:05:00+05:30",
+          "entryTime": "2026-09-22T10:05:00+05:30",
+          "exitTime": "2026-09-22T10:20:00+05:30",
+          "entryPremium": 266.75,
+          "exitPremium": 256.1,
+          "peakPremium": 269.15,
+          "exitReason": "INITIAL_STOP",
+          "lots": 3,
+          "lotSize": 65,
+          "amountInvested": 52016.25,
+          "directionalPnlPerUnit": -10.649999999999977,
+          "normalNetPnl": -2243.2854012954954,
+          "stress0_5NetPnl": -2438.1420762954954,
+          "stress1_0NetPnl": -2632.9987512954954
+        }
       }
     }
   ]
