@@ -5,7 +5,7 @@
       "BASE",
       "V4"
     ],
-    "updatedAt": "2026-09-21T04:16:16.986Z"
+    "updatedAt": "2026-09-23T07:27:14.574Z"
   },
   "sessions": [
     {
@@ -2128,6 +2128,123 @@
         "strike": 23550,
         "optionType": "PE",
         "premium": 190.25
+      },
+      "side": null,
+      "strike": null,
+      "entry": null,
+      "entryTime": null,
+      "signalSource": null,
+      "tradeCount": 0,
+      "totalPnl": null,
+      "strategyOutcomes": {}
+    },
+    {
+      "date": "2026-09-23",
+      "thread": "BASE",
+      "strategyVersions": [
+        "V2",
+        "V3-5",
+        "V3-10",
+        "V6",
+        "V7",
+        "V8",
+        "V9",
+        "V10-5",
+        "V10-10",
+        "V11"
+      ],
+      "status": "CLOSED",
+      "reason": null,
+      "updatedAt": "2026-09-23T07:27:14.574Z",
+      "spot925": 23391.15,
+      "expiry": "2026-09-29",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-29Sep26-23300-CE",
+        "strike": 23300,
+        "optionType": "CE",
+        "premium": 192.55
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-29Sep26-23550-PE",
+        "strike": 23550,
+        "optionType": "PE",
+        "premium": 194.9
+      },
+      "side": "CE",
+      "strike": 23300,
+      "entry": 182.5,
+      "entryTime": "09:35",
+      "signalSource": null,
+      "tradeCount": 10,
+      "totalPnl": 19449.48,
+      "strategyOutcomes": {
+        "V2": {
+          "tradeCount": 1,
+          "totalPnl": 10922.05
+        },
+        "V3-5": {
+          "tradeCount": 1,
+          "totalPnl": -5053.46
+        },
+        "V3-10": {
+          "tradeCount": 1,
+          "totalPnl": 9543.45
+        },
+        "V6": {
+          "tradeCount": 1,
+          "totalPnl": 14409.09
+        },
+        "V7-10": {
+          "tradeCount": 1,
+          "totalPnl": -2945.02
+        },
+        "V8-10": {
+          "tradeCount": 1,
+          "totalPnl": 9543.45
+        },
+        "V9": {
+          "tradeCount": 1,
+          "totalPnl": -4242.52
+        },
+        "V10-5": {
+          "tradeCount": 1,
+          "totalPnl": -4242.52
+        },
+        "V10-10": {
+          "tradeCount": 1,
+          "totalPnl": -4242.52
+        },
+        "V11": {
+          "tradeCount": 1,
+          "totalPnl": -4242.52
+        }
+      }
+    },
+    {
+      "date": "2026-09-23",
+      "thread": "V4",
+      "strategyVersions": [
+        "V4",
+        "V5"
+      ],
+      "status": "NO_TRADE",
+      "reason": "No V4 option signal with matching NIFTY confirmation before 09:45",
+      "updatedAt": "2026-09-23T04:16:31.981Z",
+      "spot925": 23391.15,
+      "expiry": "2026-09-29",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-29Sep26-23300-CE",
+        "strike": 23300,
+        "optionType": "CE",
+        "premium": 192.55
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-29Sep26-23550-PE",
+        "strike": 23550,
+        "optionType": "PE",
+        "premium": 194.9
       },
       "side": null,
       "strike": null,
