@@ -1,0 +1,35 @@
+name: Research - Ideas 13-15 2026 diagnostic
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/idea10-underlying-option-confirmation]
+    paths:
+      - research/idea13-15-2026-diagnostic.mjs
+      - .github/workflows/research-idea13-15-2026-diagnostic.yml
+permissions: { contents: read }
+concurrency: { group: groww-idea13-15-diagnostic, cancel-in-progress: false }
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Resolve Groww token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run frozen Ideas 13-15 diagnostic
+        run: |
+          node research/idea13-15-2026-diagnostic.mjs \
+            --start=2026-01-01 --end=2026-09-19 \
+            --out=idea13-15-2026-diagnostic.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: idea13-15-2026-diagnostic
+          path: idea13-15-2026-diagnostic.json
+          retention-days: 90
