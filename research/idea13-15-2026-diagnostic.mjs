@@ -23,7 +23,36 @@ function stats(rows,s){const v=rows.map(x=>x.money[s]).filter(Number.isFinite),g
 function boot(rows,s,N=5000){const v=rows.map(x=>x.money[s]).filter(Number.isFinite);if(!v.length)return{samples:N,mean:null,lower:null,upper:null};let seed=20260923,r=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296},m=[];for(let i=0;i<N;i++){let x=0;for(let j=0;j<v.length;j++)x+=v[Math.floor(r()*v.length)];m.push(x/v.length)}m.sort((a,b)=>a-b);return{samples:N,mean:v.reduce((a,b)=>a+b,0)/v.length,lower:m[Math.floor(N*.025)],upper:m[Math.floor(N*.975)]}}
 function zone(row,fast,slow,mode,threshold){if(!Number.isFinite(fast)||!Number.isFinite(slow))return'INSIDE';const hi=Math.max(fast,slow),lo=Math.min(fast,slow);let d=threshold;if(mode==='BAND_WIDTH_PCT')d=Math.abs(fast-slow)*threshold;return row.close>=hi+d?'ABOVE':row.close<=lo-d?'BELOW':'INSIDE'}
 function priorBias(days,date){const ds=[...days.keys()].filter(d=>d<date).sort();const prev=ds.at(-1);if(!prev)return'FLAT';const r=days.get(prev);if(!r?.length)return'FLAT';const move=r.at(-1).close-r[0].open;return move>0?'UP':move<0?'DOWN':'FLAT'}
-function findBreak(rows,fast,slow,variant){for(let i=slow-1;i<rows.length;i++){let threshold=0;if(variant.thresholdMode==='FIXED_POINTS')threshold=variant.threshold;if(variant.thresholdMode==='BAND_WIDTH_PCT')threshold=variant.threshold;const z=zone(rows[i],fast[i],slow[i],variant.thresholdMode,threshold),prev=zone(rows[i-1],fast[i-1],slow[i-1],variant.thresholdMode,threshold);if((z==='ABOVE'||z==='BELOW')&&prev!==z){if(variant.holdBars>0){let ok=true;for(let k=1;k<=variant.holdBars;k++){if(i+k>=rows.length||zone(rows[i+k],fast[i+k],slow[i+k],variant.thresholdMode,threshold)!==z){ok=false;break}}if(!ok)continue;const j=i+variant.holdBars;return{index:j,row:rows[j],direction:z==='ABOVE'?'UP':'DOWN',originIndex:i,originTime:rows[i].timestamp}}return{index:i,row:rows[i],direction:z==='ABOVE'?'UP':'DOWN',originIndex:i,originTime:rows[i].timestamp}}}return null}
+function findBreak(rows,fast,slow,variant){
+  for(let i=slow-1;i<rows.length;i++){
+    const r=rows[i],p=rows[i-1];
+    const up=r.close>fast[i]&&r.close>slow[i]&&p.close<=fast[i-1];
+    const dn=r.close<fast[i]&&r.close<slow[i]&&p.close>=fast[i-1];
+    if(!up&&!dn)continue;
+    const direction=up?'UP':'DOWN';
+    if(variant.holdBars>0){
+      let ok=true;
+      for(let k=1;k<=variant.holdBars;k++){
+        const x=rows[i+k];
+        if(!x){ok=false;break}
+        const above=x.close>fast[i+k]&&x.close>slow[i+k];
+        const below=x.close<fast[i+k]&&x.close<slow[i+k];
+        if((direction==='UP'&&!above)||(direction==='DOWN'&&!below)){ok=false;break}
+      }
+      if(!ok)continue;
+      const j=i+variant.holdBars;
+      return{index:j,row:rows[j],direction,originIndex:i,originTime:r.timestamp};
+    }
+    if(variant.thresholdMode){
+      const outer=direction==='UP'?Math.max(fast[i],slow[i]):Math.min(fast[i],slow[i]);
+      const distance=variant.thresholdMode==='FIXED_POINTS'?variant.threshold:Math.abs(fast[i]-slow[i])*variant.threshold;
+      if(direction==='UP'&&r.close<outer+distance)continue;
+      if(direction==='DOWN'&&r.close>outer-distance)continue;
+    }
+    return{index:i,row:r,direction,originIndex:i,originTime:r.timestamp};
+  }
+  return null;
+}
 export async function run({token,startDate,endDate,spacingMs=1500,out}){lastRequestAt=0;const lookback=new Date(`${startDate}T00:00:00Z`);lookback.setUTCDate(lookback.getUTCDate()-60);const lb=lookback.toISOString().slice(0,10);const spot=await candles(token,{segment:'CASH',symbol:'NSE-NIFTY',start:lb,end:endDate},spacingMs),days=group(spot),dates=[...days.keys()].filter(d=>d>=startDate&&d<=endDate).sort(),years=[...new Set(dates.map(d=>+d.slice(0,4)))],ex=await expiries(token,years,spacingMs),cc=new Map,oc=new Map;const results={};for(const name of Object.keys(VARIANTS))results[name]={variant:name,trades:[],diagnostics:{candidateBreaks:0,confirmedBreaks:0,cutoffMisses:0,biasFiltered:0}};
 for(const date of dates){const rows=days.get(date);if(!rows?.length)continue;const expiry=ex.find(x=>x>=date);if(!expiry)continue;if(!cc.has(expiry))cc.set(expiry,await contracts(token,expiry,spacingMs));const chain=cc.get(expiry);for(const[name,v]of Object.entries(VARIANTS)){const fast=ema(rows,v.fast),slow=ema(rows,v.slow);const b=findBreak(rows,fast,slow,v);if(!b)continue;results[name].diagnostics.candidateBreaks++;if(b.row.timestamp.slice(11,16)>='15:15'){results[name].diagnostics.cutoffMisses++;continue}results[name].diagnostics.confirmedBreaks++;if(name==='IDEA14_BIAS'){const bias=priorBias(days,date);if(bias==='FLAT'||bias!==b.direction){results[name].diagnostics.biasFiltered++;continue}}const ct=atm(chain,b.row.close,b.direction);if(!ct)continue;const key=`${date}:${ct.symbol}`;if(!oc.has(key))oc.set(key,await candles(token,{segment:'FNO',symbol:ct.symbol,start:date,end:date},spacingMs));const o=oc.get(key),of=ema(o,v.fast),os=ema(o,v.slow),j=o.findIndex(x=>x.timestamp===b.row.timestamp);if(j<Math.max(v.fast,v.slow)||j<1)continue;const q=o[j],p=o[j-1],up=q.close>of[j]&&q.close>os[j]&&p.close<=of[j-1],dn=q.close<of[j]&&q.close<os[j]&&p.close>=of[j-1];if(!((b.direction==='UP'&&up)||(b.direction==='DOWN'&&dn)))continue;const stop=b.direction==='UP'?q.low:q.high;let exit=null,reason=null,stopOut=false;for(const x of o.filter(x=>x.timestamp>q.timestamp)){if(x.timestamp.slice(11,16)>='15:15'){exit=x.close;reason='EOD';break}if(b.direction==='UP'&&x.low<=stop){exit=x.open<=stop?x.open:stop;reason='OPTION_CONFIRMATION_BAR_STOP';stopOut=true;break}if(b.direction==='DOWN'&&x.high>=stop){exit=x.open>=stop?x.open:stop;reason='OPTION_CONFIRMATION_BAR_STOP';stopOut=true;break}}if(exit==null){const x=o.at(-1);if(x){exit=x.close;reason='LAST_AVAILABLE'}}if(!Number.isFinite(exit))continue;const lot=indexLotSizeForExpiry('NIFTY',expiry);if(!(lot>0))continue;const bias=priorBias(days,date);results[name].trades.push({date,variant:name,direction:b.direction,side:b.direction==='UP'?'CE':'PE',contract:ct,expiry,signalTime:b.row.timestamp,originTime:b.originTime,entry:q.close,stop,exit,exitReason:reason,stopOut,dailyBias:bias,money:{current:cost(q.close,exit,lot,date,0),stress0_5:cost(q.close,exit,lot,date,.5),stress1_0:cost(q.close,exit,lot,date,1)}})}}
 for(const[name,r]of Object.entries(results)){r.tradeCount=r.trades.length;r.stopOutCount=r.trades.filter(x=>x.stopOut).length;r.stopOutRate=r.tradeCount?r.stopOutCount/r.tradeCount:null;r.summaries=Object.fromEntries(['current','stress0_5','stress1_0'].map(s=>[s,stats(r.trades,s)]));r.bootstrap=Object.fromEntries(['current','stress0_5','stress1_0'].map(s=>[s,boot(r.trades,s)]));delete r.trades}
