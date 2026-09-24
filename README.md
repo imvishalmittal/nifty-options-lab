@@ -186,6 +186,7 @@ Research workflows also run monthly integrity gates.
 
 ## Documentation
 
+- [Idea 10–15 consolidated research record](docs/IDEA10_15_RESEARCH.md)
 - [AI strategy-research handoff](docs/AI_STRATEGY_RESEARCH_SUMMARY.md)
 - [Strategy status and evidence ledger](docs/STRATEGY_STATUS.md)
 - [More Ideas research protocol](docs/MORE_IDEAS_RESEARCH_PROTOCOL.md)
