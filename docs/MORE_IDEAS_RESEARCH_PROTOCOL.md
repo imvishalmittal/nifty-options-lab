@@ -14,6 +14,17 @@ tracked in [`MORE_IDEAS_RESULTS.md`](MORE_IDEAS_RESULTS.md).
 - **Blocked:** the project cannot produce a defensible backtest from its current data or infrastructure. A synthetic substitute is not accepted as evidence.
 - **Research question only:** the source idea is not a unique trading rule and therefore has no honest backtest until a deterministic hypothesis is frozen.
 
+## Idea 10–15 extension
+
+Ideas 13–15 are a separate continuation of the Idea10 diagnostic and are not part of the original More Ideas queue. They use the frozen Idea10A 3-minute mechanics and change only the underlying confirmation condition.
+
+- **Idea13 H1/H2:** require one/two additional 3-minute underlying bars after the break — rejected.
+- **Idea14:** prior completed trading-day open→close direction must agree with the break — rejected.
+- **Idea15 Fixed10:** completed close must exceed the outer 9/21 EMA by at least 10 NIFTY points — full discovery/validation/holdout completed; **HOLD / NOT PAPER** pending robustness.
+- **Idea15 Width25:** completed close must exceed the outer EMA by 25% of band width — rejected.
+
+The Fixed10 threshold is frozen. Robustness analysis may describe annual/monthly consistency, side/direction splits and concentration, but may not tune the threshold or remove adverse periods.
+
 ## Queue
 
 | ID | Idea | Frozen implementation or required decision | Current state |
