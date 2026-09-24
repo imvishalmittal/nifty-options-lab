@@ -36,6 +36,34 @@ The hosted Sites build can lag GitHub `main`; source readiness and public deploy
 
 See [Strategy status and evidence ledger](docs/STRATEGY_STATUS.md) and [new-generation results](docs/NEW_GENERATION_RESULTS.md) for samples, P&L, profit factors, failure reasons, and the exact paper suite.
 
+## Idea 10 → Idea 15 Fixed10 research thread — current status (24 September 2026)
+
+The Idea 10 dual-chart confirmation research is now frozen and fully documented. Idea 10A uses 3-minute NIFTY 9/21 EMA confirmation on the underlying plus the selected ATM option, with entry at the option confirmation-bar close, confirmation-bar CE-low/PE-high stop, subsequent-bar-only stop execution, gap-through-stop fills at the bar open, and a 15:15-or-later EOD exit. Its 2026 holdout was weak: 156 trades, normal net -₹4,420, PF 0.994, with 136 stopouts. The stop-out diagnostic found 126/136 stopouts occurred after the underlying had already reversed; only 10/136 occurred while the underlying remained intact. This argues against simply widening the option stop.
+
+Ideas 13–15 were then tested as frozen diagnostics:
+- Idea 13 H1/H2: require one/two additional underlying 3-minute bars after the break — rejected.
+- Idea 14: prior completed trading-day open→close bias must agree with break direction — rejected.
+- Idea 15 Width25: close must exceed the outer EMA by 25% of the EMA-band width — rejected.
+- Idea 15 Fixed10: close must exceed the outer EMA by at least 10 NIFTY points — carried forward for full discovery/validation/holdout.
+
+### Idea 15 Fixed10 full backtest
+
+Frozen rule: **9/21 EMA; the completed NIFTY 3-minute close must exceed the outer EMA by at least 10 NIFTY points; all other Idea 10A mechanics remain unchanged.** No threshold tuning or post-result rule changes are permitted.
+
+| Period | Trades | Normal net | Normal PF | 0.5 stress | 0.5 PF | 1.0 stress | 1.0 PF | Max DD |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Discovery 2020–2024 | 439 | +₹15,00,650 | 1.549 | +₹11,04,142 | 1.366 | +₹7,07,635 | 1.214 | ₹2,76,087 |
+| Validation 2025 | 88 | +₹1,267 | 1.002 | -₹63,326 | 0.897 | -₹1,27,920 | 0.809 | ₹2,52,450 |
+| Holdout 2026 YTD* | 81 | +₹1,46,887 | 1.280 | +₹88,599 | 1.155 | +₹30,310 | 1.049 | ₹1,83,853 |
+
+*Holdout data through 18 September 2026, while the declared holdout window ends 19 September.
+
+The complete chain therefore **does not pass promotion gates** because untouched 2025 validation is essentially flat and fails both adverse-slippage profitability gates. The 2026 holdout is positive and passes the current PF/stress thresholds, but its 5,000-bootstrap lower bounds remain negative. Fixed10 is consequently **RESEARCH CANDIDATE — HOLD; NOT PAPER**.
+
+A dedicated robustness run is now in progress. It adds year/month consistency, profitable-month percentage, CE-vs-PE, direction-vs-direction, and trade-concentration breakdowns without changing the frozen strategy. No paper promotion occurs until those results are reviewed.
+
+Paper status is separate: Idea10A is already isolated in the paper workflow; on 24 September 2026 it recorded one CE trade and a net loss of ₹5,504.43. Base/V4/V5 had no trade. This paper observation does not alter the historical research verdict.
+
 ## Forward paper suite — V2 through V11
 
 V3 keeps the V2 entry family but changes stop management so risk begins reducing before a fixed ₹220 activation.
