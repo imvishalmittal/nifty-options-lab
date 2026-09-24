@@ -3,16 +3,31 @@
 ```yaml
 document_type: ai_project_handoff
 repository: imvishalmittal/nifty-options-lab
-as_of: 2026-09-12
+as_of: 2026-09-24
 primary_objective: Find causal, executable, cost-robust NIFTY/options strategies suitable for unchanged forward paper observation.
 live_trading_authorized: false
 live_selected_strategies: 0
 paper_suite: V2-V11 counterfactual NIFTY premium-entry outcomes
 experimental_shadow: 30-minute opening-range ATM credit spread
-active_research: []
+active_research:
+  - Idea15 Fixed10 robustness analysis
 remaining_option_selling_research: terminal; no candidate passed
 source_of_truth: docs/STRATEGY_STATUS.md
 ```
+
+### 24 September 2026 — Idea10 to Idea15 continuation
+
+Idea10A is now frozen as a 3-minute dual-confirmation research/paper hypothesis: NIFTY 9/21 EMA break plus same-direction ATM option 3-minute EMA confirmation, with the option confirmation candle defining the initial stop and subsequent-bar-only stop execution. The 2026 diagnostic showed 136 stopouts, of which 126 occurred after the underlying had already reversed and only 10 occurred while the underlying remained intact.
+
+Ideas 13–15 were then evaluated without changing the option stop mechanics. Idea13 H1/H2 and Idea14 were rejected. Idea15 Width25 was rejected. **Idea15 Fixed10** (9/21 EMA; close at least 10 NIFTY points beyond the outer EMA) completed the full discovery/validation/holdout chain:
+
+- 2020–2024 discovery: 439 trades, +₹15.01L, PF 1.549; 0.5 stress PF 1.366; 1.0 stress PF 1.214.
+- 2025 validation: 88 trades, +₹1,267, PF 1.002; 0.5 stress PF 0.897; 1.0 stress PF 0.809.
+- 2026 holdout through 18 Sep: 81 trades, +₹1.47L, PF 1.280; 0.5 stress PF 1.155; 1.0 stress PF 1.049.
+
+The full chain does not pass promotion because 2025 validation fails the stress gates. Bootstrap lower bounds remain negative in validation and holdout. Fixed10 is therefore **research candidate — hold, not paper**. A robustness run is active to quantify annual/monthly consistency, profitable-month percentage, CE/PE and direction splits, and P&L concentration. This robustness work is descriptive and cannot retune the 10-point threshold.
+
+On 24 September 2026, Idea10A also produced one isolated paper CE trade with net -₹5,504.43; BASE/V4/V5 had no trade. This is prospective paper evidence and does not alter the historical research verdict.
 
 ### 12 September 2026 provenance and new-generation update
 
