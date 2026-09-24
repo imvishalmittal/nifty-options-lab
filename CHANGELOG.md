@@ -4,6 +4,16 @@ All notable changes will be documented here.
 
 ## [Unreleased]
 
+### Idea 10–15 research
+- documented the frozen Idea10A 3-minute underlying+option confirmation thread and its 2026 diagnostic;
+- completed the frozen Idea13/14/15 diagnostic comparison;
+- completed the full Idea15 Fixed10 2020–2024 discovery, untouched 2025 validation, and 2026 holdout;
+- recorded Fixed10 as **RESEARCH CANDIDATE — HOLD; NOT PAPER** because 2025 validation fails the stress gates and bootstrap lower bounds remain negative;
+- added a robustness-analysis track covering year/month consistency, profitable-month percentage, CE/PE, direction and trade concentration;
+- kept all Idea15 analysis descriptive and prohibited threshold retuning.
+
+
+
 ### Documentation
 
 - reconciled Stocks-in-Play, the four opportunity modules, afternoon-compression validation, and the Williams bear-call replication against their archived artifacts;
