@@ -33,3 +33,5 @@ jobs:
           name: idea13-15-2026-diagnostic-final
           path: idea13-15-2026-diagnostic.json
           retention-days: 90
+
+# frozen confirmation-run marker
