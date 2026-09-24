@@ -1,4 +1,4 @@
-name: Research - Ideas 13-15 FINAL 2026
+name: Research - Idea 15 Fixed10 full backtest
 on:
   push:
     branches: [agent/idea10-underlying-option-confirmation]
@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
 permissions: { contents: read }
 jobs:
-  diagnostic:
+  backtest:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,15 +23,40 @@ jobs:
           GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
           GROWW_PREFER_TOTP: 'true'
         run: node scripts/resolve-groww-token.mjs
-      - name: Run Ideas 13-15 diagnostic
+      - name: Discovery 2020-2024
+        run: |
+          node research/idea13-15-2026-diagnostic.mjs \
+            --start=2020-01-01 --end=2024-12-31 \
+            --out=idea13-15-discovery-2020-2024.json
+      - name: Validation 2025
+        run: |
+          node research/idea13-15-2026-diagnostic.mjs \
+            --start=2025-01-01 --end=2025-12-31 \
+            --out=idea13-15-validation-2025.json
+      - name: Holdout 2026
         run: |
           node research/idea13-15-2026-diagnostic.mjs \
             --start=2026-01-01 --end=2026-09-19 \
-            --out=idea13-15-2026-diagnostic.json
+            --out=idea13-15-holdout-2026.json
+      - name: Build consolidated report
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const files=[
+            ['discovery_2020_2024','idea13-15-discovery-2020-2024.json'],
+            ['validation_2025','idea13-15-validation-2025.json'],
+            ['holdout_2026','idea13-15-holdout-2026.json']
+          ];
+          const out={study:'Idea 15 Fixed10 full backtest',frozenRule:'9/21 EMA; close must exceed outer EMA by >=10 NIFTY points; all other Idea 10A mechanics unchanged',periods:{}};
+          for(const [k,f] of files) out.periods[k]=JSON.parse(fs.readFileSync(f,'utf8'));
+          fs.writeFileSync('idea15-fixed10-full-backtest.json',JSON.stringify(out,null,2)+'\n');
+          NODE
       - uses: actions/upload-artifact@v4
         with:
-          name: idea13-15-2026-diagnostic-final
-          path: idea13-15-2026-diagnostic.json
+          name: idea15-fixed10-full-backtest
+          path: |
+            idea13-15-discovery-2020-2024.json
+            idea13-15-validation-2025.json
+            idea13-15-holdout-2026.json
+            idea15-fixed10-full-backtest.json
           retention-days: 90
-
-# frozen confirmation-run marker
