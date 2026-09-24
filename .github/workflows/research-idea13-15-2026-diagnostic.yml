@@ -7,7 +7,7 @@ on:
       - research/idea13-15-2026-diagnostic.mjs
       - .github/workflows/research-idea13-15-2026-diagnostic.yml
 permissions: { contents: read }
-concurrency: { group: groww-idea13-15-diagnostic, cancel-in-progress: false }
+concurrency: { group: groww-idea13-15-diagnostic-${{ github.run_id }}, cancel-in-progress: false }
 jobs:
   diagnostic:
     runs-on: ubuntu-latest
