@@ -25,7 +25,7 @@ function zone(row,fast,slow,mode,threshold){if(!Number.isFinite(fast)||!Number.i
 function priorBias(days,date){const ds=[...days.keys()].filter(d=>d<date).sort();const prev=ds.at(-1);if(!prev)return'FLAT';const r=days.get(prev);if(!r?.length)return'FLAT';const move=r.at(-1).close-r[0].open;return move>0?'UP':move<0?'DOWN':'FLAT'}
 function rawBreaks(rows,fast,slow){
   const out=[];
-  for(let i=slow-1;i<rows.length;i++){
+  const start=slow.findIndex(Number.isFinite);for(let i=Math.max(1,start);i<rows.length;i++){
     const r=rows[i],p=rows[i-1];
     if(!Number.isFinite(r.close)||!Number.isFinite(p.close)||!Number.isFinite(fast[i])||!Number.isFinite(slow[i])||!Number.isFinite(fast[i-1])||!Number.isFinite(slow[i-1]))continue;
     const up=r.close>fast[i]&&r.close>slow[i]&&p.close<=fast[i-1];
