@@ -8,6 +8,20 @@ from operationally incomplete work. A positive unstressed result is not a pass:
 every frozen cost, stress, integrity, stability, and robustness gate must pass
 before validation or paper observation.
 
+## Idea 10–15 continuation — Fixed10
+
+This continuation is outside the original 13-item More Ideas queue and follows the Idea10 diagnostic.
+
+| Period | Trades | Net P&L | PF | 0.5 stress PF | 1.0 stress PF | Status |
+|---|---:|---:|---:|---:|---:|---|
+| 2020–2024 discovery | 439 | +₹15,00,650 | 1.549 | 1.366 | 1.214 | Discovery result |
+| 2025 validation | 88 | +₹1,267 | 1.002 | 0.897 | 0.809 | **Fails validation gates** |
+| 2026 holdout YTD | 81 | +₹1,46,887 | 1.280 | 1.155 | 1.049 | Positive holdout, not enough for promotion |
+
+Fixed rule: 9/21 EMA; the completed NIFTY 3-minute close must exceed the outer EMA by at least 10 NIFTY points; all other Idea10A mechanics remain unchanged. No threshold tuning is allowed.
+
+Idea13 H1/H2, Idea14 and Idea15 Width25 were rejected. Fixed10 remains **RESEARCH CANDIDATE — HOLD; NOT PAPER** pending the current robustness run. The robustness run is descriptive only and will not alter the frozen threshold.
+
 ## Programme status
 
 | State | Count | Ideas |
