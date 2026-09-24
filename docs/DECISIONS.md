@@ -145,3 +145,16 @@ If the live session remains incomplete, a 15:40 IST recovery may replay the same
 **Decision:** Observe the frozen 30-minute opening-range ATM credit spread prospectively from 2 September 2026 in a dedicated one-lot after-market journal. Do not assign it a V-number, backfill earlier dates, combine its P/L with V2–V11, or expose any broker-order path. Review only after at least 100 prospective trades, retaining normal, 0.5-point, and 1-point results.
 
 **Reason:** Normal-cost PF above one is interesting but did not overcome the 41-trade sample, negative 1-point stress, negative clustered lower bound, or excessive year concentration. A separately labelled shadow observation can collect genuine forward evidence without misrepresenting the rejected discovery as selected.
+
+
+## ADR-028: Freeze Idea 10A before derivative research
+**Decision:** Keep Idea10A's 3-minute 9/21 underlying+option confirmation mechanics frozen. Derivative Ideas 13–15 may change only the explicitly declared underlying confirmation condition; option stop mechanics remain unchanged.
+**Reason:** The Idea10 diagnostic showed most stopouts followed underlying reversal, so stop widening must not be used as an after-the-fact fix.
+
+## ADR-029: Idea 15 Fixed10 remains research-only pending robustness
+**Decision:** The 10-NIFTY-point Fixed10 threshold is frozen. Its full 2020–2024 discovery, 2025 validation and 2026 holdout are documented separately. No paper promotion occurs until robustness analysis is complete and the full validation chain is judged against the existing gates.
+**Reason:** 2025 validation is materially weaker than discovery, while 2026 holdout is positive but bootstrap lower bounds remain negative.
+
+## ADR-030: Robustness analysis cannot retune Fixed10
+**Decision:** Year/month, CE/PE, direction and concentration analysis is descriptive robustness work only. It cannot be used to select a new threshold, remove losing periods, or alter the strategy definition.
+**Reason:** Prevent post-result parameter selection and preserve the untouched validation/holdout semantics.
