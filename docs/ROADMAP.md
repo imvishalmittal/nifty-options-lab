@@ -11,6 +11,14 @@ Last updated: 12 September 2026
 
 ## Immediate work
 
+### Idea 10–15 robustness track
+- Keep Idea10A isolated in paper observation; do not merge it into the V2–V11 accounting.
+- Review the completed Idea15 Fixed10 discovery/validation/holdout chain before any paper consideration.
+- Complete and review the current robustness run for annual/monthly consistency, CE/PE and direction splits, and concentration.
+- If robustness is weak, close Fixed10 as research-only. If it is sufficiently broad, define a separate frozen paper hypothesis rather than mutating Idea10A.
+
+
+
 1. Continue accumulating clean V2–V11 forward sessions without changing or backfilling frozen variant definitions.
 2. Treat the completed Jan–Aug 2026 matched-risk result as diagnostic evidence, not an untouched holdout or automatic promotion/removal decision.
 3. Keep the dashboard and strategy-status ledger synchronized with accepted artifacts.
