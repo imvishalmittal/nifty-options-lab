@@ -5,6 +5,7 @@ All notable changes will be documented here.
 ## [Unreleased]
 
 ### Idea 10–15 research
+- completed robustness run `36031321822` for Fixed10; recorded 4/9 profitable 2026 months, CE/UP-only concentration, trade concentration, and negative 5,000-bootstrap lower bounds; kept Fixed10 at **RESEARCH CANDIDATE — HOLD; NOT PAPER**;
 - documented the frozen Idea10A 3-minute underlying+option confirmation thread and its 2026 diagnostic;
 - completed the frozen Idea13/14/15 diagnostic comparison;
 - completed the full Idea15 Fixed10 2020–2024 discovery, untouched 2025 validation, and 2026 holdout;
