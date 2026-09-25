@@ -1,6 +1,6 @@
 # Strategy status and evidence ledger
 
-Last updated: 24 September 2026
+Last updated: 25 September 2026
 
 This is the repository's single status index for strategies that were reviewed, implemented, backtested, rejected, or placed in paper observation. Detailed frozen rules remain in the individual specifications; this file records outcomes and promotion status.
 
@@ -38,7 +38,7 @@ Frozen rule: **9/21 EMA; the completed NIFTY 3-minute close must exceed the oute
 
 The complete chain therefore **does not pass promotion gates** because untouched 2025 validation is essentially flat and fails both adverse-slippage profitability gates. The 2026 holdout is positive and passes the current PF/stress thresholds, but its 5,000-bootstrap lower bounds remain negative. Fixed10 is consequently **RESEARCH CANDIDATE — HOLD; NOT PAPER**.
 
-A dedicated robustness run is now in progress. It adds year/month consistency, profitable-month percentage, CE-vs-PE, direction-vs-direction, and trade-concentration breakdowns without changing the frozen strategy. No paper promotion occurs until those results are reviewed.
+The dedicated robustness run has now completed. For Fixed10, the 2026 holdout had only 4/9 profitable months, all 81 trades were CE/UP-break trades, the largest absolute trade was 15.1% of aggregate absolute trade P&L, the top five were 38.1%, and all three 5,000-bootstrap lower bounds remained negative. The robustness review therefore does not justify paper promotion. No side filter, month filter, threshold retuning, or other post-result rule change is authorized. Fixed10 remains **RESEARCH CANDIDATE — HOLD; NOT PAPER**.
 
 Paper status is separate: Idea10A is already isolated in the paper workflow; on 24 September 2026 it recorded one CE trade and a net loss of ₹5,504.43. Base/V4/V5 had no trade. This paper observation does not alter the historical research verdict.
 
