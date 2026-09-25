@@ -1,4 +1,5 @@
 name: Research - Idea 16 Trend Strength
+# Frozen-rule backtest workflow
 on:
   push:
     branches: [agent/idea10-underlying-option-confirmation]
