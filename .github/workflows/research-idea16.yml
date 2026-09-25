@@ -1,0 +1,49 @@
+name: Research - Idea 16 Trend Strength
+on:
+  push:
+    branches: [agent/idea10-underlying-option-confirmation]
+    paths:
+      - research/idea16-trend-strength-backtest.mjs
+      - .github/workflows/research-idea16.yml
+  workflow_dispatch:
+permissions: { contents: read }
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Resolve Groww token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Discovery 2020-2024
+        run: node research/idea16-trend-strength-backtest.mjs --start=2020-01-01 --end=2024-12-31 --out=idea16-discovery-2020-2024.json
+      - name: Validation 2025
+        run: node research/idea16-trend-strength-backtest.mjs --start=2025-01-01 --end=2025-12-31 --out=idea16-validation-2025.json
+      - name: Holdout 2026
+        run: node research/idea16-trend-strength-backtest.mjs --start=2026-01-01 --end=2026-09-19 --out=idea16-holdout-2026.json
+      - name: Consolidate
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const files=[['discovery_2020_2024','idea16-discovery-2020-2024.json'],['validation_2025','idea16-validation-2025.json'],['holdout_2026','idea16-holdout-2026.json']];
+          const out={study:'Idea 16 Trend Strength full backtest',frozenRule:'9/21 EMA underlying break; fast EMA slopes in break direction and absolute EMA band width expands versus prior completed 3-minute bar; all other Idea10A mechanics unchanged',periods:{}};
+          for(const [k,f] of files) out.periods[k]=JSON.parse(fs.readFileSync(f,'utf8'));
+          fs.writeFileSync('idea16-trend-strength-full-backtest.json',JSON.stringify(out,null,2)+'\n');
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: idea16-trend-strength-full-backtest
+          path: |
+            idea16-discovery-2020-2024.json
+            idea16-validation-2025.json
+            idea16-holdout-2026.json
+            idea16-trend-strength-full-backtest.json
+          retention-days: 90
