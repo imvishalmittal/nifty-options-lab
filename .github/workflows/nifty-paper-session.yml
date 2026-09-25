@@ -48,7 +48,7 @@ jobs:
           GROWW_PREFER_TOTP: 'true'
         run: node scripts/resolve-groww-token.mjs
 
-      - name: Run base, V4, and isolated Idea 10A paper sessions
+      - name: Run base, V4, Idea 10A, and Idea 15 Fixed10 paper sessions
         if: steps.guard.outputs.run == 'true'
         env:
           GROWW_REQUEST_SPACING_MS: '1500'
@@ -60,6 +60,8 @@ jobs:
           v4_pid=$!
           node paper/run-idea10-session.mjs > /tmp/idea10-paper.log 2>&1 &
           idea10_pid=$!
+          node paper/run-idea15-session.mjs > /tmp/idea15-paper.log 2>&1 &
+          idea15_pid=$!
 
           wait "$base_pid"
           base_rc=$?
@@ -67,6 +69,8 @@ jobs:
           v4_rc=$?
           wait "$idea10_pid"
           idea10_rc=$?
+          wait "$idea15_pid"
+          idea15_rc=$?
           set -e
 
           echo "===== Base paper session ====="
@@ -75,6 +79,8 @@ jobs:
           cat /tmp/v4-paper.log
           echo "===== Idea 10A paper shadow ====="
           cat /tmp/idea10-paper.log
+          echo "===== Idea 15 Fixed10 paper shadow ====="
+          cat /tmp/idea15-paper.log
 
           node paper/merge-v4-ledger.mjs
           outcome_rc=0
@@ -87,6 +93,9 @@ jobs:
 
           if [ "$idea10_rc" -ne 0 ]; then
             echo "Idea 10A paper shadow failed; existing base/V4 paper session remains authoritative."
+          fi
+          if [ "$idea15_rc" -ne 0 ]; then
+            echo "Idea 15 Fixed10 paper shadow failed; existing base/V4 paper session remains authoritative."
           fi
 
       - name: Persist paper journal
@@ -101,7 +110,9 @@ jobs:
             public/paper/v4-session-status.json \
             public/paper/sessions.json \
             public/paper/idea10-trades.json \
-            public/paper/idea10-session-status.json; do
+            public/paper/idea10-session-status.json \
+            public/paper/idea15-trades.json \
+            public/paper/idea15-session-status.json; do
             if [ -e "$file" ]; then git add "$file"; fi
           done
           if git diff --cached --quiet; then
