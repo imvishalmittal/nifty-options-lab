@@ -1,6 +1,6 @@
 # Strategy status and evidence ledger
 
-Last updated: 12 September 2026
+Last updated: 25 September 2026
 
 This is the repository's single status index for strategies that were reviewed, implemented, backtested, rejected, or placed in paper observation. Detailed frozen rules remain in the individual specifications; this file records outcomes and promotion status.
 
@@ -36,6 +36,7 @@ The scheduled paper workflow observes the NIFTY weekly-option premium-entry fami
 | BASE | V2, V3-5, V3-10, V6, V7, V8 | Select nearest weekly ITM CE and PE near ₹180 at 09:25; completed cross above ₹180 from 09:30 to before 09:45; enter next bar if premium is above ₹160 and below ₹220 | Exit/risk overlays |
 | 170/210 comparison | V9, V10-5, V10-10, V11 | Reuse the BASE contract and signal; participate only when executable entry is strictly between ₹170 and ₹210 | ₹170 stop with ₹210-activated continuous trail, entry-anchored stepped trails, plus fixed 2R |
 | NIFTY-confirmed | V4, V5 | Same option setup, with matching NIFTY confirmation and fail-fast below ₹180 | V2 versus V3-10 exit after confirmed entry |
+| Isolated EMA research | Idea10A, Idea15 Fixed10 | 3-minute NIFTY 9/21 underlying confirmation; Idea15 additionally requires the completed underlying close to be ≥10 NIFTY points beyond the outer EMA | Idea10A uses the frozen dual-chart confirmation; Idea15 uses the same option confirmation/stop mechanics with the 10-point underlying threshold |
 
 Variant meanings:
 
@@ -56,7 +57,7 @@ Variant meanings:
 
 Important accounting rule: variants are counterfactual outcomes, not independent accounts. Do not add their P&L together. V9–V11 use the same signal but have the narrower ₹170–₹210 executable-entry band, so sessions outside that band are explicitly ineligible for that cohort. All trades are intraday and no position is held overnight.
 
-The latest published paper session is 1 September 2026. It was a valid no-trade session for both threads: authentication and contract discovery succeeded, but the completed signal was outside the executable band. V9–V11 started prospectively on that date and are not backfilled into earlier paper dates. See `public/paper/sessions.json` for the auditable session ledger.
+The latest published paper session date is tracked by the journal. The scheduled paper workflow now also observes **Idea10A** and **Idea15 Fixed10** as isolated, paper-only research lanes; neither sends broker orders and neither is merged into V2–V11 account totals. Idea15's historical robustness verdict remains separate from its prospective paper observation. It was a valid no-trade session for both threads: authentication and contract discovery succeeded, but the completed signal was outside the executable band. V9–V11 started prospectively on that date and are not backfilled into earlier paper dates. See `public/paper/sessions.json` for the auditable session ledger.
 
 An additional, isolated experimental lane observes the rejected 30-minute opening-range ATM credit spread prospectively from 2 September 2026. It is not a V-number, uses one lot per observation, has no broker-order path, is excluded from V2–V11 and account totals, and is never backfilled. The purpose is to collect at least 100 prospective trades under the already frozen rules—not to relabel the historical rejection as a selected strategy. Its journal is `public/paper/opening-range-shadow.json`.
 
