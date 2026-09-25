@@ -19,9 +19,10 @@ async function fetchJson(path: string, required = true) {
 
 export async function GET() {
   try {
-    const [ledger, sessionJournal, openingRangeShadow, profitOnlyPaper, profitOnlyBacktest] = await Promise.all([
+    const [ledger, sessionJournal, idea15Paper, openingRangeShadow, profitOnlyPaper, profitOnlyBacktest] = await Promise.all([
       fetchJson("paper/trades.json"),
       fetchJson("paper/sessions.json", false),
+      fetchJson("paper/idea15-trades.json", false),
       fetchJson("paper/opening-range-shadow.json", false),
       fetchJson("paper/profit-only-directional.json", false),
       fetchJson("research/profit-only-directional-2020-2024.json", false),
@@ -29,7 +30,34 @@ export async function GET() {
     return NextResponse.json(
       {
         meta: ledger?.meta ?? {},
-        trades: Array.isArray(ledger?.trades) ? ledger.trades : [],
+        trades: [
+          ...(Array.isArray(ledger?.trades) ? ledger.trades : []),
+          ...(Array.isArray(idea15Paper?.trades)
+            ? idea15Paper.trades.map((trade: any) => ({
+                source: "PAPER",
+                strategy: trade.strategy ?? "Idea 15 Fixed10 EMA Break",
+                strategyVersion: "IDEA15_FIXED10",
+                date: trade.date,
+                indexStockName: "NIFTY 50",
+                weeklyExpiry: trade.expiry,
+                lots: Number(trade.lots),
+                callType: trade.side,
+                strikePrice: Number(trade.strike),
+                startTarget: Number(trade.entryPremium),
+                startStopLoss: Number(trade.initialStop),
+                endStopLoss: Number(trade.initialStop),
+                entryTime: trade.entryTime ?? trade.signalTime,
+                exitTime: trade.exitTime,
+                stopLossAdjustments: 0,
+                totalPnl: Number(trade.totalPnl),
+                entryPremium: Number(trade.entryPremium),
+                exitPremium: Number(trade.exitPremium),
+                exitReason: trade.exitReason,
+                grossPnl: Number(trade.grossPnl),
+                charges: Number(trade.charges),
+              }))
+            : []),
+        ],
         sessions: Array.isArray(sessionJournal?.sessions) ? sessionJournal.sessions : [],
         sessionMeta: sessionJournal?.meta ?? {},
         openingRangeShadow: openingRangeShadow ?? { meta: {}, sessions: [] },
