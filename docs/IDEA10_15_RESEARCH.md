@@ -7,8 +7,8 @@ Last updated: 25 September 2026
 This document records the continuation from the Idea10 dual-chart confirmation diagnostic through Ideas 13–15. It is separate from the original More Ideas queue and does not modify the V2–V11 paper family.
 
 **Live trading authorized:** No  
-**Idea15 Fixed10 paper promotion:** No  
-**Current state:** Robustness analysis completed; Fixed10 remains on hold
+**Idea15 Fixed10 paper promotion:** Yes — isolated prospective paper observation only  
+**Current state:** Robustness analysis completed; Fixed10 remains historically on hold for promotion, but is now authorized for isolated paper observation
 
 ## Idea10A frozen mechanics
 
@@ -108,7 +108,7 @@ The robustness review therefore does **not** justify paper promotion. The positi
 
 ## Paper separation
 
-Idea10A is separately implemented as an isolated paper/shadow runner. On 24 September 2026 it recorded one CE trade:
+Idea10A is separately implemented as an isolated paper/shadow runner. Idea15 Fixed10 is now also implemented as an isolated paper/shadow runner; this does not override its historical validation/robustness decision. On 24 September 2026 it recorded one CE trade:
 - NIFTY 23,300 CE, 29 September expiry
 - entry 11:06 at ₹89.20
 - exit 11:15 at ₹81.00
