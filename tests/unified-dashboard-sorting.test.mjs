@@ -24,3 +24,11 @@ test("renders day, month and year strategy comparison matrices", async () => {
   assert.match(source, /buildMatrix\(years, "YEAR"/);
   assert.match(source, /cell\.sessions \? "No trade" : "—"/);
 });
+
+
+test("dashboard exposes the isolated Idea15 Fixed10 paper lane", async () => {
+  const source = await readFile(new URL("../app/paper-ledger.tsx", import.meta.url), "utf8");
+  assert.match(source, /IDEA15_FIXED10/);
+  assert.match(source, /Idea15 Fixed10/);
+  assert.match(source, /isolatedTradeOnly/);
+});
