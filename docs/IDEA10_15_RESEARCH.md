@@ -1,6 +1,6 @@
 # Idea 10–15 Research Record
 
-Last updated: 24 September 2026
+Last updated: 25 September 2026
 
 ## Scope
 
@@ -8,7 +8,7 @@ This document records the continuation from the Idea10 dual-chart confirmation d
 
 **Live trading authorized:** No  
 **Idea15 Fixed10 paper promotion:** No  
-**Current state:** Robustness analysis in progress
+**Current state:** Robustness analysis completed; Fixed10 remains on hold
 
 ## Idea10A frozen mechanics
 
@@ -84,6 +84,27 @@ The active robustness run is descriptive only. It will measure:
 6. Whether 2025 weakness or 2026 recovery is concentrated in a small subset of observations.
 
 These analyses cannot change the frozen 10-point threshold, delete adverse periods, or create a new filter after seeing the result.
+
+## Robustness review — completed
+
+GitHub Actions run `36031321822` completed successfully. Artifact `idea13-15-2026-diagnostic` (artifact `10823008117`) contains the frozen 2026 robustness analysis.
+
+For **IDEA15_FIXED10**:
+- 81 trades; 17 winners; 20.99% win rate.
+- Normal net **+₹1,46,887**; PF **1.280**; DD **₹1,83,853**.
+- 0.5-point stress **+₹88,599**; PF **1.155**.
+- 1.0-point stress **+₹30,310**; PF **1.049**.
+- Only **4/9 months** were profitable: February–May.
+- All 81 trades were **CE / UP-break** trades in this holdout; there were no PE / DOWN trades.
+- Largest absolute trade: **₹1,80,809 (15.1%)** of aggregate absolute trade P&L; top five absolute trades: **38.1%**.
+- Largest winner: **27.0%** of total winning P&L.
+- 5,000-bootstrap lower bounds remained negative: **-₹3,874 normal, -₹4,619 at 0.5-point stress, -₹5,381 at 1.0-point stress**.
+
+Normal monthly P&L was: Jan -₹28,339; Feb +₹33,036; Mar +₹1,11,378; Apr +₹1,41,642; May +₹57,988; Jun -₹69,737; Jul -₹73,031; Aug -₹21,315; Sep -₹4,735.
+
+The robustness review therefore does **not** justify paper promotion. The positive 2026 aggregate is concentrated in a small number of months/trades and entirely in the CE/UP slice. No side filter, month filter, threshold retuning, or other post-result rule has been authorized.
+
+**Current status remains: IDEA15_FIXED10 = RESEARCH CANDIDATE — HOLD; NOT PAPER.**
 
 ## Paper separation
 
