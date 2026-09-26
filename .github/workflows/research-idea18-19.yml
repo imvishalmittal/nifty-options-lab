@@ -50,3 +50,5 @@ jobs:
           git push origin HEAD:agent/idea10-underlying-option-confirmation
 
 # Idea 19 discovery screen is descriptive until a discovery-only candidate is selected; no validation/holdout is run in this job.
+
+# rerun after parser fix
