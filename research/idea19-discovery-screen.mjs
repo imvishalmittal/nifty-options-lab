@@ -16,7 +16,8 @@ function stats(rows, scenario){
 }
 const [,,input,output]=process.argv;
 if(!input||!output) throw new Error('usage: node idea19-discovery-screen.mjs baseline.json output.json');
-const d=JSON.parse(fs.readFileSync(input,'utf8')); const buckets={};
+let raw=fs.readFileSync(input,'utf8').replace(/\\n/g,'').trim();
+const d=JSON.parse(raw); const buckets={};
 for(const t of d.trades??[]){const b=bucket(t.signalTime.slice(11,16));if(b!=='OUTSIDE')(buckets[b]??=[]).push(t)}
 const scenarios=['current','stress0_5','stress1_0'];
 const report={schemaVersion:1,study:'Idea 19 discovery-only time-of-day screen',period:d.period,baselineTrades:d.tradeCount,selectionProtocol:'All four pre-frozen diagnostic buckets are screened on 2020-01-01 through 2024-12-31 only. No 2025 validation or 2026 holdout result is used for bucket selection. Candidate selection, if any, occurs only after discovery review.',buckets:{}};
