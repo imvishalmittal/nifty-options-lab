@@ -32,3 +32,5 @@ jobs:
           name: idea18-19-2026-diagnostic
           path: idea18-19-2026-diagnostic.json
           retention-days: 90
+
+# Manual rerun trigger: Idea 18/19 diagnostics 2026-09-26
