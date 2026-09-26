@@ -1,4 +1,4 @@
-name: Research - Idea 18 diagnostic
+name: Research - Idea 19 discovery screen
 on:
   workflow_dispatch:
   push:
@@ -22,25 +22,31 @@ jobs:
           GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
           GROWW_PREFER_TOTP: 'true'
         run: node scripts/resolve-groww-token.mjs
-      - name: Run Idea 18 diagnostic
+      - name: Run frozen Idea 10 discovery baseline
         run: |
-          node research/idea18-diagnostic.mjs \
-            --start=2026-01-01 --end=2026-09-19 \
-            --out=idea18-2026-diagnostic.json
+          node research/groww-idea10-2026-diagnostic.mjs \
+            --start=2020-01-01 --end=2024-12-31 \
+            --variant=A --out=idea19-discovery-baseline.json
+      - name: Screen frozen Idea 19 time buckets
+        run: |
+          node research/idea19-discovery-screen.mjs \
+            idea19-discovery-baseline.json idea19-discovery-2020-2024.json
       - uses: actions/upload-artifact@v4
         with:
-          name: idea18-2026-diagnostic
-          path: idea18-2026-diagnostic.json
+          name: idea19-discovery-2020-2024
+          path: idea19-discovery-2020-2024.json
           retention-days: 90
 
 # Manual rerun trigger: Idea 18/19 diagnostics 2026-09-26
 
 
-      - name: Persist diagnostic result for retrieval
+      - name: Persist Idea 19 discovery result for retrieval
         if: success()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add idea18-2026-diagnostic.json
+          git add idea19-discovery-2020-2024.json
           git diff --cached --quiet || git commit -m "Persist Ideas 18-19 diagnostic result"
           git push origin HEAD:agent/idea10-underlying-option-confirmation
+
+# Idea 19 discovery screen is descriptive until a discovery-only candidate is selected; no validation/holdout is run in this job.
