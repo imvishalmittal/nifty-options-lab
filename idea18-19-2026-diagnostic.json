@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "study": "Idea 19 pure re-analysis of frozen Idea 10 Variant A 2026 trades",
+  "period": {
+    "startDate": "2026-01-01",
+    "endDate": "2026-09-19"
+  },
+  "baseline": {
+    "trades": 156,
+    "stopOuts": 136,
+    "netPnl": -4823.903370242515
+  },
+  "fixedBuckets": {
+    "11:00-13:00": {
+      "trades": 70,
+      "winners": 8,
+      "winRate": 0.11428571428571428,
+      "averagePnl": 187.01582404846363,
+      "totalPnl": 13091.107683392454,
+      "stopOuts": 63,
+      "reversedStopShare": 0.9365079365079365,
+      "intactStopShare": 0.06349206349206349
+    },
+    "09:45-11:00": {
+      "trades": 59,
+      "winners": 4,
+      "winRate": 0.06779661016949153,
+      "averagePnl": -2682.105048532034,
+      "totalPnl": -158244.19786339,
+      "stopOuts": 55,
+      "reversedStopShare": 0.9090909090909091,
+      "intactStopShare": 0.09090909090909091
+    },
+    "13:00-15:00": {
+      "trades": 25,
+      "winners": 7,
+      "winRate": 0.28,
+      "averagePnl": 5641.996137824201,
+      "totalPnl": 141049.903445605,
+      "stopOuts": 18,
+      "reversedStopShare": 0.9444444444444444,
+      "intactStopShare": 0.05555555555555555
+    }
+  }
+}
