@@ -13,7 +13,7 @@ function stats(rows, scenario){
   const pnl=rows.map(t=>t.money?.[scenario]).filter(Number.isFinite);
   const wins=pnl.filter(x=>x>0), losses=pnl.filter(x=>x<0);
   let eq=0,peak=0,dd=0;
-  for(const x of pnl){eq+=x;peak=Math.max(pk=peak,eq);dd=Math.max(dd,peak-eq)}
+  for(const x of pnl){eq+=x;peak=Math.max(peak,eq);dd=Math.max(dd,peak-eq)}
   const gp=wins.reduce((a,b)=>a+b,0), gl=-losses.reduce((a,b)=>a+b,0);
   return {trades:pnl.length,winners:wins.length,winRatePct:pnl.length?100*wins.length/pnl.length:null,totalPnl:pnl.reduce((a,b)=>a+b,0),profitFactor:gl?gp/gl:(gp?Infinity:null),maxDrawdown:dd};
 }
