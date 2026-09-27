@@ -5,6 +5,7 @@ on:
     branches: [agent/idea10-underlying-option-confirmation]
     paths:
       - research/idea18-19-diagnostic.mjs
+      - research/idea19-discovery-screen.mjs
       - .github/workflows/research-idea18-19.yml
 permissions: { contents: write }
 jobs:
