@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "study": "Idea 19 discovery-only time-of-day screen",
   "period": {
     "startDate": "2020-01-01",
@@ -7,32 +7,66 @@
     "requestedEndDate": "2024-12-31"
   },
   "baselineTrades": 1117,
+  "screenedTrades": 1106,
+  "outsideBucketTrades": 11,
+  "bucketedTrades": 1106,
+  "reconciliation": {
+    "totalAccountedFor": 1117,
+    "matchesBaseline": true,
+    "note": "All four pre-frozen buckets are emitted explicitly, including zero-trade buckets. Trades outside 09:15-15:00 are retained in OUTSIDE rather than silently dropped."
+  },
   "selectionProtocol": "All four pre-frozen diagnostic buckets are screened on 2020-01-01 through 2024-12-31 only. No 2025 validation or 2026 holdout result is used for bucket selection. Candidate selection, if any, occurs only after discovery review.",
   "buckets": {
-    "13:00-15:00": {
+    "09:15-09:45": {
       "current": {
-        "trades": 195,
-        "winners": 34,
-        "winRatePct": 17.435897435897434,
-        "totalPnl": 98603.13591816489,
-        "profitFactor": 1.0924224110663914,
-        "maxDrawdown": 405029.1841512001
+        "trades": 0,
+        "winners": 0,
+        "winRatePct": null,
+        "totalPnl": 0,
+        "profitFactor": null,
+        "maxDrawdown": 0
       },
       "stress0_5": {
-        "trades": 195,
-        "winners": 32,
-        "winRatePct": 16.41025641025641,
-        "totalPnl": -85632.46645683525,
-        "profitFactor": 0.9298180137930315,
-        "maxDrawdown": 477693.9246512002
+        "trades": 0,
+        "winners": 0,
+        "winRatePct": null,
+        "totalPnl": 0,
+        "profitFactor": null,
+        "maxDrawdown": 0
       },
       "stress1_0": {
-        "trades": 195,
-        "winners": 31,
-        "winRatePct": 15.897435897435898,
-        "totalPnl": -269868.068831835,
-        "profitFactor": 0.8038667896003566,
-        "maxDrawdown": 550358.6651512
+        "trades": 0,
+        "winners": 0,
+        "winRatePct": null,
+        "totalPnl": 0,
+        "profitFactor": null,
+        "maxDrawdown": 0
+      }
+    },
+    "09:45-11:00": {
+      "current": {
+        "trades": 360,
+        "winners": 42,
+        "winRatePct": 11.666666666666666,
+        "totalPnl": 33431.14872485483,
+        "profitFactor": 1.0231072801896253,
+        "maxDrawdown": 343113.2997433952
+      },
+      "stress0_5": {
+        "trades": 360,
+        "winners": 42,
+        "winRatePct": 11.666666666666666,
+        "totalPnl": -250206.220400145,
+        "profitFactor": 0.8530882461977757,
+        "maxDrawdown": 574176.1798683951
+      },
+      "stress1_0": {
+        "trades": 360,
+        "winners": 41,
+        "winRatePct": 11.38888888888889,
+        "totalPnl": -533843.5895251451,
+        "profitFactor": 0.7275737566766883,
+        "maxDrawdown": 805239.0599933951
       }
     },
     "11:00-13:00": {
@@ -61,31 +95,57 @@
         "maxDrawdown": 398662.5291042524
       }
     },
-    "09:45-11:00": {
+    "13:00-15:00": {
       "current": {
-        "trades": 360,
-        "winners": 42,
-        "winRatePct": 11.666666666666666,
-        "totalPnl": 33431.14872485483,
-        "profitFactor": 1.0231072801896253,
-        "maxDrawdown": 343113.2997433952
+        "trades": 195,
+        "winners": 34,
+        "winRatePct": 17.435897435897434,
+        "totalPnl": 98603.13591816489,
+        "profitFactor": 1.0924224110663914,
+        "maxDrawdown": 405029.1841512001
       },
       "stress0_5": {
-        "trades": 360,
-        "winners": 42,
-        "winRatePct": 11.666666666666666,
-        "totalPnl": -250206.220400145,
-        "profitFactor": 0.8530882461977757,
-        "maxDrawdown": 574176.1798683951
+        "trades": 195,
+        "winners": 32,
+        "winRatePct": 16.41025641025641,
+        "totalPnl": -85632.46645683525,
+        "profitFactor": 0.9298180137930315,
+        "maxDrawdown": 477693.9246512002
       },
       "stress1_0": {
-        "trades": 360,
-        "winners": 41,
-        "winRatePct": 11.38888888888889,
-        "totalPnl": -533843.5895251451,
-        "profitFactor": 0.7275737566766883,
-        "maxDrawdown": 805239.0599933951
+        "trades": 195,
+        "winners": 31,
+        "winRatePct": 15.897435897435898,
+        "totalPnl": -269868.068831835,
+        "profitFactor": 0.8038667896003566,
+        "maxDrawdown": 550358.6651512
       }
+    }
+  },
+  "outside": {
+    "current": {
+      "trades": 11,
+      "winners": 5,
+      "winRatePct": 45.45454545454545,
+      "totalPnl": 4628.431337847507,
+      "profitFactor": 1.0886265336544108,
+      "maxDrawdown": 42698.9415916
+    },
+    "stress0_5": {
+      "trades": 11,
+      "winners": 5,
+      "winRatePct": 45.45454545454545,
+      "totalPnl": -26731.3517871525,
+      "profitFactor": 0.5973715983628272,
+      "maxDrawdown": 54693.1215916
+    },
+    "stress1_0": {
+      "trades": 11,
+      "winners": 4,
+      "winRatePct": 36.36363636363637,
+      "totalPnl": -58091.1349121525,
+      "profitFactor": 0.2989062991505769,
+      "maxDrawdown": 67030.30327560501
     }
   }
 }
