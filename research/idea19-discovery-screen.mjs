@@ -43,7 +43,7 @@ const report={
     matchesBaseline:(screened+outside.length)===baseline,
     note:'All four pre-frozen buckets are emitted explicitly, including zero-trade buckets. Trades outside 09:15-15:00 are retained in OUTSIDE rather than silently dropped.'
   },
-  selectionProtocol:'All four pre-frozen diagnostic buckets are screened on 2020-01-01 through 2024-12-31 only. No 2025 validation or 2026 holdout result is used for bucket selection. Candidate selection, if any, occurs only after discovery review.',\n  effectiveSignalWindowNote:'The frozen 9/21 EMA logic on 3-minute candles requires the slow EMA to seed before a signal can occur; interpret the early time buckets using the actual signal timestamps rather than their nominal clock-window lengths.',
+  selectionProtocol:'All four pre-frozen diagnostic buckets are screened on 2020-01-01 through 2024-12-31 only. No 2025 validation or 2026 holdout result is used for bucket selection. Candidate selection, if any, occurs only after discovery review.',
   buckets:bucketReports,
   outside:Object.fromEntries(scenarios.map(s=>[s,stats(outside,s)]))
 };
