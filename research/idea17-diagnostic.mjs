@@ -61,7 +61,7 @@ function classify(daily, date){
 export async function run({token,baselinePath,startDate='2026-01-01',endDate='2026-09-19',spacingMs=1500,out='idea17-2026-diagnostic.json'}){
   last=0;
   const baseline=JSON.parse(fs.readFileSync(baselinePath,'utf8'));
-  const daily=await dailyCandles(token,startDate,endDate,spacingMs);
+  const daily=await dailyCandles(token,'2025-12-01',endDate,spacingMs);
   const byDate=new Map();
   for(const d of daily) byDate.set(d.timestamp.slice(0,10),d);
   const trades=baseline.trades??[];
