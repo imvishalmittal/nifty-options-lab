@@ -11,7 +11,7 @@
     "lotsPerObservation": 1,
     "minimumProspectiveTrades": 100,
     "selectionStatus": "REJECTED_UNCONFIRMED",
-    "updatedAt": "2026-09-28T17:53:06.649Z"
+    "updatedAt": "2026-09-28T18:13:48.421Z"
   },
   "sessions": [
     {
@@ -348,7 +348,7 @@
       "date": "2026-09-28",
       "status": "FAILED",
       "reason": "Groww /historical/expiries failed (400): Year cannot be in the future",
-      "updatedAt": "2026-09-28T17:53:06.649Z",
+      "updatedAt": "2026-09-28T18:13:48.421Z",
       "signalDirection": null,
       "rangeHigh": null,
       "rangeLow": null,
