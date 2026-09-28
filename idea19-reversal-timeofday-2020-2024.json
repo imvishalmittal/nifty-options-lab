@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "study": "Idea 19 discovery cross-analysis: time-of-day versus underlying-reversal latency",
+  "period": {
+    "startDate": "2020-01-01",
+    "endDate": "2024-12-31"
+  },
+  "baselineTrades": 1117,
+  "buckets": {
+    "09:15-09:45": {
+      "allTrades": 0,
+      "stopOuts": 0,
+      "reversalDrivenStopOuts": 0,
+      "intactStopOuts": 0,
+      "reversalDrivenStopRatePct": null,
+      "stopOutReversalRatePct": null,
+      "pnl": {
+        "trades": 0,
+        "winners": 0,
+        "winRatePct": null,
+        "totalPnl": 0,
+        "avgPnl": null,
+        "profitFactor": null
+      },
+      "latency": {
+        "measurable": 0,
+        "min": null,
+        "median": null,
+        "mean": null,
+        "within1": null,
+        "within2": null,
+        "bars3to5": 0,
+        "bars6to10": 0,
+        "bars11plus": 0,
+        "laterThan2": null
+      },
+      "unmeasurableReversalLatency": 0,
+      "signalWindow": {
+        "earliest": null,
+        "latest": null,
+        "uniqueSignalDates": 0
+      }
+    },
+    "09:45-11:00": {
+      "allTrades": 360,
+      "stopOuts": 319,
+      "reversalDrivenStopOuts": 285,
+      "intactStopOuts": 34,
+      "reversalDrivenStopRatePct": 79.16666666666667,
+      "stopOutReversalRatePct": 89.34169278996865,
+      "pnl": {
+        "trades": 360,
+        "winners": 42,
+        "winRatePct": 11.666666666666666,
+        "totalPnl": 33431.14872485483,
+        "avgPnl": 92.86430201348564,
+        "profitFactor": 1.0231072801896253
+      },
+      "latency": {
+        "measurable": 284,
+        "min": 1,
+        "median": 3,
+        "mean": 4.447183098591549,
+        "within1": 32.394366197183096,
+        "within2": 48.23943661971831,
+        "bars3to5": 72,
+        "bars6to10": 46,
+        "bars11plus": 29,
+        "laterThan2": 51.76056338028169
+      },
+      "unmeasurableReversalLatency": 1,
+      "signalWindow": {
+        "earliest": "2020-01-17T10:21:00+05:30",
+        "latest": "2024-12-24T10:54:00+05:30",
+        "uniqueSignalDates": 360
+      }
+    },
+    "11:00-13:00": {
+      "allTrades": 551,
+      "stopOuts": 472,
+      "reversalDrivenStopOuts": 433,
+      "intactStopOuts": 39,
+      "reversalDrivenStopRatePct": 78.58439201451905,
+      "stopOutReversalRatePct": 91.73728813559322,
+      "pnl": {
+        "trades": 551,
+        "winners": 79,
+        "winRatePct": 14.337568058076226,
+        "totalPnl": 1034606.1068211861,
+        "avgPnl": 1877.6880341582325,
+        "profitFactor": 1.4527293889961446
+      },
+      "latency": {
+        "measurable": 431,
+        "min": 1,
+        "median": 3,
+        "mean": 4.596287703016241,
+        "within1": 29.234338747099766,
+        "within2": 44.54756380510441,
+        "bars3to5": 98,
+        "bars6to10": 97,
+        "bars11plus": 44,
+        "laterThan2": 55.45243619489559
+      },
+      "unmeasurableReversalLatency": 2,
+      "signalWindow": {
+        "earliest": "2020-01-02T11:06:00+05:30",
+        "latest": "2024-12-19T12:06:00+05:30",
+        "uniqueSignalDates": 551
+      }
+    },
+    "13:00-15:00": {
+      "allTrades": 195,
+      "stopOuts": 158,
+      "reversalDrivenStopOuts": 138,
+      "intactStopOuts": 20,
+      "reversalDrivenStopRatePct": 70.76923076923077,
+      "stopOutReversalRatePct": 87.34177215189874,
+      "pnl": {
+        "trades": 195,
+        "winners": 34,
+        "winRatePct": 17.435897435897434,
+        "totalPnl": 98603.13591816489,
+        "avgPnl": 505.6571072726405,
+        "profitFactor": 1.0924224110663914
+      },
+      "latency": {
+        "measurable": 137,
+        "min": 1,
+        "median": 3,
+        "mean": 4,
+        "within1": 33.57664233576642,
+        "within2": 48.90510948905109,
+        "bars3to5": 36,
+        "bars6to10": 27,
+        "bars11plus": 7,
+        "laterThan2": 51.09489051094891
+      },
+      "unmeasurableReversalLatency": 1,
+      "signalWindow": {
+        "earliest": "2020-01-01T13:18:00+05:30",
+        "latest": "2024-12-26T13:42:00+05:30",
+        "uniqueSignalDates": 195
+      }
+    },
+    "OUTSIDE": {
+      "allTrades": 11,
+      "stopOuts": 2,
+      "reversalDrivenStopOuts": 2,
+      "intactStopOuts": 0,
+      "reversalDrivenStopRatePct": 18.181818181818183,
+      "stopOutReversalRatePct": 100,
+      "pnl": {
+        "trades": 11,
+        "winners": 5,
+        "winRatePct": 45.45454545454545,
+        "totalPnl": 4628.431337847507,
+        "avgPnl": 420.7664852588643,
+        "profitFactor": 1.0886265336544108
+      },
+      "latency": {
+        "measurable": 2,
+        "min": 1,
+        "median": 1,
+        "mean": 2,
+        "within1": 50,
+        "within2": 50,
+        "bars3to5": 1,
+        "bars6to10": 0,
+        "bars11plus": 0,
+        "laterThan2": 50
+      },
+      "unmeasurableReversalLatency": 0,
+      "signalWindow": {
+        "earliest": "2020-01-30T15:00:00+05:30",
+        "latest": "2024-11-08T15:06:00+05:30",
+        "uniqueSignalDates": 11
+      }
+    }
+  },
+  "method": {
+    "latency": "first completed 3-minute bar after signal where underlying EMA9/EMA21 direction is no longer intact, through option stop exit; only reversal-driven stop-outs are included in latency denominator.",
+    "window": "Bucket is based on signalTime. Report nominal bucket plus actual earliest/latest signal timestamps and unique signal dates; no 2025/2026 data."
+  }
+}
