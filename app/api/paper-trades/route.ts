@@ -44,6 +44,45 @@ function normalizeIdeaTrade(trade: any, strategyVersion: string, fallbackStrateg
   };
 }
 
+function buildIdeaSessions(trades: any[], thread: "IDEA10" | "IDEA15", strategyVersion: string) {
+  const byDate = new Map<string, any>();
+  for (const trade of trades) {
+    if (!trade?.date) continue;
+    const current = byDate.get(trade.date) ?? {
+      date: trade.date,
+      thread,
+      strategyVersions: [strategyVersion],
+      status: "CLOSED",
+      reason: null,
+      updatedAt: null,
+      spot925: null,
+      expiry: trade.weeklyExpiry ?? trade.expiry ?? null,
+      referencePremium: null,
+      ce: null,
+      pe: null,
+      side: trade.callType ?? trade.side ?? null,
+      strike: Number.isFinite(Number(trade.strikePrice ?? trade.strike)) ? Number(trade.strikePrice ?? trade.strike) : null,
+      entry: Number.isFinite(Number(trade.entryPremium)) ? Number(trade.entryPremium) : null,
+      entryTime: trade.entryTime ?? trade.signalTime ?? null,
+      signalSource: "PAPER_TRADE",
+      tradeCount: 0,
+      totalPnl: 0,
+      strategyOutcomes: {
+        [strategyVersion]: { tradeCount: 0, totalPnl: 0 },
+      },
+    };
+    current.tradeCount += 1;
+    current.totalPnl += Number(trade.totalPnl) || 0;
+    current.strategyOutcomes[strategyVersion].tradeCount += 1;
+    current.strategyOutcomes[strategyVersion].totalPnl += Number(trade.totalPnl) || 0;
+    if (!current.updatedAt || String(trade.exitTime ?? "") > String(current.updatedAt)) {
+      current.updatedAt = trade.exitTime ?? current.updatedAt;
+    }
+    byDate.set(trade.date, current);
+  }
+  return [...byDate.values()];
+}
+
 export async function GET() {
   try {
     const [
@@ -75,6 +114,15 @@ export async function GET() {
         )
       : [];
 
+    const baseSessions = Array.isArray(sessionJournal?.sessions) ? sessionJournal.sessions : [];
+    const existingSessionKeys = new Set(
+      baseSessions.map((session: any) => `${session.thread}:${session.date}`),
+    );
+    const ideaSessions = [
+      ...buildIdeaSessions(idea10Trades, "IDEA10", "IDEA10A"),
+      ...buildIdeaSessions(idea15Trades, "IDEA15", "IDEA15_FIXED10"),
+    ].filter((session) => !existingSessionKeys.has(`${session.thread}:${session.date}`));
+
     return NextResponse.json(
       {
         meta: ledger?.meta ?? {},
@@ -83,7 +131,7 @@ export async function GET() {
           ...idea10Trades,
           ...idea15Trades,
         ],
-        sessions: Array.isArray(sessionJournal?.sessions) ? sessionJournal.sessions : [],
+        sessions: [...baseSessions, ...ideaSessions],
         sessionMeta: sessionJournal?.meta ?? {},
         openingRangeShadow: openingRangeShadow ?? { meta: {}, sessions: [] },
         profitOnlyPaper: profitOnlyPaper ?? { meta: {}, sessions: [] },
