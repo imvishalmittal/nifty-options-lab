@@ -31,6 +31,8 @@ const strategies: StrategyDefinition[] = [
   { key: "V10-5", label: "V10-5 · 170/210 stepped", shortRule: "₹170 stop · ₹210 activation · 5-point steps", cohort: "₹170 / ₹210", thread: "BASE", sessionKey: "V10-5" },
   { key: "V10-10", label: "V10-10 · 170/210 stepped", shortRule: "₹170 stop · ₹210 activation · 10-point steps", cohort: "₹170 / ₹210", thread: "BASE", sessionKey: "V10-10" },
   { key: "V11", label: "V11 · 170-stop fixed 2R", shortRule: "₹170 stop · entry-relative 2R target", cohort: "₹170 / ₹210", thread: "BASE", sessionKey: "V11" },
+  { key: "IDEA10A", label: "Idea 10A · Dual-chart EMA", shortRule: "9/21 EMA dual-chart confirmation", cohort: "Idea 10A", thread: "IDEA10", sessionKey: "IDEA10A" },
+  { key: "IDEA15_FIXED10", label: "Idea 15 · Fixed10 EMA", shortRule: "9/21 EMA break · 10-point threshold", cohort: "Idea 15", thread: "IDEA15", sessionKey: "IDEA15_FIXED10" },
   { key: "IDEA15_FIXED10", label: "Idea15 Fixed10 · EMA break", shortRule: "9/21 EMA · 10-point break threshold · isolated paper observation", cohort: "EMA research", thread: "IDEA15", isolatedTradeOnly: true },
 ];
 
@@ -79,13 +81,13 @@ function tradeKey(trade: PaperTrade): StrategyKey | null {
   if (version === "V5") return "V5-10"; if (version === "V7") return "V7-10"; if (version === "V8") return "V8-10";
   if (version === "V10") return trade.trailStepPoints === 5 ? "V10-5" : "V10-10";
   if (version === "IDEA15_FIXED10") return "IDEA15_FIXED10";
-  if (["V2", "V4", "V6", "V9", "V11"].includes(version)) return version as StrategyKey;
+  if (["V2", "V4", "V6", "V9", "V11", "IDEA10A", "IDEA15_FIXED10"].includes(version)) return version as StrategyKey;
   const name = trade.strategy ?? "";
   if (name.includes(" V3")) return trade.trailStepPoints === 5 ? "V3-5" : "V3-10";
   if (name.includes(" V5")) return "V5-10"; if (name.includes(" V7")) return "V7-10"; if (name.includes(" V8")) return "V8-10";
   if (name.includes(" V10")) return trade.trailStepPoints === 5 ? "V10-5" : "V10-10";
   if (name.includes("Idea 15 Fixed10")) return "IDEA15_FIXED10";
-  return (["V2", "V4", "V6", "V9", "V11"] as StrategyKey[]).find((key) => name.includes(` ${key}`)) ?? null;
+  return (["V2", "V4", "V6", "V9", "V11", "IDEA10A", "IDEA15_FIXED10"] as StrategyKey[]).find((key) => name.includes(` ${key}`)) ?? null;
 }
 function maxDrawdown(trades: PaperTrade[]) { let equity = 0, peak = 0, drawdown = 0; [...trades].sort((a, b) => a.date.localeCompare(b.date) || a.entryTime.localeCompare(b.entryTime)).forEach((trade) => { equity += trade.totalPnl; peak = Math.max(peak, equity); drawdown = Math.max(drawdown, peak - equity); }); return drawdown; }
 function scopeLabel(scope: Scope, date: string, month: string, year: string) { if (scope === "DATE") return new Date(`${date}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }); if (scope === "MONTH") return new Date(`${month}-01T00:00:00`).toLocaleDateString("en-IN", { month: "long", year: "numeric" }); return scope === "YEAR" ? year : "All recorded paper sessions"; }
