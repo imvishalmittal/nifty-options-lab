@@ -33,7 +33,7 @@ const strategies: StrategyDefinition[] = [
   { key: "V10-10", label: "V10-10 · 170/210 stepped", shortRule: "₹170 stop · ₹210 activation · 10-point steps", cohort: "₹170 / ₹210", thread: "BASE", sessionKey: "V10-10" },
   { key: "V11", label: "V11 · 170-stop fixed 2R", shortRule: "₹170 stop · entry-relative 2R target", cohort: "₹170 / ₹210", thread: "BASE", sessionKey: "V11" },
   { key: "IDEA10A", label: "Idea 10A · Dual-chart EMA", shortRule: "9/21 EMA dual-chart confirmation", cohort: "EMA research", thread: "IDEA10", sessionKey: "IDEA10A" },
-  { key: "IDEA15_FIXED10", label: "Idea 15 · Fixed10 EMA", shortRule: "9/21 EMA break · 10-point threshold", cohort: "EMA research", thread: "IDEA15", sessionKey: "IDEA15_FIXED10" },
+  { key: "IDEA15_FIXED10", label: "Idea15 Fixed10 · EMA", shortRule: "9/21 EMA break · 10-point threshold", cohort: "EMA research", thread: "IDEA15", sessionKey: "IDEA15_FIXED10", isolatedTradeOnly: true },
 ];
 
 const comparisonColumns: Array<{ key: SortKey; label: string }> = [
