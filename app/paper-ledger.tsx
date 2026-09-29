@@ -5,7 +5,7 @@ import styles from "./paper-ledger.module.css";
 
 type CallType = "CE" | "PE";
 type DataSource = "proxy" | "published" | null;
-type SessionThread = "BASE" | "V4" | "IDEA15";
+type SessionThread = "BASE" | "V4" | "IDEA10" | "IDEA15";
 type Scope = "DATE" | "MONTH" | "YEAR" | "ALL";
 type MatrixGranularity = "DAY" | "MONTH" | "YEAR";
 type SortDir = "asc" | "desc";
@@ -13,7 +13,7 @@ type SortKey = "strategy" | "cohort" | "status" | "sessions" | "trades" | "winsL
 type PaperTrade = { strategy?: string; strategyVersion?: string; date: string; indexStockName: string; weeklyExpiry: string; lots: number; callType: CallType; strikePrice: number; startTarget: number; startStopLoss: number; endStopLoss: number; entryTime: string; exitTime: string; stopLossAdjustments: number; totalPnl: number; entryPremium?: number; peakPremium?: number; maxFavorableMove?: number; trailStepPoints?: number; trailGapPoints?: number; breakevenReached?: boolean; exitPremium?: number; exitReason?: string; grossPnl?: number; charges?: number };
 type SessionContract = { symbol: string; strike?: number; optionType?: CallType; premium?: number };
 type PaperSession = { date: string; thread: SessionThread; strategyVersions: string[]; status: string; reason?: string | null; updatedAt?: string | null; spot925?: number | null; expiry?: string | null; referencePremium?: number | null; ce?: SessionContract | null; pe?: SessionContract | null; side?: CallType | null; strike?: number | null; entry?: number | null; entryTime?: string | null; signalSource?: string | null; tradeCount: number; totalPnl?: number | null; strategyOutcomes?: Record<string, { tradeCount: number; totalPnl: number | null }> };
-type StrategyKey = "V2" | "V3-5" | "V3-10" | "V4" | "V5-10" | "V6" | "V7-10" | "V8-10" | "V9" | "V10-5" | "V10-10" | "V11" | "IDEA15_FIXED10";
+type StrategyKey = "V2" | "V3-5" | "V3-10" | "V4" | "V5-10" | "V6" | "V7-10" | "V8-10" | "V9" | "V10-5" | "V10-10" | "V11" | "IDEA10A" | "IDEA15_FIXED10";
 type StrategyDefinition = { key: StrategyKey; label: string; shortRule: string; cohort: "₹160 / ₹220" | "₹170 / ₹210" | "NIFTY confirmed" | "EMA research"; thread: SessionThread; sessionKey?: string; isolatedTradeOnly?: boolean };
 type MatrixCell = { total: number; trades: number; sessions: number };
 type MatrixRow = { period: string; cells: Record<StrategyKey, MatrixCell> };
@@ -31,9 +31,8 @@ const strategies: StrategyDefinition[] = [
   { key: "V10-5", label: "V10-5 · 170/210 stepped", shortRule: "₹170 stop · ₹210 activation · 5-point steps", cohort: "₹170 / ₹210", thread: "BASE", sessionKey: "V10-5" },
   { key: "V10-10", label: "V10-10 · 170/210 stepped", shortRule: "₹170 stop · ₹210 activation · 10-point steps", cohort: "₹170 / ₹210", thread: "BASE", sessionKey: "V10-10" },
   { key: "V11", label: "V11 · 170-stop fixed 2R", shortRule: "₹170 stop · entry-relative 2R target", cohort: "₹170 / ₹210", thread: "BASE", sessionKey: "V11" },
-  { key: "IDEA10A", label: "Idea 10A · Dual-chart EMA", shortRule: "9/21 EMA dual-chart confirmation", cohort: "Idea 10A", thread: "IDEA10", sessionKey: "IDEA10A" },
-  { key: "IDEA15_FIXED10", label: "Idea 15 · Fixed10 EMA", shortRule: "9/21 EMA break · 10-point threshold", cohort: "Idea 15", thread: "IDEA15", sessionKey: "IDEA15_FIXED10" },
-  { key: "IDEA15_FIXED10", label: "Idea15 Fixed10 · EMA break", shortRule: "9/21 EMA · 10-point break threshold · isolated paper observation", cohort: "EMA research", thread: "IDEA15", isolatedTradeOnly: true },
+  { key: "IDEA10A", label: "Idea 10A · Dual-chart EMA", shortRule: "9/21 EMA dual-chart confirmation", cohort: "EMA research", thread: "IDEA10", sessionKey: "IDEA10A" },
+  { key: "IDEA15_FIXED10", label: "Idea 15 · Fixed10 EMA", shortRule: "9/21 EMA break · 10-point threshold", cohort: "EMA research", thread: "IDEA15", sessionKey: "IDEA15_FIXED10" },
 ];
 
 const comparisonColumns: Array<{ key: SortKey; label: string }> = [
@@ -71,7 +70,7 @@ function normalizeContract(value: unknown): SessionContract | null {
 }
 function normalizeSession(value: unknown): PaperSession | null {
   if (!value || typeof value !== "object") return null; const row = value as Partial<PaperSession>;
-  if (!row.date || (row.thread !== "BASE" && row.thread !== "V4") || !row.status) return null;
+  if (!row.date || !["BASE", "V4", "IDEA10", "IDEA15"].includes(row.thread) || !row.status) return null;
   const outcomes = row.strategyOutcomes && typeof row.strategyOutcomes === "object" ? Object.fromEntries(Object.entries(row.strategyOutcomes).map(([key, value]) => { const outcome = value && typeof value === "object" ? value as { tradeCount?: unknown; totalPnl?: unknown } : {}; return [key, { tradeCount: Number.isFinite(Number(outcome.tradeCount)) ? Number(outcome.tradeCount) : 0, totalPnl: optionalNumber(outcome.totalPnl) ?? null }]; })) : undefined;
   return { date: String(row.date), thread: row.thread, strategyVersions: Array.isArray(row.strategyVersions) ? row.strategyVersions.map(String) : [], status: String(row.status), reason: row.reason ? String(row.reason) : null, updatedAt: row.updatedAt ? String(row.updatedAt) : null, spot925: optionalNumber(row.spot925) ?? null, expiry: row.expiry ? String(row.expiry) : null, referencePremium: optionalNumber(row.referencePremium) ?? null, ce: normalizeContract(row.ce), pe: normalizeContract(row.pe), side: row.side === "CE" || row.side === "PE" ? row.side : null, strike: optionalNumber(row.strike) ?? null, entry: optionalNumber(row.entry) ?? null, entryTime: row.entryTime ? String(row.entryTime) : null, signalSource: row.signalSource ? String(row.signalSource) : null, tradeCount: Number.isFinite(Number(row.tradeCount)) ? Number(row.tradeCount) : 0, totalPnl: optionalNumber(row.totalPnl) ?? null, strategyOutcomes: outcomes };
 }
