@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "study": "Idea 20 favorable-excursion / exit-management diagnostic",
+  "period": {
+    "startDate": "2026-01-01",
+    "endDate": "2026-09-19"
+  },
+  "source": "Frozen Idea 10A baseline plus causal 3-minute option-candle path; no lookahead and no rule is activated.",
+  "dataIntegrity": {
+    "baselineTrades": 156,
+    "eligibleTrades": 154,
+    "measuredTrades": 0,
+    "aliveAtLeast3Bars": 0,
+    "stopsAmongAlive3": 0
+  },
+  "summary": {
+    "allMeasured": {
+      "trades": 0,
+      "winners": 0,
+      "winRatePct": null,
+      "avg": null,
+      "total": 0,
+      "profitFactor": null
+    },
+    "alive3": {
+      "trades": 0,
+      "winners": 0,
+      "winRatePct": null,
+      "avg": null,
+      "total": 0,
+      "profitFactor": null
+    },
+    "stopsAlive3": {
+      "trades": 0,
+      "winners": 0,
+      "winRatePct": null,
+      "avg": null,
+      "total": 0,
+      "profitFactor": null
+    }
+  },
+  "thresholdDiagnostics": {
+    "1": {
+      "thresholdPct": 1,
+      "trades": 0,
+      "stops": 0,
+      "stopRatePct": null,
+      "avgPnl": null,
+      "totalPnl": 0
+    },
+    "2": {
+      "thresholdPct": 2,
+      "trades": 0,
+      "stops": 0,
+      "stopRatePct": null,
+      "avgPnl": null,
+      "totalPnl": 0
+    },
+    "3": {
+      "thresholdPct": 3,
+      "trades": 0,
+      "stops": 0,
+      "stopRatePct": null,
+      "avgPnl": null,
+      "totalPnl": 0
+    },
+    "5": {
+      "thresholdPct": 5,
+      "trades": 0,
+      "stops": 0,
+      "stopRatePct": null,
+      "avgPnl": null,
+      "totalPnl": 0
+    },
+    "0.25": {
+      "thresholdPct": 0.25,
+      "trades": 0,
+      "stops": 0,
+      "stopRatePct": null,
+      "avgPnl": null,
+      "totalPnl": 0
+    },
+    "0.5": {
+      "thresholdPct": 0.5,
+      "trades": 0,
+      "stops": 0,
+      "stopRatePct": null,
+      "avgPnl": null,
+      "totalPnl": 0
+    },
+    "1.5": {
+      "thresholdPct": 1.5,
+      "trades": 0,
+      "stops": 0,
+      "stopRatePct": null,
+      "avgPnl": null,
+      "totalPnl": 0
+    }
+  },
+  "trades": []
+}
