@@ -10,7 +10,7 @@ permissions: { contents: write }
 jobs:
   diagnostic:
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 300 # rerun diagnostic after research continuation
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
