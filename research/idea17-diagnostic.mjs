@@ -40,6 +40,16 @@ function reversalStats(rows){
   const intact=stops.filter(x=>x.underlyingDirectionIntactAtOptionStop===true);
   return {stopOuts:stops.length,reversalDrivenStopOuts:reversed.length,underlyingIntactStopOuts:intact.length,stopOutReversalRatePct:stops.length?reversed.length/stops.length*100:null,reversalDrivenStopRatePct:rows.length?reversed.length/rows.length*100:null};
 }
+function aggregateDaily(rows){
+  const m=new Map();
+  for(const r of rows){
+    const d=r.timestamp.slice(0,10); let x=m.get(d);
+    if(!x) x={timestamp:r.timestamp.slice(0,10)+'T09:15:00.000Z',open:r.open,high:r.high,low:r.low,close:r.close};
+    else {x.high=Math.max(x.high,r.high);x.low=Math.min(x.low,r.low);x.close=r.close;}
+    m.set(d,x);
+  }
+  return [...m.values()].sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
+}
 function classify(daily, date){
   const prior=daily.filter(x=>x.timestamp.slice(0,10)<date).at(-1);
   if(!prior) return {bias:'DATA_MISSING',magnitudePct:null,priorDate:null};
