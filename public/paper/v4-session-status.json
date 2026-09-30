@@ -1,196 +1,142 @@
 {
-  "updatedAt": "2026-09-29T08:56:39.642Z",
-  "date": "2026-09-29",
+  "updatedAt": "2026-09-30T04:16:06.506Z",
+  "date": "2026-09-30",
   "status": "NO_TRADE",
   "reason": "No V4 option signal with matching NIFTY confirmation before 09:45",
   "selectionAudit": {
-    "spot925": 22666.8,
-    "expiry": "2026-09-29",
+    "spot925": 22727.8,
+    "expiry": "2026-10-06",
     "referencePremium": 180,
     "selectionAttempts": 1,
     "ce": {
       "selected": {
-        "symbol": "NSE-NIFTY-29Sep26-22500-CE",
-        "expiryCode": "29Sep26",
-        "strike": 22500,
+        "symbol": "NSE-NIFTY-06Oct26-22750-CE",
+        "expiryCode": "06Oct26",
+        "strike": 22750,
         "optionType": "CE",
         "discoverySource": "contracts_api",
-        "premium": 195.4
+        "premium": 167.3
       },
       "bracketed": true,
       "below": {
-        "symbol": "NSE-NIFTY-29Sep26-22550-CE",
-        "expiryCode": "29Sep26",
-        "strike": 22550,
+        "symbol": "NSE-NIFTY-06Oct26-22750-CE",
+        "expiryCode": "06Oct26",
+        "strike": 22750,
         "optionType": "CE",
         "discoverySource": "contracts_api",
-        "premium": 153.35
+        "premium": 167.3
       },
       "above": {
-        "symbol": "NSE-NIFTY-29Sep26-22500-CE",
-        "expiryCode": "29Sep26",
-        "strike": 22500,
+        "symbol": "NSE-NIFTY-06Oct26-22700-CE",
+        "expiryCode": "06Oct26",
+        "strike": 22700,
         "optionType": "CE",
         "discoverySource": "contracts_api",
-        "premium": 195.4
+        "premium": 197.3
       },
-      "fetched": 6,
+      "fetched": 2,
       "candidatesChecked": [
         {
-          "symbol": "NSE-NIFTY-29Sep26-22650-CE",
-          "expiryCode": "29Sep26",
-          "strike": 22650,
-          "optionType": "CE",
-          "discoverySource": "contracts_api",
-          "premium": 80.15
-        },
-        {
-          "symbol": "NSE-NIFTY-29Sep26-22600-CE",
-          "expiryCode": "29Sep26",
-          "strike": 22600,
-          "optionType": "CE",
-          "discoverySource": "contracts_api",
-          "premium": 113.7
-        },
-        {
-          "symbol": "NSE-NIFTY-29Sep26-22700-CE",
-          "expiryCode": "29Sep26",
-          "strike": 22700,
-          "optionType": "CE",
-          "discoverySource": "contracts_api",
-          "premium": 54.3
-        },
-        {
-          "symbol": "NSE-NIFTY-29Sep26-22550-CE",
-          "expiryCode": "29Sep26",
-          "strike": 22550,
-          "optionType": "CE",
-          "discoverySource": "contracts_api",
-          "premium": 153.35
-        },
-        {
-          "symbol": "NSE-NIFTY-29Sep26-22750-CE",
-          "expiryCode": "29Sep26",
+          "symbol": "NSE-NIFTY-06Oct26-22750-CE",
+          "expiryCode": "06Oct26",
           "strike": 22750,
           "optionType": "CE",
           "discoverySource": "contracts_api",
-          "premium": 34.7
+          "premium": 167.3
         },
         {
-          "symbol": "NSE-NIFTY-29Sep26-22500-CE",
-          "expiryCode": "29Sep26",
-          "strike": 22500,
+          "symbol": "NSE-NIFTY-06Oct26-22700-CE",
+          "expiryCode": "06Oct26",
+          "strike": 22700,
           "optionType": "CE",
           "discoverySource": "contracts_api",
-          "premium": 195.4
+          "premium": 197.3
         }
       ],
       "strikeStep": 50,
       "missingStrikes": [
-        22400,
-        22350,
-        22300
+        22650,
+        22900,
+        22500,
+        23000,
+        23050,
+        22300,
+        22250
       ],
-      "actualCandidateCount": 18
+      "actualCandidateCount": 14
     },
     "pe": {
       "selected": {
-        "symbol": "NSE-NIFTY-29Sep26-22850-PE",
-        "expiryCode": "29Sep26",
+        "symbol": "NSE-NIFTY-06Oct26-22850-PE",
+        "expiryCode": "06Oct26",
         "strike": 22850,
         "optionType": "PE",
         "discoverySource": "contracts_api",
-        "premium": 181.2
+        "premium": 186.05
       },
       "bracketed": true,
       "below": {
-        "symbol": "NSE-NIFTY-29Sep26-22800-PE",
-        "expiryCode": "29Sep26",
+        "symbol": "NSE-NIFTY-06Oct26-22800-PE",
+        "expiryCode": "06Oct26",
         "strike": 22800,
         "optionType": "PE",
         "discoverySource": "contracts_api",
-        "premium": 139.45
+        "premium": 159.65
       },
       "above": {
-        "symbol": "NSE-NIFTY-29Sep26-22850-PE",
-        "expiryCode": "29Sep26",
+        "symbol": "NSE-NIFTY-06Oct26-22850-PE",
+        "expiryCode": "06Oct26",
         "strike": 22850,
         "optionType": "PE",
         "discoverySource": "contracts_api",
-        "premium": 181.2
+        "premium": 186.05
       },
-      "fetched": 8,
+      "fetched": 4,
       "candidatesChecked": [
         {
-          "symbol": "NSE-NIFTY-29Sep26-22650-PE",
-          "expiryCode": "29Sep26",
-          "strike": 22650,
-          "optionType": "PE",
-          "discoverySource": "contracts_api",
-          "premium": 48.35
-        },
-        {
-          "symbol": "NSE-NIFTY-29Sep26-22700-PE",
-          "expiryCode": "29Sep26",
-          "strike": 22700,
-          "optionType": "PE",
-          "discoverySource": "contracts_api",
-          "premium": 71.75
-        },
-        {
-          "symbol": "NSE-NIFTY-29Sep26-22600-PE",
-          "expiryCode": "29Sep26",
-          "strike": 22600,
-          "optionType": "PE",
-          "discoverySource": "contracts_api",
-          "premium": 31.6
-        },
-        {
-          "symbol": "NSE-NIFTY-29Sep26-22750-PE",
-          "expiryCode": "29Sep26",
+          "symbol": "NSE-NIFTY-06Oct26-22750-PE",
+          "expiryCode": "06Oct26",
           "strike": 22750,
           "optionType": "PE",
-          "discoverySource": "synthetic_gap_fill",
-          "premium": 103.05
-        },
-        {
-          "symbol": "NSE-NIFTY-29Sep26-22550-PE",
-          "expiryCode": "29Sep26",
-          "strike": 22550,
-          "optionType": "PE",
           "discoverySource": "contracts_api",
-          "premium": 19.7
+          "premium": 137.15
         },
         {
-          "symbol": "NSE-NIFTY-29Sep26-22800-PE",
-          "expiryCode": "29Sep26",
+          "symbol": "NSE-NIFTY-06Oct26-22800-PE",
+          "expiryCode": "06Oct26",
           "strike": 22800,
           "optionType": "PE",
           "discoverySource": "contracts_api",
-          "premium": 139.45
+          "premium": 159.65
         },
         {
-          "symbol": "NSE-NIFTY-29Sep26-22500-PE",
-          "expiryCode": "29Sep26",
-          "strike": 22500,
+          "symbol": "NSE-NIFTY-06Oct26-22700-PE",
+          "expiryCode": "06Oct26",
+          "strike": 22700,
           "optionType": "PE",
           "discoverySource": "contracts_api",
-          "premium": 12.55
+          "premium": 116.2
         },
         {
-          "symbol": "NSE-NIFTY-29Sep26-22850-PE",
-          "expiryCode": "29Sep26",
+          "symbol": "NSE-NIFTY-06Oct26-22850-PE",
+          "expiryCode": "06Oct26",
           "strike": 22850,
           "optionType": "PE",
           "discoverySource": "contracts_api",
-          "premium": 181.2
+          "premium": 186.05
         }
       ],
       "strikeStep": 50,
       "missingStrikes": [
-        22750
+        22600,
+        23000,
+        22500,
+        23050,
+        22400,
+        22350,
+        22250
       ],
-      "actualCandidateCount": 20
+      "actualCandidateCount": 14
     }
   }
 }
