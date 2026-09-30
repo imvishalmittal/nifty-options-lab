@@ -31,7 +31,7 @@ export async function run({token,baselinePath,startDate='2026-01-01',endDate='20
     }
     const rows=cache.get(key), i0=rows.findIndex(x=>x.timestamp===t.signalTime), i1=rows.findIndex(x=>x.timestamp===t.exitTime);
     if(i0<0||i1<i0) continue;
-    const path=rows.slice(i0,i1+1), entry=t.entry;
+    const path=rows.slice(i0+1,i1+1), entry=t.entry;
     const side=t.side;
     const favorable=x=>side==='CE'?(x.high/entry-1)*100:(x.high/entry-1)*100;
     const adverse=x=>side==='CE'?(x.low/entry-1)*100:(x.low/entry-1)*100;
