@@ -1,0 +1,48 @@
+name: Research - Idea 20 favorable excursion diagnostic
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/idea10-underlying-option-confirmation]
+    paths:
+      - research/idea20-diagnostic.mjs
+      - .github/workflows/research-idea20.yml
+permissions: { contents: write }
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Resolve Groww token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run frozen Idea 10A baseline
+        run: |
+          node research/groww-idea10-2026-diagnostic.mjs \
+            --start=2026-01-01 --end=2026-09-19 \
+            --variant=A --out=idea20-baseline-2026.json
+      - name: Run Idea 20 diagnostic
+        run: |
+          node research/idea20-diagnostic.mjs \
+            --start=2026-01-01 --end=2026-09-19 \
+            --baseline=idea20-baseline-2026.json \
+            --out=idea20-2026-diagnostic.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: idea20-2026-diagnostic
+          path: idea20-2026-diagnostic.json
+          retention-days: 90
+      - name: Persist Idea 20 diagnostic result
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add idea20-2026-diagnostic.json
+          git diff --cached --quiet || git commit -m "Persist Idea 20 2026 diagnostic result"
+          git push origin HEAD:agent/idea10-underlying-option-confirmation
