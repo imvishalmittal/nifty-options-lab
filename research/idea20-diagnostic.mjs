@@ -53,3 +53,5 @@ export async function run({token,baselinePath,startDate='2026-01-01',endDate='20
 }
 const a=Object.fromEntries(process.argv.slice(2).filter(x=>x.startsWith('--')).map(x=>{const[k,...v]=x.slice(2).split('=');return[k,v.join('=')]}));
 if(process.argv[1]?.endsWith('idea20-diagnostic.mjs')) run({token:process.env.GROWW_ACCESS_TOKEN,baselinePath:a.baseline,startDate:a.start,endDate:a.end,spacingMs:+(process.env.GROWW_REQUEST_SPACING_MS||1500),out:a.out||'idea20-2026-diagnostic.json'}).catch(e=>{console.error(e.stack||e);process.exit(1)});
+
+// CI trigger: ensure the Idea 20 diagnostic can be restarted from the research branch.
