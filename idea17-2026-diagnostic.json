@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "study": "Idea 17 diagnostic: daily-bias direction filter versus decisive daily-bias threshold",
   "period": {
     "startDate": "2026-01-01",
@@ -17,7 +17,8 @@
     "baselineTrades": 156,
     "multiTradeDates": [],
     "multiTradeDateCount": 0,
-    "dailyRows": 27810,
+    "intradayRows": 27810,
+    "dailyRows": 199,
     "missingPriorBiasTrades": 0
   },
   "scenarios": {
@@ -45,12 +46,12 @@
       "avgPnl": null,
       "profitFactor": null,
       "maxDrawdownRupees": 0,
-      "stopOuts": 0,
-      "reversalDrivenStopOuts": 0,
-      "underlyingIntactStopOuts": 0,
-      "stopOutReversalRatePct": null,
-      "reversalDrivenStopRatePct": null,
-      "ceTrades": 0,
+      "stopOuts": 63,
+      "reversalDrivenStopOuts": 57,
+      "underlyingIntactStopOuts": 6,
+      "stopOutReversalRatePct": 90.47619047619048,
+      "reversalDrivenStopRatePct": 80.28169014084507,
+      "ceTrades": 71,
       "peTrades": 0
     },
     "idea17_idea14_plus_decisive_threshold": {
@@ -61,12 +62,12 @@
       "avgPnl": null,
       "profitFactor": null,
       "maxDrawdownRupees": 0,
-      "stopOuts": 0,
-      "reversalDrivenStopOuts": 0,
-      "underlyingIntactStopOuts": 0,
-      "stopOutReversalRatePct": null,
-      "reversalDrivenStopRatePct": null,
-      "ceTrades": 0,
+      "stopOuts": 32,
+      "reversalDrivenStopOuts": 27,
+      "underlyingIntactStopOuts": 5,
+      "stopOutReversalRatePct": 84.375,
+      "reversalDrivenStopRatePct": 72.97297297297297,
+      "ceTrades": 37,
       "peTrades": 0
     }
   },
@@ -99,12 +100,12 @@
     }
   },
   "biasDistribution": {
-    "UP": 0,
-    "DOWN": 0,
-    "FLAT": 156,
-    "decisiveUP": 0,
-    "decisiveDOWN": 0,
-    "decisiveFLAT": 156
+    "UP": 73,
+    "DOWN": 83,
+    "FLAT": 0,
+    "decisiveUP": 37,
+    "decisiveDOWN": 43,
+    "decisiveFLAT": 76
   },
   "trades": [
     {
@@ -138,12 +139,12 @@
         "stress0_5": -3564.2061634400015,
         "stress1_0": -4113.939413440002
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.735383411369428,
       "priorDailyDate": "2025-12-31",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-01-02",
@@ -176,11 +177,11 @@
         "stress0_5": -1844.190278365,
         "stress1_0": -2518.862903365
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.06486896087196659,
       "priorDailyDate": "2026-01-01",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -214,12 +215,12 @@
         "stress0_5": -6230.268612389999,
         "stress1_0": -7179.807862389999
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.6960765378223988,
       "priorDailyDate": "2026-01-02",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-01-07",
@@ -252,9 +253,9 @@
         "stress0_5": -5572.630315949998,
         "stress1_0": -6072.387815949997
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.27275878751861216,
       "priorDailyDate": "2026-01-06",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -290,9 +291,9 @@
         "stress0_5": -3042.499789075,
         "stress1_0": -3592.233039075
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.14496518161711824,
       "priorDailyDate": "2026-01-07",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -328,9 +329,9 @@
         "stress0_5": -7736.650448500003,
         "stress1_0": -8336.359448500003
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.0095349215305638,
       "priorDailyDate": "2026-01-08",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -366,9 +367,9 @@
         "stress0_5": 24336.3682521875,
         "stress1_0": 23711.6713771875
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.7479658459201954,
       "priorDailyDate": "2026-01-09",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -404,11 +405,11 @@
         "stress0_5": -22329.040966,
         "stress1_0": -23528.458966
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.4164184509000135,
       "priorDailyDate": "2026-01-12",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -442,9 +443,9 @@
         "stress0_5": -8386.063922639998,
         "stress1_0": -8785.869922639999
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.2246973177848277,
       "priorDailyDate": "2026-01-13",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -480,9 +481,9 @@
         "stress0_5": -5400.9658241,
         "stress1_0": -5900.7233241
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.25920729977498835,
       "priorDailyDate": "2026-01-14",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -518,11 +519,11 @@
         "stress0_5": -4710.430520480002,
         "stress1_0": -5510.042520480002
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.11201764229162858,
       "priorDailyDate": "2026-01-16",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -556,9 +557,9 @@
         "stress0_5": -18188.931847787495,
         "stress1_0": -19313.386222787496
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.4236339895735797,
       "priorDailyDate": "2026-01-19",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -594,9 +595,9 @@
         "stress0_5": 9277.62995306,
         "stress1_0": 8977.77545306
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.3796877137441155,
       "priorDailyDate": "2026-01-20",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -632,9 +633,9 @@
         "stress0_5": -5284.322626525006,
         "stress1_0": -5659.140751525007
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.29723570791637677,
       "priorDailyDate": "2026-01-21",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -670,9 +671,9 @@
         "stress0_5": -7198.455814599994,
         "stress1_0": -7948.092064599994
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.9539381334050301,
       "priorDailyDate": "2026-01-23",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -708,12 +709,12 @@
         "stress0_5": -1529.47285426,
         "stress1_0": -1804.33947926
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.6647362107454091,
       "priorDailyDate": "2026-01-28",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-01-30",
@@ -746,11 +747,11 @@
         "stress0_5": -3295.892890107497,
         "stress1_0": -3570.7595151074966
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.3004804135305017,
       "priorDailyDate": "2026-01-29",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -784,9 +785,9 @@
         "stress0_5": -4785.754867502498,
         "stress1_0": -5060.621492502498
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.386523413680373,
       "priorDailyDate": "2026-01-30",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -822,9 +823,9 @@
         "stress0_5": 89965.6277705,
         "stress1_0": 89465.8702705
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.955715986753892,
       "priorDailyDate": "2026-02-01",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -860,12 +861,12 @@
         "stress0_5": -4297.047818125008,
         "stress1_0": -4646.878068125008
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 2.547591715693298,
       "priorDailyDate": "2026-02-03",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-02-05",
@@ -898,11 +899,11 @@
         "stress0_5": -4576.763508550004,
         "stress1_0": -4951.581633550005
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.1883195251782599,
       "priorDailyDate": "2026-02-04",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -936,9 +937,9 @@
         "stress0_5": -8695.9042183,
         "stress1_0": -9295.6132183
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.516759776536313,
       "priorDailyDate": "2026-02-05",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -974,11 +975,11 @@
         "stress0_5": -4872.148953759993,
         "stress1_0": -5671.760953759993
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.19849626405852305,
       "priorDailyDate": "2026-02-06",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -1012,12 +1013,12 @@
         "stress0_5": -7686.806819125,
         "stress1_0": -9360.994444125
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.6756520080797968,
       "priorDailyDate": "2026-02-09",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-02-11",
@@ -1050,11 +1051,11 @@
         "stress0_5": -3532.9298145199955,
         "stress1_0": -3932.7358145199955
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.2623002787302875,
       "priorDailyDate": "2026-02-10",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -1088,9 +1089,9 @@
         "stress0_5": 1221.7307793199982,
         "stress1_0": 622.0217793199982
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.07210291824029103,
       "priorDailyDate": "2026-02-11",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -1126,9 +1127,9 @@
         "stress0_5": -4190.580982605,
         "stress1_0": -4665.350607605
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.5650414100412782,
       "priorDailyDate": "2026-02-12",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -1164,9 +1165,9 @@
         "stress0_5": -5297.059758010007,
         "stress1_0": -5996.720258010007
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.3023497318577881,
       "priorDailyDate": "2026-02-13",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -1202,12 +1203,12 @@
         "stress0_5": -12741.77911576,
         "stress1_0": -14540.90611576
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.8309417339651626,
       "priorDailyDate": "2026-02-16",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-02-18",
@@ -1240,11 +1241,11 @@
         "stress0_5": -3151.743104922505,
         "stress1_0": -3576.536979922505
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.16606477110123752,
       "priorDailyDate": "2026-02-17",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -1278,9 +1279,9 @@
         "stress0_5": -4062.0881182700073,
         "stress1_0": -4486.881993270007
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.4136684308474035,
       "priorDailyDate": "2026-02-19",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -1316,11 +1317,11 @@
         "stress0_5": -8143.697325302505,
         "stress1_0": -8818.369950302505
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.4592535264110076,
       "priorDailyDate": "2026-02-20",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -1354,11 +1355,11 @@
         "stress0_5": -10695.121305100003,
         "stress1_0": -11694.636305100004
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.1641940177282919,
       "priorDailyDate": "2026-02-23",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -1392,9 +1393,9 @@
         "stress0_5": -2439.633699324998,
         "stress1_0": -2814.4518243249977
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.121417181970208,
       "priorDailyDate": "2026-02-24",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -1430,11 +1431,11 @@
         "stress0_5": -4157.009303080003,
         "stress1_0": -4606.791053080003
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.2275350889786143,
       "priorDailyDate": "2026-02-25",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -1468,11 +1469,11 @@
         "stress0_5": -3674.873097620003,
         "stress1_0": -4224.606347620003
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.0551358775630284,
       "priorDailyDate": "2026-02-26",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -1506,9 +1507,9 @@
         "stress0_5": 179434.79054197503,
         "stress1_0": 178060.45741697503
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.2468353561560175,
       "priorDailyDate": "2026-02-27",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -1544,9 +1545,9 @@
         "stress0_5": -3302.4052694,
         "stress1_0": -4002.0657694
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.2429181072059148,
       "priorDailyDate": "2026-03-02",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -1582,9 +1583,9 @@
         "stress0_5": -5573.64993901,
         "stress1_0": -6273.31043901
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.5491218827541564,
       "priorDailyDate": "2026-03-04",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -1620,12 +1621,12 @@
         "stress0_5": -4952.914626999997,
         "stress1_0": -5952.429626999998
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 1.165825861399905,
       "priorDailyDate": "2026-03-05",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-03-09",
@@ -1658,9 +1659,9 @@
         "stress0_5": 31682.784774652508,
         "stress1_0": 31507.869649652508
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.2737271813259343,
       "priorDailyDate": "2026-03-06",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -1696,9 +1697,9 @@
         "stress0_5": -2714.878015229998,
         "stress1_0": -2814.829515229998
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.7275755660938863,
       "priorDailyDate": "2026-03-09",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -1734,9 +1735,9 @@
         "stress0_5": -8058.066777619998,
         "stress1_0": -8757.727277619999
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.6270567481122433,
       "priorDailyDate": "2026-03-11",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -1772,9 +1773,9 @@
         "stress0_5": -3323.018811729992,
         "stress1_0": -3547.9096867299922
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -2.0645835404403456,
       "priorDailyDate": "2026-03-13",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -1810,12 +1811,12 @@
         "stress0_5": -5574.524569799997,
         "stress1_0": -5699.463944799997
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 1.113122054675597,
       "priorDailyDate": "2026-03-16",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-03-18",
@@ -1848,12 +1849,12 @@
         "stress0_5": -3599.126065500003,
         "stress1_0": -3849.0048155000027
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.7362615768429004,
       "priorDailyDate": "2026-03-17",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-03-19",
@@ -1886,12 +1887,12 @@
         "stress0_5": -1951.0897709650021,
         "stress1_0": -2126.004895965002
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.8339287948212704,
       "priorDailyDate": "2026-03-18",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-03-20",
@@ -1924,9 +1925,9 @@
         "stress0_5": -2600.3828362599966,
         "stress1_0": -2750.3100862599963
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -3.262076390582802,
       "priorDailyDate": "2026-03-19",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -1962,11 +1963,11 @@
         "stress0_5": -5121.4342831025,
         "stress1_0": -6445.7916581025
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.4884326030392794,
       "priorDailyDate": "2026-03-20",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -2000,9 +2001,9 @@
         "stress0_5": -51092.83302265,
         "stress1_0": -57464.74114765
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.4211462000595532,
       "priorDailyDate": "2026-03-23",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -2038,12 +2039,12 @@
         "stress0_5": -3034.8186783600067,
         "stress1_0": -3234.721678360007
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 1.7756683464629885,
       "priorDailyDate": "2026-03-24",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-03-30",
@@ -2076,9 +2077,9 @@
         "stress0_5": -13131.561902740004,
         "stress1_0": -13731.270902740003
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -2.0889067189554966,
       "priorDailyDate": "2026-03-27",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -2114,9 +2115,9 @@
         "stress0_5": -1229.9784065099977,
         "stress1_0": -1329.9049065099978
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -2.139388946344356,
       "priorDailyDate": "2026-03-30",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -2152,12 +2153,12 @@
         "stress0_5": 64385.466734675,
         "stress1_0": 64135.650484675
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 1.5583438566323604,
       "priorDailyDate": "2026-04-01",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-04-06",
@@ -2190,11 +2191,11 @@
         "stress0_5": -5193.866689464996,
         "stress1_0": -5418.701314464996
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.14859299628737777,
       "priorDailyDate": "2026-04-02",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -2228,12 +2229,12 @@
         "stress0_5": -2750.450386345005,
         "stress1_0": -2900.340136345005
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 1.123360527625028,
       "priorDailyDate": "2026-04-06",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-04-08",
@@ -2266,12 +2267,12 @@
         "stress0_5": -2042.8927790800024,
         "stress1_0": -2242.745779080002
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.6765861569775655,
       "priorDailyDate": "2026-04-07",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-04-09",
@@ -2304,12 +2305,12 @@
         "stress0_5": -3671.6382813100045,
         "stress1_0": -3946.4361563100047
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 3.7783827380192925,
       "priorDailyDate": "2026-04-08",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-04-10",
@@ -2342,9 +2343,9 @@
         "stress0_5": -4220.143013065,
         "stress1_0": -4444.977638065
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.926143928392098,
       "priorDailyDate": "2026-04-09",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -2380,12 +2381,12 @@
         "stress0_5": 69811.3294215975,
         "stress1_0": 68337.4135465975
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 1.1587753574117565,
       "priorDailyDate": "2026-04-10",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-04-15",
@@ -2418,9 +2419,9 @@
         "stress0_5": -674.9786136749972,
         "stress1_0": -924.7948636749971
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.8646353937115769,
       "priorDailyDate": "2026-04-13",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -2456,12 +2457,12 @@
         "stress0_5": 4923.086445229995,
         "stress1_0": 4623.306945229994
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 1.6300620946077649,
       "priorDailyDate": "2026-04-15",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-04-17",
@@ -2494,9 +2495,9 @@
         "stress0_5": -2406.1752411875073,
         "stress1_0": -2730.9363661875072
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.14258417831481962,
       "priorDailyDate": "2026-04-16",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -2532,12 +2533,12 @@
         "stress0_5": -4095.5908674025,
         "stress1_0": -4570.2417424025
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.6480209118993274,
       "priorDailyDate": "2026-04-17",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-04-21",
@@ -2570,9 +2571,9 @@
         "stress0_5": -19929.468578845004,
         "stress1_0": -21278.476328845005
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.10925937314228973,
       "priorDailyDate": "2026-04-20",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -2608,12 +2609,12 @@
         "stress0_5": -3024.8037934224985,
         "stress1_0": -3299.6016684224987
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.8690798424779933,
       "priorDailyDate": "2026-04-21",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-04-23",
@@ -2646,9 +2647,9 @@
         "stress0_5": -2362.4117411800053,
         "stress1_0": -2687.1728661800053
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.8076788489864373,
       "priorDailyDate": "2026-04-22",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -2684,9 +2685,9 @@
         "stress0_5": 10627.644610219999,
         "stress1_0": 10327.865110219998
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.8411237955377904,
       "priorDailyDate": "2026-04-23",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -2722,9 +2723,9 @@
         "stress0_5": 3886.268851279998,
         "stress1_0": 3286.709851279998
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.1380442269386726,
       "priorDailyDate": "2026-04-24",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -2760,12 +2761,12 @@
         "stress0_5": -27842.983047012498,
         "stress1_0": -29466.788672012495
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.8149234557775831,
       "priorDailyDate": "2026-04-27",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-04-29",
@@ -2798,9 +2799,9 @@
         "stress0_5": -2341.6645205250015,
         "stress1_0": -2591.4807705250014
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.40261157944107007,
       "priorDailyDate": "2026-04-28",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -2836,12 +2837,12 @@
         "stress0_5": 39660.172572952484,
         "stress1_0": 39335.41144795249
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.75826085506987,
       "priorDailyDate": "2026-04-29",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-05-04",
@@ -2874,9 +2875,9 @@
         "stress0_5": -7974.4726948,
         "stress1_0": -8374.1786948
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.7449028338155417,
       "priorDailyDate": "2026-04-30",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -2912,12 +2913,12 @@
         "stress0_5": 38547.473820625004,
         "stress1_0": 37298.39257062501
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.5073434579780045,
       "priorDailyDate": "2026-05-04",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-05-07",
@@ -2950,12 +2951,12 @@
         "stress0_5": -5572.923686079998,
         "stress1_0": -5897.684811079998
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 1.2405961852135494,
       "priorDailyDate": "2026-05-06",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-05-08",
@@ -2988,9 +2989,9 @@
         "stress0_5": -6574.905874559996,
         "stress1_0": -6899.666999559997
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.017672963858783586,
       "priorDailyDate": "2026-05-07",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3026,9 +3027,9 @@
         "stress0_5": -7512.457778137495,
         "stress1_0": -7987.108653137495
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.6186630711585872,
       "priorDailyDate": "2026-05-08",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3064,9 +3065,9 @@
         "stress0_5": -7250.864869794997,
         "stress1_0": -8200.166619794996
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.4903117328441629,
       "priorDailyDate": "2026-05-11",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3102,9 +3103,9 @@
         "stress0_5": -2332.3596317274964,
         "stress1_0": -2557.1942567274964
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.8319732447088732,
       "priorDailyDate": "2026-05-12",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3140,11 +3141,11 @@
         "stress0_5": -4726.920646672495,
         "stress1_0": -5001.718521672496
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.14136285771111368,
       "priorDailyDate": "2026-05-13",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -3178,12 +3179,12 @@
         "stress0_5": -3945.4965602099983,
         "stress1_0": -4270.257685209998
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 1.1831236171975679,
       "priorDailyDate": "2026-05-14",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-05-18",
@@ -3216,9 +3217,9 @@
         "stress0_5": 47642.5394138075,
         "stress1_0": 47217.8517888075
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.1946001620964366,
       "priorDailyDate": "2026-05-15",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3254,12 +3255,12 @@
         "stress0_5": -22407.592294660004,
         "stress1_0": -23456.820544660004
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.7143708851811148,
       "priorDailyDate": "2026-05-18",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-05-20",
@@ -3292,9 +3293,9 @@
         "stress0_5": 16134.335097849995,
         "stress1_0": 15884.518847849995
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.13509542303472566,
       "priorDailyDate": "2026-05-19",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3330,9 +3331,9 @@
         "stress0_5": 1750.7933422849942,
         "stress1_0": 1401.050592284994
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.173596409518173,
       "priorDailyDate": "2026-05-20",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3368,9 +3369,9 @@
         "stress0_5": -3441.6741096400024,
         "stress1_0": -3841.380109640002
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.018174901728729154,
       "priorDailyDate": "2026-05-21",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3406,11 +3407,11 @@
         "stress0_5": -3355.035486850004,
         "stress1_0": -3854.667986850004
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.27309583296342144,
       "priorDailyDate": "2026-05-22",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -3444,12 +3445,12 @@
         "stress0_5": -9793.028305739997,
         "stress1_0": -11641.668555739998
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 1.3170709085006838,
       "priorDailyDate": "2026-05-25",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-05-27",
@@ -3482,9 +3483,9 @@
         "stress0_5": -4292.122037755,
         "stress1_0": -4641.864787755
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.4910181135749814,
       "priorDailyDate": "2026-05-26",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3520,9 +3521,9 @@
         "stress0_5": -2593.4425241400018,
         "stress1_0": -2943.1852741400016
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.02739015710658821,
       "priorDailyDate": "2026-05-27",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3558,9 +3559,9 @@
         "stress0_5": -13171.681603415002,
         "stress1_0": -14245.891478415002
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.7013408924419595,
       "priorDailyDate": "2026-06-01",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3596,11 +3597,11 @@
         "stress0_5": -2901.2588476950014,
         "stress1_0": -3176.0567226950016
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.43173128736753164,
       "priorDailyDate": "2026-06-02",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -3634,9 +3635,9 @@
         "stress0_5": -4516.959207375003,
         "stress1_0": -4791.757082375003
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.33193448179683616,
       "priorDailyDate": "2026-06-03",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3672,11 +3673,11 @@
         "stress0_5": -2995.572876325,
         "stress1_0": -3370.297251325
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.04678367570154496,
       "priorDailyDate": "2026-06-04",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -3710,9 +3711,9 @@
         "stress0_5": -9127.219030510001,
         "stress1_0": -9576.888280510002
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.21288362290772245,
       "priorDailyDate": "2026-06-05",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3748,9 +3749,9 @@
         "stress0_5": -11248.532195237502,
         "stress1_0": -12372.705320237503
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.0429371712736502,
       "priorDailyDate": "2026-06-08",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3786,12 +3787,12 @@
         "stress0_5": -2105.6937206800017,
         "stress1_0": -2405.4732206800018
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.5150715737577194,
       "priorDailyDate": "2026-06-09",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-06-11",
@@ -3824,9 +3825,9 @@
         "stress0_5": -7169.1042380875015,
         "stress1_0": -7543.828613087502
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.11681388514805935,
       "priorDailyDate": "2026-06-10",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3862,12 +3863,12 @@
         "stress0_5": -3407.787260852503,
         "stress1_0": -3932.401385852503
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 1.9916586073501108,
       "priorDailyDate": "2026-06-12",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-06-16",
@@ -3900,9 +3901,9 @@
         "stress0_5": -23575.772143120004,
         "stress1_0": -25224.559393120002
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.5743653013333794,
       "priorDailyDate": "2026-06-15",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -3938,12 +3939,12 @@
         "stress0_5": -1765.7065338799955,
         "stress1_0": -2165.4125338799954
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.5669932380029996,
       "priorDailyDate": "2026-06-16",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-06-18",
@@ -3976,11 +3977,11 @@
         "stress0_5": -4069.693564464996,
         "stress1_0": -4519.3628144649965
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.4024736182815847,
       "priorDailyDate": "2026-06-17",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -4014,11 +4015,11 @@
         "stress0_5": 1433.55337705,
         "stress1_0": 933.92087705
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.3416965253241422,
       "priorDailyDate": "2026-06-18",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -4052,9 +4053,9 @@
         "stress0_5": -4581.9505176,
         "stress1_0": -5381.3625176
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.6409301555776348,
       "priorDailyDate": "2026-06-19",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -4090,11 +4091,11 @@
         "stress0_5": -9396.513807475003,
         "stress1_0": -10520.686932475004
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.373962545443951,
       "priorDailyDate": "2026-06-22",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -4128,9 +4129,9 @@
         "stress0_5": -4567.269336475004,
         "stress1_0": -4917.012086475003
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.1567072841857318,
       "priorDailyDate": "2026-06-23",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -4166,12 +4167,12 @@
         "stress0_5": -2884.447547230002,
         "stress1_0": -3459.0249222300017
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.8292023623138078,
       "priorDailyDate": "2026-06-24",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-06-29",
@@ -4204,11 +4205,11 @@
         "stress0_5": -13670.578994679998,
         "stress1_0": -14370.064494679998
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.14299600568652426,
       "priorDailyDate": "2026-06-25",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -4242,9 +4243,9 @@
         "stress0_5": -10260.193374512495,
         "stress1_0": -11234.476749512494
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.4562271366810755,
       "priorDailyDate": "2026-06-29",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -4280,9 +4281,9 @@
         "stress0_5": -3718.7418812675014,
         "stress1_0": -4193.392756267502
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.12955197121612416,
       "priorDailyDate": "2026-07-07",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -4318,9 +4319,9 @@
         "stress0_5": -20153.636187737502,
         "stress1_0": -20528.360562737504
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -2.117530852053595,
       "priorDailyDate": "2026-07-08",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -4356,11 +4357,11 @@
         "stress0_5": -2008.6473365075042,
         "stress1_0": -2483.298211507504
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.3381200525080619,
       "priorDailyDate": "2026-07-09",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -4394,12 +4395,12 @@
         "stress0_5": -7809.057630742506,
         "stress1_0": -8583.488005742507
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 1.0186622598360895,
       "priorDailyDate": "2026-07-10",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-07-14",
@@ -4432,12 +4433,12 @@
         "stress0_5": -13215.534290282501,
         "stress1_0": -14539.560415282502
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.7437921959034144,
       "priorDailyDate": "2026-07-13",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-07-16",
@@ -4470,11 +4471,11 @@
         "stress0_5": -12614.464490379996,
         "stress1_0": -20383.749865379996
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.10996983625095602,
       "priorDailyDate": "2026-07-15",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -4508,9 +4509,9 @@
         "stress0_5": -12320.060514605002,
         "stress1_0": -17965.907764605003
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.023880225097083763,
       "priorDailyDate": "2026-07-16",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -4546,12 +4547,12 @@
         "stress0_5": -24305.183226174995,
         "stress1_0": -40942.945476174995
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 1.0864982189404904,
       "priorDailyDate": "2026-07-17",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-07-21",
@@ -4584,9 +4585,9 @@
         "stress0_5": -69128.068174,
         "stress1_0": -120101.25208
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.39368299067571444,
       "priorDailyDate": "2026-07-20",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -4622,9 +4623,9 @@
         "stress0_5": -3153.52880642,
         "stress1_0": -3503.27155642
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.20958392639808254,
       "priorDailyDate": "2026-07-21",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -4660,9 +4661,9 @@
         "stress0_5": -2458.657678092498,
         "stress1_0": -2883.3453030924975
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.7915180029519187,
       "priorDailyDate": "2026-07-22",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -4698,9 +4699,9 @@
         "stress0_5": -5618.251889140003,
         "stress1_0": -6067.921139139998
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.5277908006459442,
       "priorDailyDate": "2026-07-23",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -4736,9 +4737,9 @@
         "stress0_5": -3455.3888827450073,
         "stress1_0": -4304.764132745007
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.4279501960652743,
       "priorDailyDate": "2026-07-24",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -4774,12 +4775,12 @@
         "stress0_5": -18781.05486475,
         "stress1_0": -21279.21736475
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.9613988879749513,
       "priorDailyDate": "2026-07-27",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-07-29",
@@ -4812,9 +4813,9 @@
         "stress0_5": -3005.5267902374944,
         "stress1_0": -3480.1776652374947
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.0441741210496005,
       "priorDailyDate": "2026-07-28",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -4850,12 +4851,12 @@
         "stress0_5": -4742.3481624249935,
         "stress1_0": -5266.9622874249935
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 1.1042156983325224,
       "priorDailyDate": "2026-07-29",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-07-31",
@@ -4888,11 +4889,11 @@
         "stress0_5": -4017.596672919995,
         "stress1_0": -4617.155672919995
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.27608019727671795,
       "priorDailyDate": "2026-07-30",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -4926,11 +4927,11 @@
         "stress0_5": -5109.711690559998,
         "stress1_0": -5834.178815559998
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.2732639310116358,
       "priorDailyDate": "2026-07-31",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -4964,12 +4965,12 @@
         "stress0_5": -5167.267226365,
         "stress1_0": -6216.495476365
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 1.6023064682819665,
       "priorDailyDate": "2026-08-03",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-08-06",
@@ -5002,11 +5003,11 @@
         "stress0_5": -1706.7226897599933,
         "stress1_0": -2106.428689759993
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.039610154824920585,
       "priorDailyDate": "2026-08-05",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -5040,11 +5041,11 @@
         "stress0_5": -2736.907780480004,
         "stress1_0": -3086.650530480004
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.04609202567344983,
       "priorDailyDate": "2026-08-06",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -5078,9 +5079,9 @@
         "stress0_5": -5459.691527360007,
         "stress1_0": -6259.103527360007
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.2652622178925146,
       "priorDailyDate": "2026-08-07",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5116,9 +5117,9 @@
         "stress0_5": -7674.47981668,
         "stress1_0": -8873.59781668
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.0010169195067577519,
       "priorDailyDate": "2026-08-10",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5154,9 +5155,9 @@
         "stress0_5": 17121.9683758625,
         "stress1_0": 16747.2440008625
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.4559913438931251,
       "priorDailyDate": "2026-08-11",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5192,9 +5193,9 @@
         "stress0_5": -2839.424453770003,
         "stress1_0": -3289.093703770003
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.1460871128691532,
       "priorDailyDate": "2026-08-12",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5230,9 +5231,9 @@
         "stress0_5": -2271.5500097649965,
         "stress1_0": -2721.2192597649964
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.1641024801573132,
       "priorDailyDate": "2026-08-13",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5268,9 +5269,9 @@
         "stress0_5": 45233.96691811999,
         "stress1_0": 44209.72029311999
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.12235687627197844,
       "priorDailyDate": "2026-08-14",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5306,9 +5307,9 @@
         "stress0_5": -9398.33641225001,
         "stress1_0": -10897.233912250009
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.32155462529753764,
       "priorDailyDate": "2026-08-17",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5344,9 +5345,9 @@
         "stress0_5": -1775.9330976125,
         "stress1_0": -2200.6207226125
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.31711992183781623,
       "priorDailyDate": "2026-08-19",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5382,12 +5383,12 @@
         "stress0_5": -5184.330571210005,
         "stress1_0": -5733.926321210005
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "UP",
+      "decisiveDailyBias": "UP",
+      "dailyBiasMagnitudePct": 0.6377111340916786,
       "priorDailyDate": "2026-08-20",
-      "biasAgreement": false,
-      "decisiveAgreement": false
+      "biasAgreement": true,
+      "decisiveAgreement": true
     },
     {
       "date": "2026-08-24",
@@ -5420,11 +5421,11 @@
         "stress0_5": -3603.2042628999943,
         "stress1_0": -4552.506012899995
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.08315502118081408,
       "priorDailyDate": "2026-08-21",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -5458,9 +5459,9 @@
         "stress0_5": -12952.927975524997,
         "stress1_0": -14326.917350524996
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.13586508329209712,
       "priorDailyDate": "2026-08-24",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5496,9 +5497,9 @@
         "stress0_5": -3437.1694604400022,
         "stress1_0": -3836.8754604400024
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.521069836919108,
       "priorDailyDate": "2026-08-26",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5534,9 +5535,9 @@
         "stress0_5": -2991.7053979,
         "stress1_0": -3366.4297729
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.4829032024868174,
       "priorDailyDate": "2026-08-27",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5572,11 +5573,11 @@
         "stress0_5": -4003.250865692499,
         "stress1_0": -4477.9017406924995
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.3520008633983496,
       "priorDailyDate": "2026-08-28",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -5610,9 +5611,9 @@
         "stress0_5": -8474.41933481,
         "stress1_0": -10547.89420981
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.39399147489312947,
       "priorDailyDate": "2026-08-31",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5648,9 +5649,9 @@
         "stress0_5": -2402.4381605024982,
         "stress1_0": -2727.1992855024982
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.10215777146559413,
       "priorDailyDate": "2026-09-01",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5686,9 +5687,9 @@
         "stress0_5": -2766.4352655600014,
         "stress1_0": -3316.0310155600014
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.5875921815113094,
       "priorDailyDate": "2026-09-02",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5724,9 +5725,9 @@
         "stress0_5": -2878.6363760099953,
         "stress1_0": -3428.232126009995
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.17144446140304748,
       "priorDailyDate": "2026-09-03",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5762,11 +5763,11 @@
         "stress0_5": -1958.4946265499987,
         "stress1_0": -2458.1271265499986
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.10157727517388082,
       "priorDailyDate": "2026-09-04",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -5800,9 +5801,9 @@
         "stress0_5": -7888.059374297505,
         "stress1_0": -9162.122249297505
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "DOWN",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": -0.4204434338167973,
       "priorDailyDate": "2026-09-07",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5838,9 +5839,9 @@
         "stress0_5": -3536.550660799991,
         "stress1_0": -3936.256660799991
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.605782797114296,
       "priorDailyDate": "2026-09-08",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5876,9 +5877,9 @@
         "stress0_5": -5081.7961164100025,
         "stress1_0": -5531.465366410002
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -0.8614306687934392,
       "priorDailyDate": "2026-09-09",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5914,11 +5915,11 @@
         "stress0_5": 60994.17085321751,
         "stress1_0": 60269.70372821751
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.19759725156305308,
       "priorDailyDate": "2026-09-10",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -5952,9 +5953,9 @@
         "stress0_5": -2621.6042155,
         "stress1_0": -2996.3285905
       },
-      "dailyBias": "FLAT",
-      "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBias": "DOWN",
+      "decisiveDailyBias": "DOWN",
+      "dailyBiasMagnitudePct": -1.1945414371252405,
       "priorDailyDate": "2026-09-15",
       "biasAgreement": false,
       "decisiveAgreement": false
@@ -5990,11 +5991,11 @@
         "stress0_5": -3381.78933568,
         "stress1_0": -3781.49533568
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.4282266227193743,
       "priorDailyDate": "2026-09-16",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     },
     {
@@ -6028,11 +6029,11 @@
         "stress0_5": -4210.0057060200015,
         "stress1_0": -4859.5279560200015
       },
-      "dailyBias": "FLAT",
+      "dailyBias": "UP",
       "decisiveDailyBias": "FLAT",
-      "dailyBiasMagnitudePct": 0,
+      "dailyBiasMagnitudePct": 0.22827510164702414,
       "priorDailyDate": "2026-09-17",
-      "biasAgreement": false,
+      "biasAgreement": true,
       "decisiveAgreement": false
     }
   ]
