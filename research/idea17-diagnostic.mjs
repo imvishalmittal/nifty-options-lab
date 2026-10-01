@@ -2,11 +2,9 @@ import fs from 'node:fs';
 import { normalizeCandles, splitDateRange } from './groww-backtest-nifty-180.mjs';
 
 const API='https://api.groww.in/v1';
-const CAPITAL=60000;
-const FROZEN_DECISIVE_THRESHOLD_PCT=0.5; // frozen before any Idea 17 run; not tuned on 2026
+const FROZEN_DECISIVE_THRESHOLD_PCT=0.5;
 let last=0;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-
 async function get(t,e,p,sp=1500){
   const w=Math.max(0,sp-(Date.now()-last)); if(w) await sleep(w);
   const u=new URL(API+e); for(const [k,v] of Object.entries(p)) u.searchParams.set(k,String(v));
@@ -40,14 +38,15 @@ function aggregateDaily(rows){
 }
 function classify(daily,date){
   const prior=daily.filter(x=>x.timestamp.slice(0,10)<date).at(-1);
-  if(!prior)return{bias:'DATA_MISSING',magnitudePct:null,priorDate:null};
+  if(!prior)return{bias:'DATA_MISSING',decisiveBias:'DATA_MISSING',magnitudePct:null,priorDate:null};
   const magnitude=(prior.close/prior.open-1)*100;
   const bias=magnitude>0?'UP':magnitude<0?'DOWN':'FLAT';
   const decisive=Math.abs(magnitude)>=FROZEN_DECISIVE_THRESHOLD_PCT?bias:'FLAT';
   return{bias,decisiveBias:decisive,magnitudePct:magnitude,priorDate:prior.timestamp.slice(0,10)};
 }
-function stats(rows,field='money'){
-  const v=rows.map(x=>x[field]).filter(Number.isFinite),pos=v.filter(x=>x>0),neg=v.filter(x=>x<0);
+function moneyValue(x){return Number.isFinite(x?.money?.current)?x.money.current:null;}
+function stats(rows){
+  const v=rows.map(moneyValue).filter(Number.isFinite),pos=v.filter(x=>x>0),neg=v.filter(x=>x<0);
   const gp=pos.reduce((a,b)=>a+b,0),gl=Math.abs(neg.reduce((a,b)=>a+b,0));let eq=0,peak=0,dd=0;
   for(const x of v){eq+=x;peak=Math.max(peak,eq);dd=Math.max(dd,peak-eq)}
   return{trades:v.length,winners:pos.length,winRatePct:v.length?pos.length/v.length*100:null,totalPnl:v.reduce((a,b)=>a+b,0),avgPnl:v.length?v.reduce((a,b)=>a+b,0)/v.length:null,profitFactor:gl?gp/gl:(gp?Infinity:null),maxDrawdownRupees:dd};
@@ -56,8 +55,10 @@ function reversalStats(rows){
   const stops=rows.filter(x=>x.stopOut),reversed=stops.filter(x=>x.underlyingDirectionIntactAtOptionStop===false),intact=stops.filter(x=>x.underlyingDirectionIntactAtOptionStop===true);
   return{stopOuts:stops.length,reversalDrivenStopOuts:reversed.length,underlyingIntactStopOuts:intact.length,stopOutReversalRatePct:stops.length?reversed.length/stops.length*100:null,reversalDrivenStopRatePct:rows.length?reversed.length/rows.length*100:null};
 }
+function assertClose(a,b,label,tol=.01){if(Math.abs(a-b)>tol)throw Error(`RECONCILIATION FAILED: ${label}: ${a} vs ${b}`);}
 export async function run({token,baselinePath,startDate='2026-01-01',endDate='2026-09-19',spacingMs=1500,out='idea17-2026-diagnostic.json'}){
-  last=0;const baseline=JSON.parse(fs.readFileSync(baselinePath,'utf8'));
+  last=0;
+  const baseline=JSON.parse(fs.readFileSync(baselinePath,'utf8'));
   const intraday=await dailyCandles(token,'2025-12-01',endDate,spacingMs);
   const daily=aggregateDaily(intraday);
   const trades=baseline.trades??[],counts={};
@@ -66,7 +67,18 @@ export async function run({token,baselinePath,startDate='2026-01-01',endDate='20
   const enriched=trades.map(t=>{const c=classify(daily,t.date),sideBias=t.side==='CE'?'UP':'DOWN';return{...t,dailyBias:c.bias,decisiveDailyBias:c.decisiveBias,dailyBiasMagnitudePct:c.magnitudePct,priorDailyDate:c.priorDate,biasAgreement:c.bias===sideBias,decisiveAgreement:c.decisiveBias===sideBias};});
   const idea14=enriched.filter(t=>t.biasAgreement),idea17=enriched.filter(t=>t.decisiveAgreement),excluded14=enriched.filter(t=>!t.biasAgreement),excluded17=enriched.filter(t=>!t.decisiveAgreement);
   const scenarios={baseline:enriched,idea14_direction_only:idea14,idea17_idea14_plus_decisive_threshold:idea17};
-  const result={schemaVersion:2,study:'Idea 17 diagnostic: daily-bias direction filter versus decisive daily-bias threshold',period:{startDate,endDate},frozenSpec:{dailyBias:'prior completed NIFTY trading day close versus open; UP if close>open, DOWN if close<open, FLAT if equal.',decisiveThresholdPct:FROZEN_DECISIVE_THRESHOLD_PCT,decisiveBias:`UP/DOWN only when absolute prior-day open-to-close return >= ${FROZEN_DECISIVE_THRESHOLD_PCT}%; otherwise FLAT.`,entryGate:'trade direction must agree with the selected daily bias; FLAT or disagreement means no trade.',lookahead:'none; only prior completed day is used.',source:'retrospective filter on the frozen Idea 10A baseline trade set; Idea 10A signal/confirmation/exit mechanics are unchanged.'},dataIntegrity:{baselineTrades:trades.length,multiTradeDates,multiTradeDateCount:multiTradeDates.length,intradayRows:intraday.length,dailyRows:daily.length,missingPriorBiasTrades:enriched.filter(t=>t.dailyBias==='DATA_MISSING').length},scenarios:Object.fromEntries(Object.entries(scenarios).map(([name,rows])=>[name,{...stats(rows),...reversalStats(rows),ceTrades:rows.filter(x=>x.side==='CE').length,peTrades:rows.filter(x=>x.side==='PE').length}])),exclusions:{idea14:{trades:excluded14.length,...stats(excluded14),pnlBySide:{CE:stats(excluded14.filter(x=>x.side==='CE')).totalPnl,PE:stats(excluded14.filter(x=>x.side==='PE')).totalPnl}},idea17:{trades:excluded17.length,...stats(excluded17),pnlBySide:{CE:stats(excluded17.filter(x=>x.side==='CE')).totalPnl,PE:stats(excluded17.filter(x=>x.side==='PE')).totalPnl}}},biasDistribution:{UP:enriched.filter(x=>x.dailyBias==='UP').length,DOWN:enriched.filter(x=>x.dailyBias==='DOWN').length,FLAT:enriched.filter(x=>x.dailyBias==='FLAT').length,decisiveUP:enriched.filter(x=>x.decisiveDailyBias==='UP').length,decisiveDOWN:enriched.filter(x=>x.decisiveDailyBias==='DOWN').length,decisiveFLAT:enriched.filter(x=>x.decisiveDailyBias==='FLAT').length},trades:enriched};
+  const scenarioStats=Object.fromEntries(Object.entries(scenarios).map(([name,rows])=>[name,{...stats(rows),...reversalStats(rows),ceTrades:rows.filter(x=>x.side==='CE').length,peTrades:rows.filter(x=>x.side==='PE').length}]));
+  const exclusions={idea14:{trades:excluded14.length,...stats(excluded14),pnlBySide:{CE:stats(excluded14.filter(x=>x.side==='CE')).totalPnl,PE:stats(excluded14.filter(x=>x.side==='PE')).totalPnl}},idea17:{trades:excluded17.length,...stats(excluded17),pnlBySide:{CE:stats(excluded17.filter(x=>x.side==='CE')).totalPnl,PE:stats(excluded17.filter(x=>x.side==='PE')).totalPnl}}};
+  const baselineStats=stats(enriched),rawMoney=trades.map(moneyValue).filter(Number.isFinite);
+  if(trades.length!==156)throw Error(`BASELINE COUNT FAILED: expected 156, got ${trades.length}`);
+  if(enriched.length!==trades.length)throw Error('BASELINE RECONSTRUCTION FAILED: enriched trade count changed');
+  if(enriched.some(t=>t.dailyBias==='DATA_MISSING'||t.decisiveDailyBias==='DATA_MISSING'))throw Error('BIAS COVERAGE FAILED: missing prior completed day');
+  if(scenarioStats.idea14_direction_only.trades+exclusions.idea14.trades!==baselineStats.trades)throw Error('IDEA14 COUNT RECONCILIATION FAILED');
+  if(scenarioStats.idea17_idea14_plus_decisive_threshold.trades+exclusions.idea17.trades!==baselineStats.trades)throw Error('IDEA17 COUNT RECONCILIATION FAILED');
+  assertClose(scenarioStats.idea14_direction_only.totalPnl+exclusions.idea14.totalPnl,baselineStats.totalPnl,'Idea14 P&L');
+  assertClose(scenarioStats.idea17_idea14_plus_decisive_threshold.totalPnl+exclusions.idea17.totalPnl,baselineStats.totalPnl,'Idea17 P&L');
+  assertClose(baselineStats.totalPnl,rawMoney.reduce((a,b)=>a+b,0),'baseline P&L');
+  const result={schemaVersion:3,study:'Idea 17 diagnostic: daily-bias direction filter versus decisive daily-bias threshold',period:{startDate,endDate},frozenSpec:{dailyBias:'prior completed NIFTY trading day close versus open; UP if close>open, DOWN if close<open, FLAT if equal.',decisiveThresholdPct:FROZEN_DECISIVE_THRESHOLD_PCT,decisiveBias:`UP/DOWN only when absolute prior-day open-to-close return >= ${FROZEN_DECISIVE_THRESHOLD_PCT}%; otherwise FLAT.`,entryGate:'trade direction must agree with the selected daily bias; FLAT or disagreement means no trade.',lookahead:'none; only prior completed day is used.',source:'retrospective filter on the frozen Idea 10A baseline trade set; Idea 10A signal/confirmation/exit mechanics are unchanged.'},dataIntegrity:{baselineTrades:trades.length,multiTradeDates,multiTradeDateCount:multiTradeDates.length,intradayRows:intraday.length,dailyRows:daily.length,missingPriorBiasTrades:enriched.filter(t=>t.dailyBias==='DATA_MISSING').length,reconciliation:'PASS'},scenarios:scenarioStats,exclusions,biasDistribution:{UP:enriched.filter(x=>x.dailyBias==='UP').length,DOWN:enriched.filter(x=>x.dailyBias==='DOWN').length,FLAT:enriched.filter(x=>x.dailyBias==='FLAT').length,decisiveUP:enriched.filter(x=>x.decisiveDailyBias==='UP').length,decisiveDOWN:enriched.filter(x=>x.decisiveDailyBias==='DOWN').length,decisiveFLAT:enriched.filter(x=>x.decisiveDailyBias==='FLAT').length},trades:enriched};
   fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n');
   console.log(JSON.stringify({period:result.period,frozenThresholdPct:FROZEN_DECISIVE_THRESHOLD_PCT,dataIntegrity:result.dataIntegrity,scenarios:result.scenarios,exclusions:result.exclusions,biasDistribution:result.biasDistribution},null,2));
 }
