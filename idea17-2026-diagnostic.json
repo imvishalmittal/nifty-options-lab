@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "study": "Idea 17 diagnostic: daily-bias direction filter versus decisive daily-bias threshold",
   "period": {
     "startDate": "2026-01-01",
@@ -19,17 +19,18 @@
     "multiTradeDateCount": 0,
     "intradayRows": 27810,
     "dailyRows": 199,
-    "missingPriorBiasTrades": 0
+    "missingPriorBiasTrades": 0,
+    "reconciliation": "PASS"
   },
   "scenarios": {
     "baseline": {
-      "trades": 0,
-      "winners": 0,
-      "winRatePct": null,
-      "totalPnl": 0,
-      "avgPnl": null,
-      "profitFactor": null,
-      "maxDrawdownRupees": 0,
+      "trades": 156,
+      "winners": 20,
+      "winRatePct": 12.82051282051282,
+      "totalPnl": -4823.903370242515,
+      "avgPnl": -30.922457501554582,
+      "profitFactor": 0.993772497866198,
+      "maxDrawdownRupees": 281454.41820387007,
       "stopOuts": 136,
       "reversalDrivenStopOuts": 126,
       "underlyingIntactStopOuts": 10,
@@ -39,13 +40,13 @@
       "peTrades": 2
     },
     "idea14_direction_only": {
-      "trades": 0,
-      "winners": 0,
-      "winRatePct": null,
-      "totalPnl": 0,
-      "avgPnl": null,
-      "profitFactor": null,
-      "maxDrawdownRupees": 0,
+      "trades": 71,
+      "winners": 7,
+      "winRatePct": 9.859154929577464,
+      "totalPnl": -51660.554752220014,
+      "avgPnl": -727.6134472143664,
+      "profitFactor": 0.8463568418741083,
+      "maxDrawdownRupees": 163386.676769145,
       "stopOuts": 63,
       "reversalDrivenStopOuts": 57,
       "underlyingIntactStopOuts": 6,
@@ -55,13 +56,13 @@
       "peTrades": 0
     },
     "idea17_idea14_plus_decisive_threshold": {
-      "trades": 0,
-      "winners": 0,
-      "winRatePct": null,
-      "totalPnl": 0,
-      "avgPnl": null,
-      "profitFactor": null,
-      "maxDrawdownRupees": 0,
+      "trades": 37,
+      "winners": 5,
+      "winRatePct": 13.513513513513514,
+      "totalPnl": 30295.134239499966,
+      "avgPnl": 818.7874118783775,
+      "profitFactor": 1.1589213354015566,
+      "maxDrawdownRupees": 102383.5647562825,
       "stopOuts": 32,
       "reversalDrivenStopOuts": 27,
       "underlyingIntactStopOuts": 5,
@@ -73,29 +74,29 @@
   },
   "exclusions": {
     "idea14": {
-      "trades": 0,
-      "winners": 0,
-      "winRatePct": null,
-      "totalPnl": 0,
-      "avgPnl": null,
-      "profitFactor": null,
-      "maxDrawdownRupees": 0,
+      "trades": 85,
+      "winners": 13,
+      "winRatePct": 15.294117647058824,
+      "totalPnl": 46836.651381977455,
+      "avgPnl": 551.0194280232641,
+      "profitFactor": 1.1068413691211838,
+      "maxDrawdownRupees": 205948.41348094758,
       "pnlBySide": {
-        "CE": 0,
-        "PE": 0
+        "CE": 42914.67551037247,
+        "PE": 3921.9758716049923
       }
     },
     "idea17": {
-      "trades": 0,
-      "winners": 0,
-      "winRatePct": null,
-      "totalPnl": 0,
-      "avgPnl": null,
-      "profitFactor": null,
-      "maxDrawdownRupees": 0,
+      "trades": 119,
+      "winners": 15,
+      "winRatePct": 12.605042016806722,
+      "totalPnl": -35119.037609742525,
+      "avgPnl": -295.11796310708,
+      "profitFactor": 0.9398629246950229,
+      "maxDrawdownRupees": 270065.9012680476,
       "pnlBySide": {
-        "CE": 0,
-        "PE": 0
+        "CE": -39041.01348134754,
+        "PE": 3921.9758716049923
       }
     }
   },
