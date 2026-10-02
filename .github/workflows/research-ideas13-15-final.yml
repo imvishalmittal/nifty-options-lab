@@ -34,6 +34,8 @@ jobs:
             --start=2025-01-01 --end=2025-12-31 \
             --out=idea13-15-validation-2025.json
       - name: Holdout 2026
+        env:
+          PRESERVE_FIXED10_TRADES: 'true'
         run: |
           node research/idea13-15-2026-diagnostic.mjs \
             --start=2026-01-01 --end=2026-09-19 \
@@ -59,4 +61,5 @@ jobs:
             idea13-15-validation-2025.json
             idea13-15-holdout-2026.json
             idea15-fixed10-full-backtest.json
+            idea15-fixed10-trades-2026.json
           retention-days: 90
