@@ -5,7 +5,7 @@
       "BASE",
       "V4"
     ],
-    "updatedAt": "2026-10-01T04:16:32.169Z"
+    "updatedAt": "2026-10-02T04:01:06.113Z"
   },
   "sessions": [
     {
@@ -2752,6 +2752,62 @@
         "optionType": "PE",
         "premium": 189.75
       },
+      "side": null,
+      "strike": null,
+      "entry": null,
+      "entryTime": null,
+      "signalSource": null,
+      "tradeCount": 0,
+      "totalPnl": null,
+      "strategyOutcomes": {}
+    },
+    {
+      "date": "2026-10-02",
+      "thread": "BASE",
+      "strategyVersions": [
+        "V2",
+        "V3-5",
+        "V3-10",
+        "V6",
+        "V7",
+        "V8",
+        "V9",
+        "V10-5",
+        "V10-10",
+        "V11"
+      ],
+      "status": "NO_SESSION",
+      "reason": "No completed 09:25 NIFTY candle",
+      "updatedAt": "2026-10-02T04:01:06.113Z",
+      "spot925": null,
+      "expiry": null,
+      "referencePremium": null,
+      "ce": null,
+      "pe": null,
+      "side": null,
+      "strike": null,
+      "entry": null,
+      "entryTime": null,
+      "signalSource": null,
+      "tradeCount": 0,
+      "totalPnl": null,
+      "strategyOutcomes": {}
+    },
+    {
+      "date": "2026-10-02",
+      "thread": "V4",
+      "strategyVersions": [
+        "V4",
+        "V5"
+      ],
+      "status": "NO_TRADE",
+      "reason": "No completed 09:25 NIFTY candle",
+      "updatedAt": "2026-10-02T04:01:04.861Z",
+      "spot925": null,
+      "expiry": null,
+      "referencePremium": null,
+      "ce": null,
+      "pe": null,
       "side": null,
       "strike": null,
       "entry": null,
