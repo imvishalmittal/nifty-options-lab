@@ -1,0 +1,43 @@
+name: Research - Idea 17 discovery validation holdout
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/idea10-underlying-option-confirmation]
+    paths:
+      - research/idea17-three-period-backtest.mjs
+      - research/groww-idea10-2026-diagnostic.mjs
+      - research/idea17-diagnostic.mjs
+      - .github/workflows/research-idea17-three-period.yml
+permissions: { contents: write }
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1440
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Resolve Groww token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run Idea 17 discovery validation holdout
+        env:
+          GROWW_REQUEST_SPACING_MS: '1500'
+        run: node research/idea17-three-period-backtest.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: idea17-three-period-results
+          path: idea17-three-period-results.json
+          retention-days: 90
+      - name: Persist result
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add idea17-three-period-results.json
+          git diff --cached --quiet || git commit -m "Persist Idea 17 discovery validation holdout result"
+          git push origin HEAD:agent/idea10-underlying-option-confirmation
