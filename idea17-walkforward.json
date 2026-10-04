@@ -1,0 +1,742 @@
+{
+  "schemaVersion": 1,
+  "study": "Idea 17 walk-forward: Idea10A + prior completed-day O-to-C direction + frozen >=0.5% decisive threshold",
+  "frozenSpec": {
+    "thresholdPct": 0.5,
+    "bias": "prior completed NIFTY trading day close versus open",
+    "gate": "trade side must agree with decisive UP/DOWN bias; FLAT means no trade",
+    "lookahead": "none"
+  },
+  "periods": {
+    "discovery": {
+      "period": {
+        "start": "2020-01-01",
+        "end": "2024-12-31"
+      },
+      "baselineTrades": 1117,
+      "eligibleTrades": 1116,
+      "excludedMissingPriorBias": 1,
+      "missingPriorBiasDates": [
+        "2020-01-01"
+      ],
+      "selectedTrades": 223,
+      "selected": {
+        "current": {
+          "stats": {
+            "trades": 223,
+            "winners": 30,
+            "winRatePct": 13.452914798206278,
+            "totalPnl": 180905.40730932733,
+            "profitFactor": 1.184273240107044,
+            "maxDrawdownRupees": 188758.29251291996
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 59,
+            "mean": 180905.40730932733,
+            "lower95": -367550.01510593266,
+            "upper95": 806425.5771416202
+          }
+        },
+        "stress0_5": {
+          "stats": {
+            "trades": 223,
+            "winners": 30,
+            "winRatePct": 13.452914798206278,
+            "totalPnl": -16098.99919067245,
+            "profitFactor": 0.9860086778671084,
+            "maxDrawdownRupees": 237684.55176291993
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 59,
+            "mean": -16098.99919067245,
+            "lower95": -561566.288047775,
+            "upper95": 599345.875245135
+          }
+        },
+        "stress1_0": {
+          "stats": {
+            "trades": 223,
+            "winners": 30,
+            "winRatePct": 13.452914798206278,
+            "totalPnl": -213103.40569067252,
+            "profitFactor": 0.8385041660542065,
+            "maxDrawdownRupees": 286610.81101291993
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 59,
+            "mean": -213103.40569067252,
+            "lower95": -757441.5117619146,
+            "upper95": 393553.78805169516
+          }
+        }
+      },
+      "baseline": {
+        "current": {
+          "stats": {
+            "trades": 1116,
+            "winners": 160,
+            "winRatePct": 14.336917562724013,
+            "totalPnl": 1176187.2916986705,
+            "profitFactor": 1.2427017995814882,
+            "maxDrawdownRupees": 465589.68621874484
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 60,
+            "mean": 1176187.2916986705,
+            "lower95": -157591.36480537485,
+            "upper95": 2569871.38731489
+          }
+        },
+        "stress0_5": {
+          "stats": {
+            "trades": 1116,
+            "winners": 158,
+            "winRatePct": 14.157706093189965,
+            "totalPnl": 201285.34857367034,
+            "profitFactor": 1.035426228719369,
+            "maxDrawdownRupees": 618415.529718745
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 60,
+            "mean": 201285.34857367034,
+            "lower95": -1153237.6161801252,
+            "upper95": 1620642.2713611922
+          }
+        },
+        "stress1_0": {
+          "stats": {
+            "trades": 1116,
+            "winners": 153,
+            "winRatePct": 13.709677419354838,
+            "totalPnl": -773616.5945513303,
+            "profitFactor": 0.8814249316654739,
+            "maxDrawdownRupees": 1068462.4304154706
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 60,
+            "mean": -773616.5945513303,
+            "lower95": -2147195.21905424,
+            "upper95": 653763.3312486325
+          }
+        }
+      },
+      "annual": {
+        "2020": {
+          "trades": 58,
+          "pnl": 20727.701003104994
+        },
+        "2021": {
+          "trades": 42,
+          "pnl": 38977.92250902749
+        },
+        "2022": {
+          "trades": 57,
+          "pnl": 168269.2920520949
+        },
+        "2023": {
+          "trades": 31,
+          "pnl": -66875.93340186503
+        },
+        "2024": {
+          "trades": 35,
+          "pnl": 19806.425146965033
+        }
+      },
+      "monthly": {
+        "2020-01": {
+          "trades": 4,
+          "pnl": -15803.279511114992
+        },
+        "2020-02": {
+          "trades": 3,
+          "pnl": -21440.220472079996
+        },
+        "2020-03": {
+          "trades": 6,
+          "pnl": -30043.311446804993
+        },
+        "2020-04": {
+          "trades": 6,
+          "pnl": -4907.2377647925005
+        },
+        "2020-05": {
+          "trades": 4,
+          "pnl": -20025.036585609996
+        },
+        "2020-06": {
+          "trades": 7,
+          "pnl": -30692.77187617749
+        },
+        "2020-07": {
+          "trades": 6,
+          "pnl": -34212.66391509
+        },
+        "2020-08": {
+          "trades": 2,
+          "pnl": -7439.178739909999
+        },
+        "2020-09": {
+          "trades": 5,
+          "pnl": 168055.38512770747
+        },
+        "2020-10": {
+          "trades": 3,
+          "pnl": -14637.173254477506
+        },
+        "2020-11": {
+          "trades": 7,
+          "pnl": -19197.398095450008
+        },
+        "2020-12": {
+          "trades": 5,
+          "pnl": 51070.58753690498
+        },
+        "2021-01": {
+          "trades": 5,
+          "pnl": -3368.2094333674904
+        },
+        "2021-02": {
+          "trades": 5,
+          "pnl": -9272.487727647493
+        },
+        "2021-03": {
+          "trades": 3,
+          "pnl": -23109.37314243
+        },
+        "2021-04": {
+          "trades": 5,
+          "pnl": 23179.044736547497
+        },
+        "2021-05": {
+          "trades": 3,
+          "pnl": -10916.213247007494
+        },
+        "2021-06": {
+          "trades": 2,
+          "pnl": -12201.3175675025
+        },
+        "2021-07": {
+          "trades": 1,
+          "pnl": 4948.556014535003
+        },
+        "2021-08": {
+          "trades": 3,
+          "pnl": 1776.3603952749886
+        },
+        "2021-09": {
+          "trades": 6,
+          "pnl": 124092.15462632498
+        },
+        "2021-10": {
+          "trades": 2,
+          "pnl": -14693.689748915001
+        },
+        "2021-11": {
+          "trades": 3,
+          "pnl": -14730.710576900003
+        },
+        "2021-12": {
+          "trades": 4,
+          "pnl": -26726.191819885003
+        },
+        "2022-01": {
+          "trades": 6,
+          "pnl": -3438.136005230008
+        },
+        "2022-02": {
+          "trades": 4,
+          "pnl": 87751.83610038001
+        },
+        "2022-03": {
+          "trades": 8,
+          "pnl": 61465.11503953499
+        },
+        "2022-04": {
+          "trades": 4,
+          "pnl": 39371.49914043501
+        },
+        "2022-05": {
+          "trades": 4,
+          "pnl": -14962.58429656999
+        },
+        "2022-06": {
+          "trades": 6,
+          "pnl": -7651.527942325013
+        },
+        "2022-07": {
+          "trades": 6,
+          "pnl": -26055.277988579997
+        },
+        "2022-08": {
+          "trades": 4,
+          "pnl": 96461.90543015
+        },
+        "2022-09": {
+          "trades": 2,
+          "pnl": -8591.338425680002
+        },
+        "2022-10": {
+          "trades": 6,
+          "pnl": -28005.759935294973
+        },
+        "2022-11": {
+          "trades": 3,
+          "pnl": -8885.402343660002
+        },
+        "2022-12": {
+          "trades": 4,
+          "pnl": -19191.036721065007
+        },
+        "2023-01": {
+          "trades": 4,
+          "pnl": -6607.61171022001
+        },
+        "2023-02": {
+          "trades": 4,
+          "pnl": -19368.64237868
+        },
+        "2023-03": {
+          "trades": 2,
+          "pnl": -7290.348267420003
+        },
+        "2023-04": {
+          "trades": 3,
+          "pnl": -16950.83478743499
+        },
+        "2023-05": {
+          "trades": 5,
+          "pnl": -21180.659451350002
+        },
+        "2023-06": {
+          "trades": 1,
+          "pnl": -337.0636123599983
+        },
+        "2023-07": {
+          "trades": 3,
+          "pnl": -7552.780371560006
+        },
+        "2023-09": {
+          "trades": 3,
+          "pnl": 40009.203055064994
+        },
+        "2023-10": {
+          "trades": 2,
+          "pnl": 14191.999202504998
+        },
+        "2023-11": {
+          "trades": 1,
+          "pnl": -8507.296621559999
+        },
+        "2023-12": {
+          "trades": 3,
+          "pnl": -33281.898458849995
+        },
+        "2024-01": {
+          "trades": 2,
+          "pnl": -4688.676719540003
+        },
+        "2024-02": {
+          "trades": 3,
+          "pnl": -16977.894611034993
+        },
+        "2024-03": {
+          "trades": 3,
+          "pnl": -25799.470483564997
+        },
+        "2024-04": {
+          "trades": 3,
+          "pnl": 16353.109183300012
+        },
+        "2024-05": {
+          "trades": 2,
+          "pnl": -10787.442897695
+        },
+        "2024-06": {
+          "trades": 6,
+          "pnl": 26296.59814446999
+        },
+        "2024-07": {
+          "trades": 3,
+          "pnl": 41940.99615261501
+        },
+        "2024-08": {
+          "trades": 1,
+          "pnl": -4634.533800064998
+        },
+        "2024-09": {
+          "trades": 3,
+          "pnl": -4265.547035002493
+        },
+        "2024-10": {
+          "trades": 3,
+          "pnl": -20058.191026135
+        },
+        "2024-11": {
+          "trades": 2,
+          "pnl": 37593.346512455006
+        },
+        "2024-12": {
+          "trades": 4,
+          "pnl": -15165.868272837495
+        }
+      }
+    },
+    "validation": {
+      "period": {
+        "start": "2025-01-01",
+        "end": "2025-12-31"
+      },
+      "baselineTrades": 207,
+      "eligibleTrades": 207,
+      "excludedMissingPriorBias": 0,
+      "missingPriorBiasDates": [],
+      "selectedTrades": 55,
+      "selected": {
+        "current": {
+          "stats": {
+            "trades": 55,
+            "winners": 11,
+            "winRatePct": 20,
+            "totalPnl": 9750.233710744975,
+            "profitFactor": 1.0363942043253485,
+            "maxDrawdownRupees": 122345.943949145
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 12,
+            "mean": 9750.233710744975,
+            "lower95": -159612.22246822497,
+            "upper95": 197770.56494459495
+          }
+        },
+        "stress0_5": {
+          "stats": {
+            "trades": 55,
+            "winners": 10,
+            "winRatePct": 18.181818181818183,
+            "totalPnl": -33903.58391425499,
+            "profitFactor": 0.888117215902717,
+            "maxDrawdownRupees": 148965.84472483495
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 12,
+            "mean": -33903.58391425499,
+            "lower95": -203001.17131796747,
+            "upper95": 152280.560952095
+          }
+        },
+        "stress1_0": {
+          "stats": {
+            "trades": 55,
+            "winners": 10,
+            "winRatePct": 18.181818181818183,
+            "totalPnl": -77557.40153925499,
+            "profitFactor": 0.7708693567229707,
+            "maxDrawdownRupees": 184423.639349835
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 12,
+            "mean": -77557.40153925499,
+            "lower95": -248948.94025641747,
+            "upper95": 108215.12471107492
+          }
+        }
+      },
+      "baseline": {
+        "current": {
+          "stats": {
+            "trades": 207,
+            "winners": 38,
+            "winRatePct": 18.357487922705314,
+            "totalPnl": 436054.20553200966,
+            "profitFactor": 1.4397865131494658,
+            "maxDrawdownRupees": 363476.83513020026
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 12,
+            "mean": 436054.20553200966,
+            "lower95": -357877.68633645,
+            "upper95": 1475784.9537103751
+          }
+        },
+        "stress0_5": {
+          "stats": {
+            "trades": 207,
+            "winners": 37,
+            "winRatePct": 17.874396135265698,
+            "totalPnl": 285077.46478200983,
+            "profitFactor": 1.2551563332900886,
+            "maxDrawdownRupees": 433342.93363020016
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 12,
+            "mean": 285077.46478200983,
+            "lower95": -512195.0744118351,
+            "upper95": 1335464.0643854425
+          }
+        },
+        "stress1_0": {
+          "stats": {
+            "trades": 207,
+            "winners": 36,
+            "winRatePct": 17.391304347826086,
+            "totalPnl": 134100.72403200984,
+            "profitFactor": 1.1078451395728999,
+            "maxDrawdownRupees": 503209.0321302001
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 12,
+            "mean": 134100.72403200984,
+            "lower95": -665854.8994363417,
+            "upper95": 1187835.6988854427
+          }
+        }
+      },
+      "annual": {
+        "2025": {
+          "trades": 55,
+          "pnl": 9750.233710744975
+        }
+      },
+      "monthly": {
+        "2025-01": {
+          "trades": 9,
+          "pnl": 52681.71597336
+        },
+        "2025-02": {
+          "trades": 6,
+          "pnl": -28755.609576462488
+        },
+        "2025-03": {
+          "trades": 7,
+          "pnl": 42576.8240289325
+        },
+        "2025-04": {
+          "trades": 4,
+          "pnl": -7418.0788230025055
+        },
+        "2025-05": {
+          "trades": 5,
+          "pnl": 13940.522176977503
+        },
+        "2025-06": {
+          "trades": 5,
+          "pnl": 937.3430172274916
+        },
+        "2025-07": {
+          "trades": 2,
+          "pnl": -43211.920083475
+        },
+        "2025-08": {
+          "trades": 3,
+          "pnl": -16673.011554497498
+        },
+        "2025-09": {
+          "trades": 3,
+          "pnl": -15807.448275009989
+        },
+        "2025-10": {
+          "trades": 6,
+          "pnl": 3881.337660594998
+        },
+        "2025-11": {
+          "trades": 2,
+          "pnl": -6038.659785602498
+        },
+        "2025-12": {
+          "trades": 3,
+          "pnl": 13637.2189517025
+        }
+      }
+    },
+    "holdout": {
+      "period": {
+        "start": "2026-01-01",
+        "end": "2026-09-19"
+      },
+      "baselineTrades": 156,
+      "eligibleTrades": 156,
+      "excludedMissingPriorBias": 0,
+      "missingPriorBiasDates": [],
+      "selectedTrades": 37,
+      "selected": {
+        "current": {
+          "stats": {
+            "trades": 37,
+            "winners": 5,
+            "winRatePct": 13.513513513513514,
+            "totalPnl": 31922.415251222454,
+            "profitFactor": 1.168899462701645,
+            "maxDrawdownRupees": 91060.67743945999
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 8,
+            "mean": 31922.415251222454,
+            "lower95": -193139.53815629502,
+            "upper95": 375005.0156373749
+          }
+        },
+        "stress0_5": {
+          "stats": {
+            "trades": 37,
+            "winners": 5,
+            "winRatePct": 13.513513513513514,
+            "totalPnl": -10998.103998777562,
+            "profitFactor": 0.951831496733118,
+            "maxDrawdownRupees": 119040.09743946
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 8,
+            "mean": -10998.103998777562,
+            "lower95": -252834.75644365503,
+            "upper95": 339946.2212748549
+          }
+        },
+        "stress1_0": {
+          "stats": {
+            "trades": 37,
+            "winners": 5,
+            "winRatePct": 13.513513513513514,
+            "totalPnl": -53918.62324877751,
+            "profitFactor": 0.7985471124751632,
+            "maxDrawdownRupees": 147019.51743945997
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 8,
+            "mean": -53918.62324877751,
+            "lower95": -316355.51778273494,
+            "upper95": 306083.4148640525
+          }
+        }
+      },
+      "baseline": {
+        "current": {
+          "stats": {
+            "trades": 156,
+            "winners": 20,
+            "winRatePct": 12.82051282051282,
+            "totalPnl": -4823.903370242515,
+            "profitFactor": 0.993772497866198,
+            "maxDrawdownRupees": 281454.41820387007
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 9,
+            "mean": -4823.903370242515,
+            "lower95": -461117.57579257764,
+            "upper95": 463481.07716267015
+          }
+        },
+        "stress0_5": {
+          "stats": {
+            "trades": 156,
+            "winners": 20,
+            "winRatePct": 12.82051282051282,
+            "totalPnl": -194268.8344952425,
+            "profitFactor": 0.7960090670620181,
+            "maxDrawdownRupees": 417429.40307887003
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 9,
+            "mean": -194268.8344952425,
+            "lower95": -775579.8802327005,
+            "upper95": 349086.169691415
+          }
+        },
+        "stress1_0": {
+          "stats": {
+            "trades": 156,
+            "winners": 20,
+            "winRatePct": 12.82051282051282,
+            "totalPnl": -374731.0495262424,
+            "profitFactor": 0.665742659506115,
+            "maxDrawdownRupees": 544421.67185987
+          },
+          "bootstrap": {
+            "samples": 5000,
+            "clusters": 9,
+            "mean": -374731.0495262424,
+            "lower95": -1102190.990253253,
+            "upper95": 243069.2227095001
+          }
+        }
+      },
+      "annual": {
+        "2026": {
+          "trades": 37,
+          "pnl": 31922.415251222454
+        }
+      },
+      "monthly": {
+        "2026-01": {
+          "trades": 3,
+          "pnl": -9549.80850509
+        },
+        "2026-02": {
+          "trades": 4,
+          "pnl": -30598.09518311001
+        },
+        "2026-03": {
+          "trades": 5,
+          "pnl": -17363.322461625005
+        },
+        "2026-04": {
+          "trades": 10,
+          "pnl": 140697.7637698825
+        },
+        "2026-05": {
+          "trades": 4,
+          "pnl": 22983.269018595012
+        },
+        "2026-06": {
+          "trades": 5,
+          "pnl": -30291.942955762508
+        },
+        "2026-07": {
+          "trades": 4,
+          "pnl": -35202.6746340925
+        },
+        "2026-08": {
+          "trades": 2,
+          "pnl": -8752.773797575004
+        }
+      }
+    }
+  },
+  "integrity": {
+    "dailyRows": 1668,
+    "missingPriorBiasDatesByPeriod": {
+      "discovery": [
+        "2020-01-01"
+      ],
+      "validation": [],
+      "holdout": []
+    }
+  },
+  "consistency": {
+    "discoveryPF": 1.184273240107044,
+    "validationPF": 1.0363942043253485,
+    "holdoutPF": 1.168899462701645,
+    "discoveryPnl": 180905.40730932733,
+    "validationPnl": 9750.233710744975,
+    "holdoutPnl": 31922.415251222454,
+    "validationPositive": true,
+    "holdoutPositive": true
+  },
+  "verdict": "CANDIDATE_FOR_FORENSIC_REVIEW"
+}
