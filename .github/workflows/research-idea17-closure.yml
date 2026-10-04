@@ -1,0 +1,64 @@
+name: Research - Idea 17 closure discovery validation holdout
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/idea10-underlying-option-confirmation]
+    paths:
+      - research/idea17-closure-backtest.mjs
+      - .github/workflows/research-idea17-closure.yml
+permissions: { contents: write }
+jobs:
+  closure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Resolve Groww token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Discovery 2020-2024 baseline
+        run: |
+          node research/groww-idea10-2026-diagnostic.mjs --start=2020-01-01 --end=2024-12-31 --variant=A --out=idea17-baseline-discovery.json
+      - name: Discovery 2020-2024 Idea17
+        run: |
+          node research/idea17-closure-backtest.mjs --start=2020-01-01 --end=2024-12-31 --baseline=idea17-baseline-discovery.json --out=idea17-discovery-2020-2024.json
+      - name: Validation 2025 baseline
+        run: |
+          node research/groww-idea10-2026-diagnostic.mjs --start=2025-01-01 --end=2025-12-31 --variant=A --out=idea17-baseline-validation.json
+      - name: Validation 2025 Idea17
+        run: |
+          node research/idea17-closure-backtest.mjs --start=2025-01-01 --end=2025-12-31 --baseline=idea17-baseline-validation.json --out=idea17-validation-2025.json
+      - name: Holdout 2026 baseline
+        run: |
+          node research/groww-idea10-2026-diagnostic.mjs --start=2026-01-01 --end=2026-09-19 --variant=A --out=idea17-baseline-holdout.json
+      - name: Holdout 2026 Idea17
+        run: |
+          node research/idea17-closure-backtest.mjs --start=2026-01-01 --end=2026-09-19 --baseline=idea17-baseline-holdout.json --out=idea17-holdout-2026.json
+      - name: Combined closure artifact
+        run: |
+          mkdir -p idea17-closure
+          cp idea17-discovery-2020-2024.json idea17-validation-2025.json idea17-holdout-2026.json idea17-closure/
+          tar -czf idea17-closure-results.tgz idea17-closure
+      - uses: actions/upload-artifact@v4
+        with:
+          name: idea17-closure-results
+          path: |
+            idea17-discovery-2020-2024.json
+            idea17-validation-2025.json
+            idea17-holdout-2026.json
+            idea17-closure-results.tgz
+          retention-days: 90
+      - name: Persist closure results
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add idea17-discovery-2020-2024.json idea17-validation-2025.json idea17-holdout-2026.json
+          git diff --cached --quiet || git commit -m "Persist Idea 17 closure discovery validation holdout results"
+          git push origin HEAD:agent/idea10-underlying-option-confirmation
