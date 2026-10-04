@@ -15,9 +15,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
-      - name: Run Idea 17 closure backtest v3
+      - name: Resolve Groww token
         env:
           GROWW_ACCESS_TOKEN: \${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: \${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: \${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Run Idea 17 closure backtest v3
+        env:
           GROWW_REQUEST_SPACING_MS: '1500'
         run: node research/idea17-three-period-backtest-v2.mjs
       - uses: actions/upload-artifact@v4
