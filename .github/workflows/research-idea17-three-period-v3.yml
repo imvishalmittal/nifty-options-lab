@@ -17,9 +17,9 @@ jobs:
         with: { node-version: 22 }
       - name: Resolve Groww token
         env:
-          GROWW_ACCESS_TOKEN: \${{ secrets.GROWW_ACCESS_TOKEN }}
-          GROWW_TOTP_TOKEN: \${{ secrets.GROWW_TOTP_TOKEN }}
-          GROWW_TOTP_SECRET: \${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
           GROWW_PREFER_TOTP: 'true'
         run: node scripts/resolve-groww-token.mjs
       - name: Run Idea 17 closure backtest v3
