@@ -1,0 +1,35 @@
+name: Research - Idea 17 closure backtest v3
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/idea10-underlying-option-confirmation]
+    paths:
+      - research/idea17-three-period-backtest-v2.mjs
+      - .github/workflows/research-idea17-three-period-v3.yml
+permissions: { contents: write }
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1440
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Run Idea 17 closure backtest v3
+        env:
+          GROWW_ACCESS_TOKEN: \${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_REQUEST_SPACING_MS: '1500'
+        run: node research/idea17-three-period-backtest-v2.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: idea17-three-period-results-v3
+          path: idea17-three-period-results-v2.json
+          retention-days: 90
+      - name: Persist result
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add idea17-three-period-results-v2.json
+          git diff --cached --quiet || git commit -m "Persist Idea 17 closure backtest v3"
+          git push origin HEAD:agent/idea10-underlying-option-confirmation
