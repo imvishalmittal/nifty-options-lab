@@ -3,13 +3,13 @@
 ```yaml
 document_type: ai_project_handoff
 repository: imvishalmittal/nifty-options-lab
-as_of: 2026-09-12
+as_of: 2026-10-04
 primary_objective: Find causal, executable, cost-robust NIFTY/options strategies suitable for unchanged forward paper observation.
 live_trading_authorized: false
 live_selected_strategies: 0
 paper_suite: V2-V11 counterfactual NIFTY premium-entry outcomes
 experimental_shadow: 30-minute opening-range ATM credit spread
-active_research: []
+active_research: [Idea17 walk-forward closure, Idea20 exit-side research]
 remaining_option_selling_research: terminal; no candidate passed
 source_of_truth: docs/STRATEGY_STATUS.md
 ```
@@ -29,6 +29,15 @@ social-media strategy into this repository. The evidence-derived P1/P2/P4/P5/P6
 generation completed on 12 September 2026 without a discovery pass. P1, P2, P5
 and P6 were rejected, P4 is descriptive only, and P3/P7 remain data-blocked.
 See [`NEW_GENERATION_RESULTS.md`](NEW_GENERATION_RESULTS.md).
+
+## 0. 4 October 2026 authoritative closure update
+
+- **Ideas 13–16 are closed.** H1, H2, Idea 14, Idea 15 Fixed10, Idea 15 Width25, and Idea 16 are all **REJECTED**. There is no active candidate in this group.
+- **Idea 15 Fixed10 forensic is complete.** The actual 81-trade ledger was +₹1,46,887; removing the largest winner of ₹1,80,809 leaves −₹33,922 with PF 0.935. This is an automatic fail under the frozen leave-largest rule. Bootstrap scaling/convention differences are non-decisive, and no further Fixed10 forensic work is required.
+- **Idea 17 is the active closure experiment.** Frozen rule: prior completed NIFTY trading day close-versus-open bias, decisive only when absolute move is ≥0.5%, with trade direction required to agree. The corrected workflow is **Research - Idea 17 walk-forward closure**, run **37197782403**, attempt 2. The earlier 2020-01-01 boundary failure was repaired as an operational/data-window defect; do not treat it as strategy evidence.
+- **Idea 20 remains active research** on exit-side behavior; it is not selected or paper-promoted.
+- **Idea 10A remains the baseline/control** for Idea 17, and **V2–V11 remain paper observation only**.
+- The required Idea 17 evidence order is **Discovery → Validation → Holdout → robustness/concentration screen if the candidate survives**. No promotion decision exists until the completed artifact is reviewed.
 
 ## 1. Read this first
 
