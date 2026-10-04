@@ -1,6 +1,6 @@
 # Strategy status and evidence ledger
 
-Last updated: 25 September 2026
+Last updated: 4 October 2026
 
 This is the repository's single status index for strategies that were reviewed, implemented, backtested, rejected, or placed in paper observation. Detailed frozen rules remain in the individual specifications; this file records outcomes and promotion status.
 
@@ -13,6 +13,29 @@ This is the repository's single status index for strategies that were reviewed, 
 - **INCOMPLETE SPEC** — the source idea lacks enough deterministic rules for a defensible backtest.
 
 A strategy is never promoted because its zero-slippage result alone is positive. Its frozen acceptance gates, costs, stress scenarios, data completeness, robustness, and drawdown must all pass.
+
+## 4 October 2026 closure update
+
+### Current closure queue
+
+- **Idea 17 — prior completed-day decisive bias ≥0.5%:** **ACTIVE CLOSURE TEST**. The corrected Discovery → Validation → Holdout workflow is running under the frozen definition. The daily bias is the prior completed NIFTY trading day's close-versus-open move; trade direction must agree with it and the absolute prior-day move must be at least 0.5%. The run is **Research - Idea 17 walk-forward closure**, run **37197782403**, attempt 2, on commit **fcca2452abd101d12dab1a18afc5fc8d6c709456**. The earlier failure was an infrastructure/data-window boundary defect for 2020-01-01, not a strategy verdict; the repair commit is **ec051f09a2134ee807e9a875c3e98dce324c97d3**. Do not infer a pass/fail result until the consolidated walk-forward artifact completes.
+- **Idea 20 — exit-side research:** **ACTIVE RESEARCH**. It remains open research and is not a selected or paper-promoted strategy.
+- **Idea 10A:** **PAPER + BASELINE**. It remains the baseline/control for the Idea 17 experiment.
+- **V2–V11:** **PAPER OBSERVATION ONLY**. No variant has been promoted.
+
+### Ideas 13–16 — closed
+
+There is **no active candidate from Ideas 13–16**. The authoritative statuses are:
+
+- Idea 13 H1 — **REJECTED**, independently verified from the holdout artifact.
+- Idea 13 H2 — **REJECTED**, independently verified from the holdout artifact.
+- Idea 14 — **REJECTED**, independently verified from the holdout artifact.
+- **Idea 15 Fixed10 — REJECTED.** The actual 81-trade ledger has original net **+₹1,46,887**. Removing the largest winner (**₹1,80,809**) leaves **−₹33,922** with **PF 0.935**. This independently triggers the frozen automatic-fail rule (net ≤ 0 and PF ≤ 1 after leave-largest). The clustered-bootstrap scaling/convention discrepancy is non-decisive; the leave-largest arithmetic controls the verdict. **No further Fixed10 forensic work is open.**
+- Idea 15 Width25 — **REJECTED**, independently verified from the 152-trade ledger.
+- Idea 16 — **REJECTED**, diagnostic confirmed.
+
+The corrected closure order is therefore **Idea 17 → Idea 20**, while Ideas 13–16 remain closed and V2–V11/Idea10A remain prospective paper observation only.
+
 
 ## New-generation research — terminal
 
