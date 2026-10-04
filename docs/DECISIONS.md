@@ -145,3 +145,12 @@ If the live session remains incomplete, a 15:40 IST recovery may replay the same
 **Decision:** Observe the frozen 30-minute opening-range ATM credit spread prospectively from 2 September 2026 in a dedicated one-lot after-market journal. Do not assign it a V-number, backfill earlier dates, combine its P/L with V2–V11, or expose any broker-order path. Review only after at least 100 prospective trades, retaining normal, 0.5-point, and 1-point results.
 
 **Reason:** Normal-cost PF above one is interesting but did not overcome the 41-trade sample, negative 1-point stress, negative clustered lower bound, or excessive year concentration. A separately labelled shadow observation can collect genuine forward evidence without misrepresenting the rejected discovery as selected.
+
+
+## ADR-028: Freeze Ideas 13–16 closure and Idea 17 walk-forward
+
+**Decision:** Ideas 13 H1, 13 H2, 14, 15 Fixed10, 15 Width25, and 16 are closed as rejected. No candidate from Ideas 13–16 remains active. Fixed10's 81-trade leave-largest test is decisive: +₹1,46,887 original net minus the ₹1,80,809 largest winner leaves −₹33,922 with PF 0.935, satisfying the frozen automatic-fail rule. Bootstrap scaling/convention differences do not alter that verdict.
+
+**Decision:** Continue Idea 17 as the sole active strategy-closure experiment from this group using the frozen prior-completed-day bias definition and ≥0.5% decisive threshold. Its evidence must be produced sequentially as Discovery → Validation → Holdout. The current workflow is run 37197782403 (attempt 2); the earlier 2020-01-01 boundary failure was repaired as an operational/data-window defect, not treated as strategy evidence.
+
+**Reason:** Prevent stale candidate labels and prevent the Fixed10 forensic result from being reopened after its decisive leave-largest failure. The next substantive promotion decision must come from the completed Idea 17 walk-forward artifact, while Idea 20 remains separate exit-side research.
