@@ -1,3 +1,4 @@
+// Idea 17 closure runner: lineage-verified prior-day bias implementation.
 import fs from 'node:fs';
 import { normalizeCandles, splitDateRange } from './groww-backtest-nifty-180.mjs';
 const API='https://api.groww.in/v1', THRESHOLD=0.5; let last=0;
