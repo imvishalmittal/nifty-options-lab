@@ -1,9 +1,38 @@
 {
-  "updatedAt": "2026-10-02T10:04:23.949Z",
+  "updatedAt": "2026-10-05T09:46:16.569Z",
   "strategy": "IDEA10A",
   "variant": "A",
-  "date": "2026-10-02",
-  "status": "NO_TRADE",
-  "reason": "No same-bar underlying + option 9/21 EMA confirmation before 15:15",
-  "expiry": "2026-10-06"
+  "date": "2026-10-05",
+  "status": "CLOSED",
+  "trade": {
+    "source": "PAPER",
+    "strategy": "Idea 10 Dual-Chart EMA Confirmation",
+    "strategyVersion": "IDEA10A",
+    "variant": "A",
+    "date": "2026-10-05",
+    "expiry": "2026-10-06",
+    "side": "CE",
+    "contract": "NSE-NIFTY-06Oct26-22500-CE",
+    "strike": 22500,
+    "signalTime": "13:30",
+    "entryTime": "13:30",
+    "entryPremium": 90.1,
+    "initialStop": 85.45,
+    "exitTime": "15:15",
+    "exitPremium": 109.65,
+    "exitReason": "EOD",
+    "lots": 26,
+    "units": 650,
+    "grossPnl": 12707.5,
+    "charges": 210.45,
+    "totalPnl": 12497.05,
+    "stopOut": false,
+    "paperOnly": true,
+    "diagnostics": {
+      "variant": "A",
+      "ema": "9/21",
+      "timeframe": "3minute",
+      "noOrderApiUsed": true
+    }
+  }
 }
