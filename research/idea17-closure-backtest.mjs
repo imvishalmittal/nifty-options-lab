@@ -81,8 +81,7 @@ export async function run({token,baselinePath,startDate,endDate,spacingMs=1500,o
   last=0;
   const baseline=JSON.parse(fs.readFileSync(baselinePath,'utf8'));
   const trades=baseline.trades??[];
-  const priorStart=new Date(startDate+'T00:00:00Z'); priorStart.setUTCDate(priorStart.getUTCDate()-35);
-  const ps=priorStart.toISOString().slice(0,10);
+  const ps=startDate==='2020-01-01'?'2019-12-01':(()=>{const d=new Date(startDate+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-35);return d.toISOString().slice(0,10)})();
   const intraday=await candles(token,ps,endDate,spacingMs),daily=aggregate(intraday);
   const enriched=trades.map(t=>{const c=classify(daily,t.date);if(!c)throw Error(`Missing prior bias for ${t.date}`);const side=t.side==='CE'?'UP':'DOWN';return{...t,dailyBias:c.bias,decisiveDailyBias:c.decisive,dailyBiasMagnitudePct:c.magnitudePct,priorDailyDate:c.priorDate,biasAgreement:c.bias===side,decisiveAgreement:c.decisive===side}});
   const selected=enriched.filter(t=>t.decisiveAgreement);
