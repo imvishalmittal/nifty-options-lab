@@ -14,7 +14,7 @@
     "selectionBasis": "Experimental shadow observation while frozen 2020-2024 trailing discovery runs",
     "validationStatus": "UNVERIFIED_TRAILING_DISCOVERY_RUNNING",
     "excludedFromV2V11Totals": true,
-    "updatedAt": "2026-10-05T19:13:29.496Z"
+    "updatedAt": "2026-10-06T16:40:22.594Z"
   },
   "sessions": [
     {
@@ -636,6 +636,94 @@
           "normalNetPnl": 2119.9311439115017,
           "stress0_5NetPnl": 1535.3611189115015,
           "stress1_0NetPnl": 950.7910939115015
+        }
+      }
+    },
+    {
+      "date": "2026-10-06",
+      "status": "TRADE",
+      "reason": null,
+      "updatedAt": "2026-10-06T16:40:22.594Z",
+      "strategies": {
+        "RETEST15_TRAIL_5_AFTER_BE_10": {
+          "side": "CE",
+          "contract": "NSE-NIFTY-06Oct26-22400-CE",
+          "expiry": "06Oct26",
+          "strike": 22400,
+          "signalTime": "2026-10-06T09:50:00+05:30",
+          "entryTime": "2026-10-06T09:50:00+05:30",
+          "exitTime": "2026-10-06T10:00:00+05:30",
+          "entryPremium": 255.25,
+          "exitPremium": 260.25,
+          "peakPremium": 274.15,
+          "exitReason": "TRAILING_STOP",
+          "lots": 3,
+          "lotSize": 65,
+          "amountInvested": 49773.75,
+          "directionalPnlPerUnit": 5,
+          "normalNetPnl": 807.920585735,
+          "stress0_5NetPnl": 613.063910735,
+          "stress1_0NetPnl": 418.20723573500004
+        },
+        "RETEST15_TRAIL_10_AFTER_BE_10": {
+          "side": "CE",
+          "contract": "NSE-NIFTY-06Oct26-22400-CE",
+          "expiry": "06Oct26",
+          "strike": 22400,
+          "signalTime": "2026-10-06T09:50:00+05:30",
+          "entryTime": "2026-10-06T09:50:00+05:30",
+          "exitTime": "2026-10-06T10:00:00+05:30",
+          "entryPremium": 255.25,
+          "exitPremium": 255.25,
+          "peakPremium": 274.15,
+          "exitReason": "BREAKEVEN_STOP",
+          "lots": 3,
+          "lotSize": 65,
+          "amountInvested": 49773.75,
+          "directionalPnlPerUnit": 0,
+          "normalNetPnl": -165.20699111499997,
+          "stress0_5NetPnl": -360.063666115,
+          "stress1_0NetPnl": -554.9203411149999
+        },
+        "PREVIOUS_DAY_BREAK_TRAIL_5_AFTER_BE_10": {
+          "side": "CE",
+          "contract": "NSE-NIFTY-06Oct26-22400-CE",
+          "expiry": "06Oct26",
+          "strike": 22400,
+          "signalTime": "2026-10-06T09:45:00+05:30",
+          "entryTime": "2026-10-06T09:45:00+05:30",
+          "exitTime": "2026-10-06T10:00:00+05:30",
+          "entryPremium": 247.05,
+          "exitPremium": 262.05,
+          "peakPremium": 274.15,
+          "exitReason": "TRAILING_STOP",
+          "lots": 3,
+          "lotSize": 65,
+          "amountInvested": 48174.75,
+          "directionalPnlPerUnit": 15,
+          "normalNetPnl": 2757.966757367,
+          "stress0_5NetPnl": 2563.110082367,
+          "stress1_0NetPnl": 2368.253407367
+        },
+        "PREVIOUS_DAY_BREAK_TRAIL_10_AFTER_BE_10": {
+          "side": "CE",
+          "contract": "NSE-NIFTY-06Oct26-22400-CE",
+          "expiry": "06Oct26",
+          "strike": 22400,
+          "signalTime": "2026-10-06T09:45:00+05:30",
+          "entryTime": "2026-10-06T09:45:00+05:30",
+          "exitTime": "2026-10-06T10:00:00+05:30",
+          "entryPremium": 247.05,
+          "exitPremium": 257.05,
+          "peakPremium": 274.15,
+          "exitReason": "TRAILING_STOP",
+          "lots": 3,
+          "lotSize": 65,
+          "amountInvested": 48174.75,
+          "directionalPnlPerUnit": 10,
+          "normalNetPnl": 1784.839180517,
+          "stress0_5NetPnl": 1589.982505517,
+          "stress1_0NetPnl": 1395.125830517
         }
       }
     }
