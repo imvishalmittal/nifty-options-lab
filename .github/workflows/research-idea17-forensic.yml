@@ -1,0 +1,44 @@
+name: Research - Idea 17 forensic closure
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - research/idea17-closure-backtest.mjs
+      - .github/workflows/research-idea17-forensic.yml
+permissions: { contents: write }
+jobs:
+  closure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Resolve Groww token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+          GROWW_PREFER_TOTP: 'true'
+        run: node scripts/resolve-groww-token.mjs
+      - name: Discovery baseline
+        run: node research/groww-idea10-2026-diagnostic.mjs --start=2020-01-01 --end=2024-12-31 --variant=A --out=idea17-baseline-discovery.json
+      - name: Discovery Idea17 forensic
+        run: node research/idea17-closure-backtest.mjs --start=2020-01-01 --end=2024-12-31 --baseline=idea17-baseline-discovery.json --out=idea17-discovery-2020-2024.json
+      - name: Validation baseline
+        run: node research/groww-idea10-2026-diagnostic.mjs --start=2025-01-01 --end=2025-12-31 --variant=A --out=idea17-baseline-validation.json
+      - name: Validation Idea17 forensic
+        run: node research/idea17-closure-backtest.mjs --start=2025-01-01 --end=2025-12-31 --baseline=idea17-baseline-validation.json --out=idea17-validation-2025.json
+      - name: Holdout baseline
+        run: node research/groww-idea10-2026-diagnostic.mjs --start=2026-01-01 --end=2026-09-19 --variant=A --out=idea17-baseline-holdout.json
+      - name: Holdout Idea17 forensic
+        run: node research/idea17-closure-backtest.mjs --start=2026-01-01 --end=2026-09-19 --baseline=idea17-baseline-holdout.json --out=idea17-holdout-2026.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: idea17-forensic-closure
+          path: |
+            idea17-discovery-2020-2024.json
+            idea17-validation-2025.json
+            idea17-holdout-2026.json
+          retention-days: 90
