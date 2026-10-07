@@ -14,7 +14,7 @@
     "selectionBasis": "Experimental shadow observation while frozen 2020-2024 trailing discovery runs",
     "validationStatus": "UNVERIFIED_TRAILING_DISCOVERY_RUNNING",
     "excludedFromV2V11Totals": true,
-    "updatedAt": "2026-10-06T16:40:22.594Z"
+    "updatedAt": "2026-10-07T17:23:32.501Z"
   },
   "sessions": [
     {
@@ -725,6 +725,18 @@
           "stress0_5NetPnl": 1589.982505517,
           "stress1_0NetPnl": 1395.125830517
         }
+      }
+    },
+    {
+      "date": "2026-10-07",
+      "status": "PROCESSED",
+      "reason": "No selected signal",
+      "updatedAt": "2026-10-07T17:23:32.501Z",
+      "strategies": {
+        "RETEST15_TRAIL_5_AFTER_BE_10": null,
+        "RETEST15_TRAIL_10_AFTER_BE_10": null,
+        "PREVIOUS_DAY_BREAK_TRAIL_5_AFTER_BE_10": null,
+        "PREVIOUS_DAY_BREAK_TRAIL_10_AFTER_BE_10": null
       }
     }
   ]
