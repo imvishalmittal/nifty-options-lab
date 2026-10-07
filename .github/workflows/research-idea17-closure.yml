@@ -62,3 +62,4 @@ jobs:
           git add idea17-discovery-2020-2024.json idea17-validation-2025.json idea17-holdout-2026.json
           git diff --cached --quiet || git commit -m "Persist Idea 17 closure discovery validation holdout results"
           git push origin HEAD:agent/idea10-underlying-option-confirmation
+# Trigger refresh: Idea 17 forensic closure
