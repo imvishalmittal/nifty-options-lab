@@ -1,6 +1,6 @@
 # Strategy status and evidence ledger
 
-Last updated: 4 October 2026
+Last updated: 8 October 2026
 
 This is the repository's single status index for strategies that were reviewed, implemented, backtested, rejected, or placed in paper observation. Detailed frozen rules remain in the individual specifications; this file records outcomes and promotion status.
 
@@ -14,27 +14,38 @@ This is the repository's single status index for strategies that were reviewed, 
 
 A strategy is never promoted because its zero-slippage result alone is positive. Its frozen acceptance gates, costs, stress scenarios, data completeness, robustness, and drawdown must all pass.
 
-## 4 October 2026 closure update
+## 8 October 2026 closure update
 
-### Current closure queue
+### Idea 17 — closed and rejected
 
-- **Idea 17 — prior completed-day decisive bias ≥0.5%:** **ACTIVE CLOSURE TEST**. The corrected Discovery → Validation → Holdout workflow is running under the frozen definition. The daily bias is the prior completed NIFTY trading day's close-versus-open move; trade direction must agree with it and the absolute prior-day move must be at least 0.5%. The run is **Research - Idea 17 walk-forward closure**, run **37197782403**, attempt 2, on commit **fcca2452abd101d12dab1a18afc5fc8d6c709456**. The earlier failure was an infrastructure/data-window boundary defect for 2020-01-01, not a strategy verdict; the repair commit is **ec051f09a2134ee807e9a875c3e98dce324c97d3**. Do not infer a pass/fail result until the consolidated walk-forward artifact completes.
-- **Idea 20 — exit-side research:** **ACTIVE RESEARCH**. It remains open research and is not a selected or paper-promoted strategy.
-- **Idea 10A:** **PAPER + BASELINE**. It remains the baseline/control for the Idea 17 experiment.
-- **V2–V11:** **PAPER OBSERVATION ONLY**. No variant has been promoted.
+**Idea 17 — prior completed-day decisive bias ≥0.5%: REJECTED / CLOSED.** The complete forensic closure run **37712110669** (workflow **Research - Idea 17 forensic closure**, main, workflow_dispatch) completed successfully on 8 October 2026. Artifact **idea17-forensic-closure**, ID **11526485340**, was uploaded successfully.
 
-### Ideas 13–16 — closed
+Frozen definition:
+- prior completed NIFTY trading day's close-versus-open bias;
+- decisive threshold **≥0.5%**;
+- trade direction must agree with the prior-day bias;
+- no same-day/current-session lookahead.
 
-There is **no active candidate from Ideas 13–16**. The authoritative statuses are:
+The sequential Discovery → Validation → Holdout walk-forward was completed, followed by the mandatory exact winner-removal forensic screen.
 
-- Idea 13 H1 — **REJECTED**, independently verified from the holdout artifact.
-- Idea 13 H2 — **REJECTED**, independently verified from the holdout artifact.
-- Idea 14 — **REJECTED**, independently verified from the holdout artifact.
-- **Idea 15 Fixed10 — REJECTED.** The actual 81-trade ledger has original net **+₹1,46,887**. Removing the largest winner (**₹1,80,809**) leaves **−₹33,922** with **PF 0.935**. This independently triggers the frozen automatic-fail rule (net ≤ 0 and PF ≤ 1 after leave-largest). The clustered-bootstrap scaling/convention discrepancy is non-decisive; the leave-largest arithmetic controls the verdict. **No further Fixed10 forensic work is open.**
-- Idea 15 Width25 — **REJECTED**, independently verified from the 152-trade ledger.
-- Idea 16 — **REJECTED**, diagnostic confirmed.
+**Holdout (2026-01-01 to 2026-09-19):**
+- 37 selected trades, 5 winners, **13.51% win rate**
+- normal net **+₹31,922.42**, PF **1.1689**
+- 0.5-point stress **−₹10,998.10**, PF **0.9518**
+- 1-point stress **−₹53,918.62**, PF **0.7986**
+- clustered 5,000-resample bootstrap lower 95% bound: **−₹258,325.57** under 0.5 stress
 
-The corrected closure order is therefore **Idea 17 → Idea 20**, while Ideas 13–16 remain closed and V2–V11/Idea10A remain prospective paper observation only.
+**Exact forensic failure:**
+- largest winner: **+₹71,285.25** on 13-Apr-2026; removing it leaves **−₹39,362.83**, PF **0.7917**
+- largest three winners: **+₹71,285.25, +₹64,635.28, +₹39,984.93**; removing them leaves **−₹143,983.05**, PF **0.2382**
+- both removal tests trigger the frozen automatic-reject rule
+- April 2026 alone contributed **+₹140,697.76**, versus total holdout net **+₹31,922.42**
+
+The discovery period also failed robustness after removing its largest winner: original +₹180,905.41 became **−₹1,114.76**, PF **0.9989**. The validation period was already marginal at +₹9,750.23 / PF 1.0364 and failed 0.5-point stress. Therefore the apparent positive holdout result is not a durable edge.
+
+**Final status: REJECTED / CLOSED. No paper promotion and no live-trading consideration. Do not retune Idea 17 after seeing these results.**
+
+The next substantive research thread is **Idea 20 — exit-side research**, which remains active and separate. Idea 10A and V2–V11 remain paper/control observation only.
 
 
 ## New-generation research — terminal
