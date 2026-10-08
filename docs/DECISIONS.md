@@ -154,3 +154,12 @@ If the live session remains incomplete, a 15:40 IST recovery may replay the same
 **Decision:** Continue Idea 17 as the sole active strategy-closure experiment from this group using the frozen prior-completed-day bias definition and ≥0.5% decisive threshold. Its evidence must be produced sequentially as Discovery → Validation → Holdout. The current workflow is run 37197782403 (attempt 2); the earlier 2020-01-01 boundary failure was repaired as an operational/data-window defect, not treated as strategy evidence.
 
 **Reason:** Prevent stale candidate labels and prevent the Fixed10 forensic result from being reopened after its decisive leave-largest failure. The next substantive promotion decision must come from the completed Idea 17 walk-forward artifact, while Idea 20 remains separate exit-side research.
+
+
+## ADR-029: Close Idea 17 after exact forensic screen
+
+**Decision:** Idea 17 is **REJECTED / CLOSED** after successful sequential Discovery → Validation → Holdout and exact winner-removal forensic analysis in workflow run **37712110669**. The frozen rule was prior completed NIFTY trading-day close-versus-open bias with a decisive threshold of **≥0.5%**, requiring trade-direction agreement and no same-day lookahead.
+
+**Evidence:** The 2026 holdout produced 37 trades, +₹31,922.42 normal P&L and PF 1.1689, but failed 0.5-point and 1-point stress. Removing the largest winner (+₹71,285.25) leaves −₹39,362.83 / PF 0.7917; removing the largest three winners leaves −₹143,983.05 / PF 0.2382. The 5,000-resample monthly-clustered bootstrap lower bound is negative, and April 2026 contributed +₹140,697.76 versus only +₹31,922.42 total holdout net. Discovery likewise falls to −₹1,114.76 / PF 0.9989 after its largest winner is removed.
+
+**Reason:** The apparent positive holdout result is dominated by a small number of exceptional winners and is not robust to the repository's frozen forensic gates. Do not retune Idea 17 after seeing the decision sample. No paper promotion or live execution is permitted. Idea 20 remains the next active research thread.
