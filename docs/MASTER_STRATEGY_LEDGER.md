@@ -1,6 +1,6 @@
 # NIFTY Options Lab — Master Strategy Ledger
 
-**As of:** 2026-10-04
+**As of:** 2026-10-08
 
 This is the single human-readable tracker of the strategy families and numbered ideas researched in this repository. It records what each strategy does, why it was tested, why it was rejected or retained, and what is still running. Primary repository artifacts, commits, and workflow runs are authoritative.
 
@@ -154,12 +154,21 @@ This is the single human-readable tracker of the strategy families and numbered 
 ## Ideas 17–20
 
 ### Idea 17 — Prior completed-day decisive bias
+
 **How it works:** dailyBias is the **prior completed NIFTY trading day's close versus open**. A decisive day is frozen at **>=0.5%**. The trade direction must agree with that prior-day bias. No same-day/current-session lookahead is permitted.
-**Why tested:** The 2026 retrospective diagnostic showed a potentially useful regime filter: Idea10A baseline 156 trades, −₹4,824, PF 0.994; direction-only 71 trades, −₹51,661, PF 0.846; decisive >=0.5% 37 trades, +₹30,295, PF 1.159. This is promising but insufficient by itself.
-**Current closure test:** Discovery 2020–2024, Validation 2025, Holdout 2026, followed by PF/P&L/drawdown, clustered bootstrap, 0.5%/1.0% stress, annual/monthly stability, trade-count/missing-data checks and discovery→validation→holdout consistency.
-**Status:** ACTIVE CLOSURE TEST. The corrected walk-forward workflow is running. It is not promoted or rejected yet.
+
+**Why tested:** A retrospective 2026 diagnostic suggested a possible regime filter: Idea10A baseline 156 trades, −₹4,824, PF 0.994; direction-only bias 71 trades, −₹51,661, PF 0.846; decisive >=0.5% bias 37 trades, +₹30,295, PF 1.159. This required a sequential walk-forward and exact concentration/robustness forensic screen.
+
+**Final evidence:** Discovery 2020–2024, Validation 2025, Holdout 2026-01-01 to 2026-09-19. Successful forensic closure run **37712110669**; artifact **idea17-forensic-closure** ID **11526485340**.
+
+**Holdout result:** 37 trades, 13.51% win rate, +₹31,922.42 normal net, PF 1.1689; 0.5-point stress −₹10,998.10 / PF 0.9518; 1-point stress −₹53,918.62 / PF 0.7986. Clustered bootstrap lower 95% bounds were negative.
+
+**Forensic closure:** The largest winner was +₹71,285.25 (13-Apr-2026). Removing it leaves −₹39,362.83 / PF 0.7917. Removing the largest three winners (+₹71,285.25, +₹64,635.28, +₹39,984.93) leaves −₹143,983.05 / PF 0.2382. Both trigger the frozen automatic-reject rule. April 2026 contributed +₹140,697.76 against total holdout net +₹31,922.42, confirming extreme concentration. Discovery also failed the leave-largest test (−₹1,114.76 / PF 0.9989 after removing its +₹182,020.17 winner), while validation was only +₹9,750.23 / PF 1.0364 and failed 0.5-point stress.
+
+**Status:** **REJECTED / CLOSED.** No paper promotion, no live-trading consideration, and no post-result retuning. The next active research thread is Idea 20 exit-side research.
 
 ### Idea 18 — Reversal after confirmation
+
 **Why tested:** Diagnose whether late reversals following confirmation could improve the base signal.
 **Why rejected:** Diagnostic showed late reversals were about 54.8%, while 3+ favorable-bar cases had only about +0.258% average favorable excursion; no robust promotion case.
 **Status:** CLOSED DIAGNOSTIC.
