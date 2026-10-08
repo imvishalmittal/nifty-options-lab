@@ -1,0 +1,38 @@
+name: Research - Idea 20 exit-side diagnostic
+
+on:
+  push:
+    paths:
+      - research/idea20-exit-side-diagnostic.mjs
+      - .github/workflows/research-idea20-exit-side-diagnostic.yml
+  workflow_dispatch:
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install
+        run: npm ci
+
+      - name: Run Idea 20 diagnostic
+        env:
+          GROWW_ACCESS_TOKEN: \${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_REQUEST_SPACING_MS: 1500
+          OUT: idea20-2026-diagnostic.json
+        run: node research/idea20-exit-side-diagnostic.mjs
+
+      - name: Upload diagnostic artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: idea20-2026-diagnostic
+          path: idea20-2026-diagnostic.json
+          if-no-files-found: error
