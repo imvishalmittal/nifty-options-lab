@@ -5,7 +5,7 @@
       "BASE",
       "V4"
     ],
-    "updatedAt": "2026-10-07T04:47:11.168Z"
+    "updatedAt": "2026-10-08T04:16:29.640Z"
   },
   "sessions": [
     {
@@ -3144,6 +3144,82 @@
           "totalPnl": -3431.04
         }
       }
+    },
+    {
+      "date": "2026-10-08",
+      "thread": "BASE",
+      "strategyVersions": [
+        "V2",
+        "V3-5",
+        "V3-10",
+        "V6",
+        "V7",
+        "V8",
+        "V9",
+        "V10-5",
+        "V10-10",
+        "V11"
+      ],
+      "status": "NO_TRADE",
+      "reason": "No valid ₹180 crossing before 09:45",
+      "updatedAt": "2026-10-08T04:16:29.640Z",
+      "spot925": 22518.85,
+      "expiry": "2026-10-13",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-13Oct26-22450-CE",
+        "strike": 22450,
+        "optionType": "CE",
+        "premium": 172.2
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-13Oct26-22600-PE",
+        "strike": 22600,
+        "optionType": "PE",
+        "premium": 181.7
+      },
+      "side": null,
+      "strike": null,
+      "entry": null,
+      "entryTime": null,
+      "signalSource": null,
+      "tradeCount": 0,
+      "totalPnl": null,
+      "strategyOutcomes": {}
+    },
+    {
+      "date": "2026-10-08",
+      "thread": "V4",
+      "strategyVersions": [
+        "V4",
+        "V5"
+      ],
+      "status": "NO_TRADE",
+      "reason": "No V4 option signal with matching NIFTY confirmation before 09:45",
+      "updatedAt": "2026-10-08T04:16:02.652Z",
+      "spot925": 22518.85,
+      "expiry": "2026-10-13",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-13Oct26-22450-CE",
+        "strike": 22450,
+        "optionType": "CE",
+        "premium": 172.2
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-13Oct26-22600-PE",
+        "strike": 22600,
+        "optionType": "PE",
+        "premium": 181.7
+      },
+      "side": null,
+      "strike": null,
+      "entry": null,
+      "entryTime": null,
+      "signalSource": null,
+      "tradeCount": 0,
+      "totalPnl": null,
+      "strategyOutcomes": {}
     }
   ]
 }
