@@ -25,7 +25,7 @@ jobs:
 
       - name: Run Idea 20 diagnostic
         env:
-          GROWW_ACCESS_TOKEN: \${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
           GROWW_REQUEST_SPACING_MS: 1500
           OUT: idea20-2026-diagnostic.json
         run: node research/idea20-exit-side-diagnostic.mjs
