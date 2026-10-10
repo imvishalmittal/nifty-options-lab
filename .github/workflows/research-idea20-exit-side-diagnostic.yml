@@ -23,9 +23,30 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Run Idea 20 diagnostic
+      - name: Generate fresh Groww access token
+        if: ${{ secrets.GROWW_TOTP_API_KEY != '' && secrets.GROWW_TOTP_SECRET != '' }}
+        env:
+          GROWW_TOTP_API_KEY: ${{ secrets.GROWW_TOTP_API_KEY }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+        run: node research/groww-generate-access-token.mjs
+
+      - name: Validate authentication configuration
         env:
           GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+          GROWW_TOTP_API_KEY: ${{ secrets.GROWW_TOTP_API_KEY }}
+          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
+        run: |
+          if [ -z "$GROWW_TOTP_API_KEY" ] || [ -z "$GROWW_TOTP_SECRET" ]; then
+            if [ -z "$GROWW_ACCESS_TOKEN" ]; then
+              echo "::error::Configure GROWW_TOTP_API_KEY and GROWW_TOTP_SECRET for automatic token generation, or provide a current GROWW_ACCESS_TOKEN."
+              exit 1
+            fi
+            echo "::warning::Using GROWW_ACCESS_TOKEN fallback. Groww access tokens expire daily at 6:00 AM; this may fail if stale."
+          fi
+
+      - name: Run Idea 20 diagnostic
+        env:
+          GROWW_ACCESS_TOKEN: ${{ env.GROWW_ACCESS_TOKEN || secrets.GROWW_ACCESS_TOKEN }}
           GROWW_REQUEST_SPACING_MS: 1500
           OUT: idea20-2026-diagnostic.json
         run: node research/idea20-exit-side-diagnostic.mjs
