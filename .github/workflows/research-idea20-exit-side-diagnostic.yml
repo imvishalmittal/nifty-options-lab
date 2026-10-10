@@ -11,6 +11,10 @@ jobs:
   diagnostic:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    env:
+      GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+      GROWW_TOTP_API_KEY: ${{ secrets.GROWW_TOTP_API_KEY }}
+      GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,17 +28,14 @@ jobs:
         run: npm ci
 
       - name: Generate fresh Groww access token
-        if: ${{ secrets.GROWW_TOTP_API_KEY != '' && secrets.GROWW_TOTP_SECRET != '' }}
-        env:
-          GROWW_TOTP_API_KEY: ${{ secrets.GROWW_TOTP_API_KEY }}
-          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
-        run: node research/groww-generate-access-token.mjs
+        run: |
+          if [ -n "$GROWW_TOTP_API_KEY" ] && [ -n "$GROWW_TOTP_SECRET" ]; then
+            node research/groww-generate-access-token.mjs
+          else
+            echo "No TOTP secrets configured; will use GROWW_ACCESS_TOKEN fallback."
+          fi
 
       - name: Validate authentication configuration
-        env:
-          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
-          GROWW_TOTP_API_KEY: ${{ secrets.GROWW_TOTP_API_KEY }}
-          GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
         run: |
           if [ -z "$GROWW_TOTP_API_KEY" ] || [ -z "$GROWW_TOTP_SECRET" ]; then
             if [ -z "$GROWW_ACCESS_TOKEN" ]; then
@@ -46,7 +47,6 @@ jobs:
 
       - name: Run Idea 20 diagnostic
         env:
-          GROWW_ACCESS_TOKEN: ${{ env.GROWW_ACCESS_TOKEN || secrets.GROWW_ACCESS_TOKEN }}
           GROWW_REQUEST_SPACING_MS: 1500
           OUT: idea20-2026-diagnostic.json
         run: node research/idea20-exit-side-diagnostic.mjs
