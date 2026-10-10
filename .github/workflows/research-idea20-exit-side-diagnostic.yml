@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - research/idea20-exit-side-diagnostic.mjs
+      - research/groww-generate-access-token.mjs
       - .github/workflows/research-idea20-exit-side-diagnostic.yml
   workflow_dispatch:
 
@@ -12,7 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
-      GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
       GROWW_TOTP_API_KEY: ${{ secrets.GROWW_TOTP_API_KEY }}
       GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
     steps:
@@ -22,27 +22,35 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install
         run: npm ci
 
       - name: Generate fresh Groww access token
+        env:
+          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
         run: |
           if [ -n "$GROWW_TOTP_API_KEY" ] && [ -n "$GROWW_TOTP_SECRET" ]; then
             node research/groww-generate-access-token.mjs
+          elif [ -n "$GROWW_ACCESS_TOKEN" ]; then
+            echo "No TOTP secrets configured; using the static-token fallback."
+            echo "GROWW_ACCESS_TOKEN=$GROWW_ACCESS_TOKEN" >> "$GITHUB_ENV"
           else
-            echo "No TOTP secrets configured; will use GROWW_ACCESS_TOKEN fallback."
+            echo "::error::Configure GROWW_TOTP_API_KEY and GROWW_TOTP_SECRET for automatic token generation."
+            exit 1
           fi
 
       - name: Validate authentication configuration
         run: |
+          if [ -z "$GROWW_ACCESS_TOKEN" ]; then
+            echo "::error::No Groww access token was generated or configured."
+            exit 1
+          fi
           if [ -z "$GROWW_TOTP_API_KEY" ] || [ -z "$GROWW_TOTP_SECRET" ]; then
-            if [ -z "$GROWW_ACCESS_TOKEN" ]; then
-              echo "::error::Configure GROWW_TOTP_API_KEY and GROWW_TOTP_SECRET for automatic token generation, or provide a current GROWW_ACCESS_TOKEN."
-              exit 1
-            fi
-            echo "::warning::Using GROWW_ACCESS_TOKEN fallback. Groww access tokens expire daily at 6:00 AM; this may fail if stale."
+            echo "::warning::Using static GROWW_ACCESS_TOKEN fallback. It expires daily at 6:00 AM and may be stale."
+          else
+            echo "TOTP-based authentication configured; fresh token is available to subsequent steps."
           fi
 
       - name: Run Idea 20 diagnostic
