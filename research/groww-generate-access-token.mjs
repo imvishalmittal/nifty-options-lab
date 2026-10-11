@@ -1,10 +1,10 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 
-const apiKey = process.env.GROWW_TOTP_API_KEY;
+const apiKey = process.env.GROWW_TOTP_TOKEN;
 const totpSecret = process.env.GROWW_TOTP_SECRET;
 if (!apiKey || !totpSecret) {
-  console.error('Missing GROWW_TOTP_API_KEY or GROWW_TOTP_SECRET. Add both as GitHub Actions secrets to enable automatic daily token generation.');
+  console.error('Missing GROWW_TOTP_TOKEN or GROWW_TOTP_SECRET. Add both as GitHub Actions secrets to enable automatic daily token generation.');
   process.exit(2);
 }
 
