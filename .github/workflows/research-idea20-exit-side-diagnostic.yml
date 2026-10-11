@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
-      GROWW_TOTP_API_KEY: ${{ secrets.GROWW_TOTP_API_KEY }}
+      GROWW_TOTP_TOKEN: ${{ secrets.GROWW_TOTP_TOKEN }}
       GROWW_TOTP_SECRET: ${{ secrets.GROWW_TOTP_SECRET }}
     steps:
       - name: Checkout
@@ -29,8 +29,8 @@ jobs:
 
       - name: Validate TOTP secrets
         run: |
-          if [ -z "$GROWW_TOTP_API_KEY" ]; then
-            echo "::error::GROWW_TOTP_API_KEY is missing. Add it in repository Settings > Secrets and variables > Actions."
+          if [ -z "$GROWW_TOTP_TOKEN" ]; then
+            echo "::error::GROWW_TOTP_TOKEN is missing. Add it in repository Settings > Secrets and variables > Actions."
             exit 1
           fi
           if [ -z "$GROWW_TOTP_SECRET" ]; then
