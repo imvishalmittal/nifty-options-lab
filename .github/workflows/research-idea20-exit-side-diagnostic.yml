@@ -27,31 +27,20 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Generate fresh Groww access token
-        env:
-          GROWW_ACCESS_TOKEN: ${{ secrets.GROWW_ACCESS_TOKEN }}
+      - name: Validate TOTP secrets
         run: |
-          if [ -n "$GROWW_TOTP_API_KEY" ] && [ -n "$GROWW_TOTP_SECRET" ]; then
-            node research/groww-generate-access-token.mjs
-          elif [ -n "$GROWW_ACCESS_TOKEN" ]; then
-            echo "No TOTP secrets configured; using the static-token fallback."
-            echo "GROWW_ACCESS_TOKEN=$GROWW_ACCESS_TOKEN" >> "$GITHUB_ENV"
-          else
-            echo "::error::Configure GROWW_TOTP_API_KEY and GROWW_TOTP_SECRET for automatic token generation."
+          if [ -z "$GROWW_TOTP_API_KEY" ]; then
+            echo "::error::GROWW_TOTP_API_KEY is missing. Add it in repository Settings > Secrets and variables > Actions."
             exit 1
           fi
+          if [ -z "$GROWW_TOTP_SECRET" ]; then
+            echo "::error::GROWW_TOTP_SECRET is missing. Add it in repository Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "Both TOTP secrets are configured."
 
-      - name: Validate authentication configuration
-        run: |
-          if [ -z "$GROWW_ACCESS_TOKEN" ]; then
-            echo "::error::No Groww access token was generated or configured."
-            exit 1
-          fi
-          if [ -z "$GROWW_TOTP_API_KEY" ] || [ -z "$GROWW_TOTP_SECRET" ]; then
-            echo "::warning::Using static GROWW_ACCESS_TOKEN fallback. It expires daily at 6:00 AM and may be stale."
-          else
-            echo "TOTP-based authentication configured; fresh token is available to subsequent steps."
-          fi
+      - name: Generate fresh Groww access token
+        run: node research/groww-generate-access-token.mjs
 
       - name: Run Idea 20 diagnostic
         env:
