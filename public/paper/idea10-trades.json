@@ -4,7 +4,7 @@
     "paperStrategies": [
       "IDEA10A"
     ],
-    "lastPaperSession": "2026-10-09"
+    "lastPaperSession": "2026-10-12"
   },
   "trades": [
     {
@@ -370,6 +370,37 @@
       "grossPnl": -4772.5,
       "charges": 179.27,
       "totalPnl": -4951.77,
+      "stopOut": true,
+      "paperOnly": true,
+      "diagnostics": {
+        "variant": "A",
+        "ema": "9/21",
+        "timeframe": "3minute",
+        "noOrderApiUsed": true
+      }
+    },
+    {
+      "source": "PAPER",
+      "strategy": "Idea 10 Dual-Chart EMA Confirmation",
+      "strategyVersion": "IDEA10A",
+      "variant": "A",
+      "date": "2026-10-12",
+      "expiry": "2026-10-13",
+      "side": "CE",
+      "contract": "NSE-NIFTY-13Oct26-22350-CE",
+      "strike": 22350,
+      "signalTime": "12:48",
+      "entryTime": "12:48",
+      "entryPremium": 114,
+      "initialStop": 108.2,
+      "exitTime": "12:51",
+      "exitPremium": 108.2,
+      "exitReason": "OPTION_CONFIRMATION_BAR_STOP",
+      "lots": 21,
+      "units": 525,
+      "grossPnl": -3045,
+      "charges": 183.25,
+      "totalPnl": -3228.25,
       "stopOut": true,
       "paperOnly": true,
       "diagnostics": {
