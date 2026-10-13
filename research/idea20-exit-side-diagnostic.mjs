@@ -36,7 +36,10 @@ function summarizeExitRows(rows){
  let seed=20261012,rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};const means=[];
  for(let i=0;i<5000&&pnl.length;i++){let s=0;for(let j=0;j<pnl.length;j++)s+=pnl[Math.floor(rand()*pnl.length)];means.push(s/pnl.length)}
  means.sort((a,b)=>a-b);
- return {trades:pnl.length,winners:pnl.filter(x=>x>0).length,winRate:pnl.length?pnl.filter(x=>x>0).length/pnl.length:null,totalNetPnl:pnl.reduce((a,b)=>a+b,0),profitFactor:loss?wins/loss:(wins?Infinity:null),maxDrawdownRupees:dd,meanPnlPerTrade:pnl.length?pnl.reduce((a,b)=>a+b,0)/pnl.length:null,bootstrap95PctMeanInterval:means.length?{lower:means[Math.floor(means.length*.025)],upper:means[Math.floor(means.length*.975)]}:null}
+ const totalNetPnl=pnl.reduce((a,b)=>a+b,0),positiveWinners=pnl.filter(x=>x>0).sort((a,b)=>b-a);
+ const leaveTop1WinnerNetPnl=totalNetPnl-(positiveWinners[0]??0);
+ const leaveTop3WinnersNetPnl=totalNetPnl-positiveWinners.slice(0,3).reduce((a,b)=>a+b,0);
+ return {trades:pnl.length,winners:pnl.filter(x=>x>0).length,winRate:pnl.length?pnl.filter(x=>x>0).length/pnl.length:null,totalNetPnl,profitFactor:loss?wins/loss:(wins?Infinity:null),maxDrawdownRupees:dd,meanPnlPerTrade:pnl.length?totalNetPnl/pnl.length:null,leaveTop1WinnerNetPnl,leaveTop3WinnersNetPnl,largestWinnerPnl:positiveWinners[0]??null,top3WinnersPnl:positiveWinners.slice(0,3).reduce((a,b)=>a+b,0),bootstrap95PctMeanInterval:means.length?{lower:means[Math.floor(means.length*.025)],upper:means[Math.floor(means.length*.975)]}:null}
 }
 function counterfactualSummary(rows){
  const byRule={};
