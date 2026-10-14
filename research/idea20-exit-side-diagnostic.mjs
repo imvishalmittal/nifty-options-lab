@@ -56,6 +56,56 @@ function enrich(trade,cs){const entry=trade.entry,post=cs.filter(x=>x.timestamp>
 function median(a){const v=a.filter(Number.isFinite).sort((x,y)=>x-y);if(!v.length)return null;const m=Math.floor(v.length/2);return v.length%2?v[m]:(v[m-1]+v[m])/2}
 function summarize(rows){const stops=rows.filter(x=>x.stopOut),survivors=rows.filter(x=>x.threeBarSurvivor);return{trades:rows.length,stopOuts:stops.length,stopOutRate:rows.length?stops.length/rows.length:null,threeBarSurvivors:survivors.length,threeBarSurvivorRate:rows.length?survivors.length/rows.length:null,avgMfePct:rows.length?rows.reduce((s,x)=>s+x.mfePct,0)/rows.length:null,medianMfePct:median(rows.map(x=>x.mfePct)),avgMaePct:rows.length?rows.reduce((s,x)=>s+x.maePct,0)/rows.length:null,medianMaePct:median(rows.map(x=>x.maePct)),thresholds:Object.fromEntries(THRESHOLDS.map(th=>{const r=stops.filter(x=>x.reachedThresholdBeforeStop?.[th]);return[`${th}%`,{stopOutsAfterThreshold:r.length,shareOfStopOuts:stops.length?r.length/stops.length:null,shareOfAllTrades:rows.length?r.length/rows.length:null}]}))}}
 
+function entryCohortSummary(rows){
+ const groups={};
+ const buckets=[
+  {name:'09:15-10:00',start:'09:15',end:'10:00'},
+  {name:'10:00-11:00',start:'10:00',end:'11:00'},
+  {name:'11:00-12:00',start:'11:00',end:'12:00'},
+  {name:'12:00-13:00',start:'12:00',end:'13:00'},
+  {name:'13:00-14:00',start:'13:00',end:'14:00'},
+  {name:'14:00-15:15',start:'14:00',end:'15:15'}
+ ];
+ const windows=[
+  {name:'jan_jun_2026',start:'2026-01-01',end:'2026-07-01'},
+  {name:'jul_sep_2026',start:'2026-07-01',end:'2026-10-01'}
+ ];
+ const summarize=(selected)=>{
+  const n=selected.length;
+  const result={trades:n,bySide:{}};
+  for(const side of ['CE','PE']){
+   const r=selected.filter(t=>t.side===side);
+   const stops=r.filter(t=>t.stopOut);
+   const pnlKey='current';
+   const pnl=r.map(t=>t.money?.[pnlKey]).filter(Number.isFinite);
+   const wins=pnl.filter(x=>x>0).reduce((a,b)=>a+b,0);
+   const loss=Math.abs(pnl.filter(x=>x<0).reduce((a,b)=>a+b,0));
+   const avg=key=>{const a=r.map(t=>t[key]).filter(Number.isFinite);return a.length?a.reduce((x,y)=>x+y,0)/a.length:null};
+   result.bySide[side]={
+    trades:r.length,stops:stops.length,stopRate:r.length?stops.length/r.length:null,
+    netPnl:pnl.reduce((a,b)=>a+b,0),profitFactor:loss?wins/loss:(wins?Infinity:null),
+    stress0_5NetPnl:r.map(t=>t.money?.stress0_5).filter(Number.isFinite).reduce((a,b)=>a+b,0),
+    stress1_0NetPnl:r.map(t=>t.money?.stress1_0).filter(Number.isFinite).reduce((a,b)=>a+b,0),
+    avgMfePct:avg('mfePct'),avgMaePct:avg('maePct'),
+    avgMfeBeforeStopPct:avg('mfeBeforeStopPct'),
+    underlyingIntactAtStop:stops.filter(t=>t.underlyingDirectionIntactAtOptionStop===true).length,
+    underlyingReversedAtStop:stops.filter(t=>t.underlyingDirectionIntactAtOptionStop===false).length
+   };
+  }
+  return result;
+ };
+ groups.all=summarize(rows);
+ groups.byCalendarWindow={};
+ for(const w of windows)groups.byCalendarWindow[w.name]={startDate:w.start,endDateExclusive:w.end,...summarize(rows.filter(t=>t.date>=w.start&&t.date<w.end))};
+ groups.byEntryTime={};
+ for(const b of buckets){
+  const selected=rows.filter(t=>{const time=t.signalTime.slice(11,16);return time>=b.start&&time<b.end});
+  groups.byEntryTime[b.name]={...summarize(selected),bucketStart:b.start,bucketEndExclusive:b.end};
+ }
+ groups.method='Descriptive cohorts of frozen entries; not an optimized entry rule or independent holdout. P&L uses the frozen host exit and existing cost model; small cohorts, especially PE, should not be interpreted as reliable estimates.';
+ return groups;
+}
+
 function temporalSummary(rows){
  const periods=[
   {name:'jan_jun_2026',start:'2026-01-01',end:'2026-07-01'},
@@ -76,6 +126,6 @@ function temporalSummary(rows){
  return result;
 }
 
-async function main(){const token=process.env.GROWW_ACCESS_TOKEN;if(!token)throw Error('GROWW_ACCESS_TOKEN required');const start='2026-01-01',end='2026-09-19',variants={};for(const variant of ['A','B']){last=0;const base=await runIdea10A({token,startDate:start,endDate:end,variant,spacingMs:+(process.env.GROWW_REQUEST_SPACING_MS||1500)}),rows=[];for(const t of base.trades){if(!t.contract?.symbol)continue;const cs=await candles(token,t.contract.symbol,t.date,+(process.env.GROWW_REQUEST_SPACING_MS||1500));const enriched=enrich(t,cs);enriched.counterfactuals=Object.fromEntries(EXIT_RULES.map(rule=>[rule,replayExit(t,cs,rule)]));rows.push(enriched)}variants[variant]={base:{variant:base.variant,ema:base.ema,period:base.period,tradeCount:base.tradeCount,stopOutCount:base.stopOutCount,stopOutRate:base.stopOutRate,summaries:base.summaries,bootstrap:base.bootstrap},diagnostics:summarize(rows),counterfactualSummary:counterfactualSummary(rows),temporalValidation:temporalSummary(rows),trades:rows}}
+async function main(){const token=process.env.GROWW_ACCESS_TOKEN;if(!token)throw Error('GROWW_ACCESS_TOKEN required');const start='2026-01-01',end='2026-09-19',variants={};for(const variant of ['A','B']){last=0;const base=await runIdea10A({token,startDate:start,endDate:end,variant,spacingMs:+(process.env.GROWW_REQUEST_SPACING_MS||1500)}),rows=[];for(const t of base.trades){if(!t.contract?.symbol)continue;const cs=await candles(token,t.contract.symbol,t.date,+(process.env.GROWW_REQUEST_SPACING_MS||1500));const enriched=enrich(t,cs);enriched.counterfactuals=Object.fromEntries(EXIT_RULES.map(rule=>[rule,replayExit(t,cs,rule)]));rows.push(enriched)}variants[variant]={base:{variant:base.variant,ema:base.ema,period:base.period,tradeCount:base.tradeCount,stopOutCount:base.stopOutCount,stopOutRate:base.stopOutRate,summaries:base.summaries,bootstrap:base.bootstrap},diagnostics:summarize(rows),entryCohorts:entryCohortSummary(rows),counterfactualSummary:counterfactualSummary(rows),temporalValidation:temporalSummary(rows),trades:rows}}
 const out={schemaVersion:1,study:'Idea 20 favorable-excursion / exit-management diagnostic',host:'Idea 10A baseline',period:{startDate:start,endDate:end},rule:'Post-entry 3-minute option premium path; CE/PE both use premium-price excursion; threshold-before-stop excludes the stop bar because intrabar high/stop ordering is unknown; diagnostic only; no exit rule activated',thresholds:THRESHOLDS,variants};fs.writeFileSync(process.env.OUT||'idea20-2026-diagnostic.json',JSON.stringify(out,null,2));console.log(JSON.stringify({study:out.study,period:out.period,rule:'CE-only counterfactual exits; PE excluded because frozen host stop is inverted for long-premium P&L; stop-first on same-candle target/stop; completed-bar trailing changes apply next bar; stress0_5/stress1_0 are 0.5/1.0 premium points adverse slippage per leg',variants:Object.fromEntries(Object.entries(variants).map(([k,v])=>[k,{base:v.base.summaries,diagnostics:v.diagnostics,counterfactualSummary:v.counterfactualSummary}]))},null,2))}
 main().catch(e=>{console.error(e.stack||e);process.exit(1)})
