@@ -5,7 +5,7 @@
       "BASE",
       "V4"
     ],
-    "updatedAt": "2026-10-13T04:16:31.916Z"
+    "updatedAt": "2026-10-14T04:07:28.788Z"
   },
   "sessions": [
     {
@@ -3498,6 +3498,132 @@
       "tradeCount": 0,
       "totalPnl": null,
       "strategyOutcomes": {}
+    },
+    {
+      "date": "2026-10-14",
+      "thread": "BASE",
+      "strategyVersions": [
+        "V2",
+        "V3-5",
+        "V3-10",
+        "V6",
+        "V7",
+        "V8",
+        "V9",
+        "V10-5",
+        "V10-10",
+        "V11"
+      ],
+      "status": "CLOSED",
+      "reason": null,
+      "updatedAt": "2026-10-14T04:07:26.083Z",
+      "spot925": 22694.75,
+      "expiry": "2026-10-19",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-19Oct26-22650-CE",
+        "strike": 22650,
+        "optionType": "CE",
+        "premium": 186.95
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-19Oct26-22750-PE",
+        "strike": 22750,
+        "optionType": "PE",
+        "premium": 173.4
+      },
+      "side": "PE",
+      "strike": 22750,
+      "entry": 181.9,
+      "entryTime": "09:32",
+      "signalSource": null,
+      "tradeCount": 10,
+      "totalPnl": -57082.36,
+      "strategyOutcomes": {
+        "V2": {
+          "tradeCount": 1,
+          "totalPnl": -7291.19
+        },
+        "V3-5": {
+          "tradeCount": 1,
+          "totalPnl": -5053
+        },
+        "V3-10": {
+          "tradeCount": 1,
+          "totalPnl": -7291.19
+        },
+        "V6": {
+          "tradeCount": 1,
+          "totalPnl": -7291.19
+        },
+        "V7-10": {
+          "tradeCount": 1,
+          "totalPnl": -7291.19
+        },
+        "V8-10": {
+          "tradeCount": 1,
+          "totalPnl": -6674.88
+        },
+        "V9": {
+          "tradeCount": 1,
+          "totalPnl": -4047.43
+        },
+        "V10-5": {
+          "tradeCount": 1,
+          "totalPnl": -4047.43
+        },
+        "V10-10": {
+          "tradeCount": 1,
+          "totalPnl": -4047.43
+        },
+        "V11": {
+          "tradeCount": 1,
+          "totalPnl": -4047.43
+        }
+      }
+    },
+    {
+      "date": "2026-10-14",
+      "thread": "V4",
+      "strategyVersions": [
+        "V4",
+        "V5"
+      ],
+      "status": "CLOSED",
+      "reason": null,
+      "updatedAt": "2026-10-14T04:07:28.788Z",
+      "spot925": 22694.75,
+      "expiry": "2026-10-19",
+      "referencePremium": 180,
+      "ce": {
+        "symbol": "NSE-NIFTY-19Oct26-22650-CE",
+        "strike": 22650,
+        "optionType": "CE",
+        "premium": 186.95
+      },
+      "pe": {
+        "symbol": "NSE-NIFTY-19Oct26-22750-PE",
+        "strike": 22750,
+        "optionType": "PE",
+        "premium": 173.4
+      },
+      "side": "PE",
+      "strike": 22750,
+      "entry": 181.9,
+      "entryTime": "09:32",
+      "signalSource": "PRIMARY",
+      "tradeCount": 2,
+      "totalPnl": -9862.71,
+      "strategyOutcomes": {
+        "V4": {
+          "tradeCount": 1,
+          "totalPnl": -2571.52
+        },
+        "V5-10": {
+          "tradeCount": 1,
+          "totalPnl": -7291.19
+        }
+      }
     }
   ]
 }
