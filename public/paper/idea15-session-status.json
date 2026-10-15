@@ -1,9 +1,39 @@
 {
-  "updatedAt": "2026-10-14T09:45:07.814Z",
+  "updatedAt": "2026-10-15T09:13:24.877Z",
   "strategy": "IDEA15_FIXED10",
   "variant": "FIXED10",
-  "date": "2026-10-14",
-  "status": "NO_TRADE",
-  "reason": "No same-bar Idea15 Fixed10 + option 9/21 confirmation before 15:15",
-  "expiry": "2026-10-19"
+  "date": "2026-10-15",
+  "status": "CLOSED",
+  "trade": {
+    "source": "PAPER",
+    "strategy": "Idea 15 Fixed10 EMA Break",
+    "strategyVersion": "IDEA15_FIXED10",
+    "variant": "FIXED10",
+    "date": "2026-10-15",
+    "expiry": "2026-10-19",
+    "side": "CE",
+    "contract": "NSE-NIFTY-19Oct26-22950-CE",
+    "strike": 22950,
+    "signalTime": "12:33",
+    "entryTime": "12:33",
+    "entryPremium": 143.2,
+    "initialStop": 132.7,
+    "exitTime": "14:42",
+    "exitPremium": 125.5,
+    "exitReason": "OPTION_CONFIRMATION_BAR_STOP",
+    "lots": 16,
+    "units": 400,
+    "grossPnl": -7080,
+    "charges": 169.41,
+    "totalPnl": -7249.41,
+    "stopOut": true,
+    "paperOnly": true,
+    "diagnostics": {
+      "variant": "FIXED10",
+      "ema": "9/21",
+      "timeframe": "3minute",
+      "thresholdPoints": 10,
+      "noOrderApiUsed": true
+    }
+  }
 }
