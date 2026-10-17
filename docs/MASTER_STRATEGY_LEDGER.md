@@ -1,16 +1,16 @@
 # NIFTY Options Lab — Master Strategy Ledger
 
-**As of:** 2026-10-08
+**As of:** 2026-10-17
 
 This is the single human-readable tracker of the strategy families and numbered ideas researched in this repository. It records what each strategy does, why it was tested, why it was rejected or retained, and what is still running. Primary repository artifacts, commits, and workflow runs are authoritative.
 
 ## Current state
 
-- **ACTIVE CLOSURE TEST:** Idea 17 — prior completed-day decisive bias (>=0.5%).
-- **ACTIVE RESEARCH:** Idea 20 — exit-side research.
-- **PAPER / CONTROL:** Idea 10A and V2–V11 premium variants. These are observation/control lanes, not promoted live strategies.
-- **REJECTED / CLOSED:** Ideas 13 H1/H2, 14, 15 Fixed10, 15 Width25, and 16.
+- **ACTIVE RESEARCH:** No active Idea 20 work remains; its current entry-and-exit candidate is rejected and closed.
+- **PAPER / CONTROL:** Idea 10A (provisional paper observation) and V2–V11 premium variants (established paper observation suite). These are observation/control lanes, not promoted live strategies.
+- **REJECTED / CLOSED:** Ideas 13 H1/H2, 14, 15 Fixed10, 15 Width25, 16, 17, and 20.
 - **CLOSED DIAGNOSTICS:** Ideas 18 and 19.
+- **NOT OPENED:** The separate question of diagnosing new entry signals has no numbered idea or frozen hypothesis; do not treat it as continuing Idea 20 or begin it until separately specified.
 - Ideas 1, 2, 4, 5, 6 remain protocol-defined runnable hypotheses but are not proven candidates. Idea 3 is method-blocked. Ideas 9, 11 and 12 have no authoritative numbered definition in the primary material available here; this ledger does not invent one.
 
 ## V2–V11 premium family
@@ -165,7 +165,7 @@ This is the single human-readable tracker of the strategy families and numbered 
 
 **Forensic closure:** The largest winner was +₹71,285.25 (13-Apr-2026). Removing it leaves −₹39,362.83 / PF 0.7917. Removing the largest three winners (+₹71,285.25, +₹64,635.28, +₹39,984.93) leaves −₹143,983.05 / PF 0.2382. Both trigger the frozen automatic-reject rule. April 2026 contributed +₹140,697.76 against total holdout net +₹31,922.42, confirming extreme concentration. Discovery also failed the leave-largest test (−₹1,114.76 / PF 0.9989 after removing its +₹182,020.17 winner), while validation was only +₹9,750.23 / PF 1.0364 and failed 0.5-point stress.
 
-**Status:** **REJECTED / CLOSED.** No paper promotion, no live-trading consideration, and no post-result retuning. The next active research thread is Idea 20 exit-side research.
+**Status:** **REJECTED / CLOSED.** No paper promotion, no live-trading consideration, and no post-result retuning. Idea 17 is closed; no follow-on research is implied by this verdict.
 
 ### Idea 18 — Reversal after confirmation
 
@@ -178,10 +178,19 @@ This is the single human-readable tracker of the strategy families and numbered 
 **Finding:** 11:00–13:00 emerged as the discovery leader, but the evidence was diagnostic only and bucket accounting had a boundary artifact that required correction.
 **Status:** CLOSED DIAGNOSTIC; no promotion.
 
-### Idea 20 — Exit-side research
-**How it works:** Research focuses on whether changing the exit side/exit mechanics can improve the surviving signal rather than creating another entry filter.
-**Why tested:** Entry-side filters have repeatedly failed robustness; exit-side behavior remains an open research avenue.
-**Status:** ACTIVE RESEARCH; not promoted.
+### Idea 20 — Exit-side counterfactuals on frozen Idea 10A entries
+
+**Scope:** Frozen Idea 10A entries were replayed candle-by-candle against the original stop/EOD exits, fixed profit targets (+0.5%, +1%, +2%, +3%), breakeven after +0.5%, and a trailing stop activating at +1% with a 0.5% distance. Conservative stop-first handling was used when stop and target were both touched in one 3-minute candle. PE trades were excluded from long-premium counterfactuals because the frozen host uses a high-based PE stop while the modeled P&L assumes long-option exposure.
+
+**Why tested:** Determine whether exit management could produce a robust, executable improvement without changing the frozen entry signal.
+
+**Findings:** Variant A (9/21 EMA) trailing-stop counterfactual returned +₹2,41,061 before additional slippage, but fell to +₹52,565 under 0.5 option-premium points of adverse slippage per leg and −₹1,35,930 under 1.0-point stress. At 0.5-point stress, the bootstrap interval for mean trade P&L included zero; removing the largest winner changed total P&L to −₹46,896, and removing the largest three winners to −₹1,08,544. Variant B (5/13 EMA) was −₹5,784 without added slippage and deteriorated further under stress. Entry-time cohort gains did not persist across the Jan–Jun versus Jul–Sep 2026 split; for example, Variant A's 14:00–15:15 frozen-exit cohort moved from +₹1,54,562 to −₹4,906. These are retrospective diagnostics, not independent holdout evidence.
+
+**Verdict:** **REJECTED / CLOSED** for the frozen entry-and-exit candidate. Exit counterfactuals did not establish a robust edge after execution-cost and concentration checks; the apparent entry-time advantages were not temporally stable. No entry-time filter is adopted, and no paper/live promotion is allowed.
+
+**PR / provenance:** PR [#108](https://github.com/imvishalmittal/nifty-options-lab/pull/108), branch `research/idea20-counterfactual-exits`, head `406e326979b9a85257bc0a20d982cc20a34312ef`. Diagnostic workflow [38607048197](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/38607048197) and CI workflow [38607060951](https://github.com/imvishalmittal/nifty-options-lab/actions/runs/38607060951) both succeeded. PR #108 remains open and draft at the time of this ledger update; no trading rule is merged or activated. Its final disposition is an administrative follow-up, not a reason to reopen the strategy verdict.
+
+**Boundary:** Any future investigation of new entry signals is a separate, not-yet-opened research question. It requires its own numbered idea, frozen hypothesis, and independent validation plan before work begins. It is not a continuation of Idea 20.
 
 ## Other major strategy families already tested
 
